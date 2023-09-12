@@ -12,7 +12,7 @@ import matplotlib as mpl
 import numpy.linalg as LA
 import matplotlib.pyplot as plt
 
-IM = "data/wireframe/valid-images/*.jpg"
+IM = "data/wireframe/train-images/*.jpg"
 
 
 if __name__ == "__main__":

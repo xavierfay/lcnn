@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 
 from lcnn.utils import parmap
 
-GT = "data/wireframe/valid/*.npz"
+GT = "data/wireframe/train/*.npz"
 WF = "/data/lcnn/wirebase/result/wireframe/wireframe_1_rerun-baseline_0.5_0.5/2/*.mat"
 AFM = "/data/lcnn/wirebase/result/wireframe/afm/*.npz"
 IMGS = "/data/lcnn/wirebase/Wireframe/v1.1/test/*.jpg"

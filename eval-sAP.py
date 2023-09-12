@@ -8,7 +8,7 @@ Examples:
     python eval-sAP.py logs/*/npz/000*
 
 Arguments:
-    <path>                           One or more directories from train.py
+    <path>                           One or more directories from valid.py
 
 Options:
    -h --help                         Show this screen.
@@ -28,7 +28,7 @@ from docopt import docopt
 import lcnn.utils
 import lcnn.metric
 
-GT = "data/wireframe/valid/*.npz"
+GT = "data/wireframe/train/*.npz"
 
 
 def line_score(path, threshold=5):

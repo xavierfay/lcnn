@@ -64,8 +64,8 @@ def main():
     args = docopt(__doc__)
 
     files = sorted(glob.glob(osp.join(args["<input-dir>"], "*.npz")))
-    inames = sorted(glob.glob("data/wireframe/valid-images/*.jpg"))
-    gts = sorted(glob.glob("data/wireframe/valid/*.npz"))
+    inames = sorted(glob.glob("data/wireframe/train-images/*.jpg"))
+    gts = sorted(glob.glob("data/wireframe/train/*.npz"))
     prefix = args["<output-dir>"]
 
     inputs = list(zip(files, inames, gts))

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Train L-CNN
 Usage:
-    train.py [options] <yaml-config>
-    train.py (-h | --help )
+    valid.py [options] <yaml-config>
+    valid.py (-h | --help )
 
 Arguments:
    <yaml-config>                   Path to the yaml hyper-parameter file
@@ -88,7 +88,7 @@ def main():
     # 1. dataset
 
     # uncomment for debug DataLoader
-    # wireframe.datasets.WireframeDataset(datadir, split="train")[0]
+    # wireframe.datasets.WireframeDataset(datadir, split="valid")[0]
     # sys.exit(0)
 
     datadir = C.io.datadir
@@ -98,20 +98,20 @@ def main():
         "pin_memory": True,
     }
     train_loader = torch.utils.data.DataLoader(
-        WireframeDataset(datadir, split="train"),
+        WireframeDataset(datadir, split="valid"),
         shuffle=True,
         batch_size=M.batch_size,
         **kwargs,
     )
     val_loader = torch.utils.data.DataLoader(
-        WireframeDataset(datadir, split="valid"),
+        WireframeDataset(datadir, split="train"),
         shuffle=False,
         batch_size=M.batch_size_eval,
         **kwargs,
     )
     epoch_size = len(train_loader)
-    # print("epoch_size (train):", epoch_size)
-    # print("epoch_size (valid):", len(val_loader))
+    # print("epoch_size (valid):", epoch_size)
+    # print("epoch_size (train):", len(val_loader))
 
     if resume_from:
         checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))

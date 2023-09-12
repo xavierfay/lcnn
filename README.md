@@ -66,7 +66,7 @@ demo.py                         # script for detecting wireframes for an image
 eval-sAP.py                     # script for sAP evaluation
 eval-APH.py                     # script for APH evaluation
 eval-mAPJ.py                    # script for mAPJ evaluation
-train.py                        # script for training the neural network
+valid.py                        # script for training the neural network
 post.py                         # script for post-processing
 process.py                      # script for processing a dataset from a checkpoint
 ```
@@ -139,7 +139,7 @@ The default batch size assumes your have a graphics card with 12GB video memory,
 
 To train the neural network on GPU 0 (specified by `-d 0`) with the default parameters, execute
 ```bash
-python ./train.py -d 0 --identifier baseline config/wireframe.yaml
+python ./valid.py -d 0 --identifier baseline config/wireframe.yaml
 ```
 
 ## Testing Pretrained Models
