@@ -22,9 +22,9 @@ except Exception:
 # Change the directory here
 PRED = "logs/190418-201834-f8934c6-lr4d10/npz/000312000/*.npz"
 PRED = "post/jmap_0008/*.npz"
-GT = "data/wireframe/train/*.npz"
+GT = "data/wireframe/valid/*.npz"
 # PRED = "logs/190506-001532-york/*.npz"
-# GT = "data/york/train/*.npz"
+# GT = "data/york/valid/*.npz"
 WF = "/data/lcnn/wirebase/result/wireframe/wireframe_1_rerun-baseline_0.5_0.5/*"
 AFM = "/data/lcnn/wirebase/result/wireframe/afm/*.npz"
 

@@ -195,7 +195,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in ["valid", "train"]:
+    for batch in ["train", "valid"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:
@@ -218,7 +218,7 @@ def main():
 
             path = os.path.join(data_output, batch, prefix)
             save_heatmap(f"{path}_0", im[::, ::], lines0)
-            if batch != "train":
+            if batch != "valid":
                 save_heatmap(f"{path}_1", im[::, ::-1], lines1)
                 save_heatmap(f"{path}_2", im[::-1, ::], lines2)
                 save_heatmap(f"{path}_3", im[::-1, ::-1], lines3)
