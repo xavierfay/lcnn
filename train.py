@@ -101,6 +101,7 @@ def main():
         WireframeDataset(datadir, split="train"),
         shuffle=True,
         batch_size=M.batch_size,
+        num_workers=2,
         **kwargs,
     )
     val_loader = torch.utils.data.DataLoader(
