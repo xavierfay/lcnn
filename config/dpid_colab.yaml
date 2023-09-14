@@ -1,6 +1,6 @@
 io:
   logdir: logs/
-  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/dpid_2
+  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/dpid_longlines
   resume_from:
   num_workers: 4
   tensorboard_port: 0

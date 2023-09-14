@@ -18,7 +18,18 @@ def extract_lines_from_file(filepath):
     print(lines)
     return lines
 
+def extract_lines_from_file(filepath):
+    with open(filepath, 'r') as file:
+        lines = []
+        for line in file.readlines():
+            # Split by spaces
+            parts = line.strip().split()
 
+            # Convert each part to an integer (or float if needed)
+            coords = list(map(int, parts))
+            lines.append(coords)
+    print(lines)
+    return lines
 def convert_txt_to_json_in_directory(directory):
     data = []
 
@@ -56,5 +67,5 @@ def convert_txt_to_json_in_directory(directory):
 
 
 # Example usage:
-directory = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_P&IDs\\image_dpid'
+directory = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_P&IDs\\test\\'
 convert_txt_to_json_in_directory(directory)
