@@ -62,7 +62,7 @@ class LineVectorizer(nn.Module):
 
                 joff = data["joff"]
                 joff = torch.from_numpy(joff)
-            print("joff_new",joff.shape,'joff_org:', h["joff"][i].shape)
+            print("joff_new \n",joff.shape,'joff_org: \n', h["joff"][i].shape)
             data = np.load(data_path)
             p, label, feat, jc = self.sample_lines(
                      data ,jmap, joff, input_dict["mode"]
@@ -179,11 +179,13 @@ class LineVectorizer(nn.Module):
     def sample_lines(self, meta, jmap, joff, mode):
         with torch.no_grad():
 
-            junc = meta["junc"]  # [N, 2]
+            junc = torch.from_numpy(meta["junc"])
+            junc = junc[:,:-1]# [N, 2]
+            print("size junc: \n", junc)
             #jtyp = meta["jtyp"]  # [N]
             jtyp = torch.zeros(len(junc), dtype=torch.int64)
-            Lpos = meta["Lpos"]
-            Lneg = meta["Lneg"]
+            Lpos = torch.from_numpy(meta["Lpos"])
+            Lneg = torch.from_numpy(meta["Lneg"])
 
 
 
@@ -201,18 +203,19 @@ class LineVectorizer(nn.Module):
             # junc = junc_sym
 
 
-            padding = (0, len(junc)-len(jtyp))
-            # Pad tensor
-            jtyp = F.pad(jtyp, padding, "constant", 0)
-
-            padding = (0,len(junc)-len(Lpos)+1, 0, len(junc)-len(Lpos)+1)
-            Lpos = F.pad(Lpos, padding, "constant", 0)
-            print("size_lpos", Lpos.shape)
+            # padding = (0, len(junc)-len(jtyp))
+            # # Pad tensor
+            # jtyp = F.pad(jtyp, padding, "constant", 0)
+            #
+            # padding = (0,len(junc)-len(Lpos)+1, 0, len(junc)-len(Lpos)+1)
+            # Lpos = F.pad(Lpos, padding, "constant", 0)
+            # print("size_lpos", Lpos.shape)
 
 
 
             n_type = jmap.shape[0]
             #jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
+            jmap = jmap.reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -249,7 +252,11 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            label = Lpos[up, vp]
+            up_clamped = up.clamp(max=Lpos.shape[0] - 1)
+            vp_clamped = vp.clamp(max=Lpos.shape[1] - 1)
+
+            label = Lpos[up_clamped, vp_clamped]
+            #label = Lpos[up, vp]
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -312,7 +319,7 @@ class LineVectorizer(nn.Module):
 
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print("jcs:",jcs,"Jmap:", jmap, 'juncs:',junc)
+            print("jcs:\n",jcs,"Jmap:\n", jmap, 'juncs:\n',junc)
             print("line \n ", line)
             return line, label.float(), feat, jcs
 
