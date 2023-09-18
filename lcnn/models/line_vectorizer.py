@@ -50,9 +50,24 @@ class LineVectorizer(nn.Module):
 
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
+            # p, label, feat, jc = self.sample_lines(
+            #     meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
+            # )
+
+            data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
+
+            with np.load(data_path) as data:
+                jmap = data["jmap"][i]
+                jmap = torch.from_numpy(jmap)
+
+                joff = data["joff"]
+                joff = torch.from_numpy(joff)
+            print("joff_new",joff.shape,'joff_org:', h["joff"][i].shape)
+            data = np.load(data_path)
             p, label, feat, jc = self.sample_lines(
-                meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
-            )
+                     data ,jmap, joff, input_dict["mode"]
+                 )
+
             # print("p.shape:", p.shape)
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
@@ -64,6 +79,18 @@ class LineVectorizer(nn.Module):
                 jcs.append(jc)
                 ps.append(p)
             fs.append(feat)
+
+
+            # print("jcs list :" , jcs)
+            # data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
+            # with np.load(data_path) as data:
+            #     junc_sym = data['junc']
+            #     # Slice to keep only the first two columns
+            #     junc_sym = junc_sym[:, :2]
+            #     junc_sym = torch.from_numpy(junc_sym)
+            #
+            # jcs = [[junc_sym]]
+
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
@@ -153,12 +180,39 @@ class LineVectorizer(nn.Module):
         with torch.no_grad():
 
             junc = meta["junc"]  # [N, 2]
-            jtyp = meta["jtyp"]  # [N]
+            #jtyp = meta["jtyp"]  # [N]
+            jtyp = torch.zeros(len(junc), dtype=torch.int64)
             Lpos = meta["Lpos"]
             Lneg = meta["Lneg"]
 
+
+
+
+            # data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
+            # # Load the .npz file
+            # with np.load(data_path) as data:
+            #     junc_sym = data['junc']
+            #     # Slice to keep only the first two columns
+            #     junc_sym = junc_sym[:, :2]
+            #     junc_sym = torch.from_numpy(junc_sym)
+            #
+            # # Assuming junc is defined somewhere above in your code
+            # junc = torch.cat((junc, junc_sym))
+            # junc = junc_sym
+
+
+            padding = (0, len(junc)-len(jtyp))
+            # Pad tensor
+            jtyp = F.pad(jtyp, padding, "constant", 0)
+
+            padding = (0,len(junc)-len(Lpos)+1, 0, len(junc)-len(Lpos)+1)
+            Lpos = F.pad(Lpos, padding, "constant", 0)
+            print("size_lpos", Lpos.shape)
+
+
+
             n_type = jmap.shape[0]
-            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
+            #jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -203,7 +257,7 @@ class LineVectorizer(nn.Module):
                 # sample positive lines
                 cdx = label.nonzero().flatten()
                 if len(cdx) > M.n_dyn_posl:
-                    # print("too many positive lines")
+                    print("too many positive lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
                     cdx = cdx[perm]
                 c[cdx] = 1
@@ -211,7 +265,7 @@ class LineVectorizer(nn.Module):
                 # sample negative lines
                 cdx = Lneg[up, vp].nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
-                    # print("too many negative lines")
+                    print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
                     cdx = cdx[perm]
                 c[cdx] = 1
@@ -258,7 +312,8 @@ class LineVectorizer(nn.Module):
 
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print(jcs, jmap, junc)
+            print("jcs:",jcs,"Jmap:", jmap, 'juncs:',junc)
+            print("line \n ", line)
             return line, label.float(), feat, jcs
 
 
