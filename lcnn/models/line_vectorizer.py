@@ -1,7 +1,7 @@
 import itertools
 import random
 from collections import defaultdict
-
+import numpy.linalg as LA
 import numpy as np
 import torch
 import torch.nn as nn
@@ -41,80 +41,94 @@ class LineVectorizer(nn.Module):
                 nn.Linear(M.dim_fc, 1),
             )
         self.loss = nn.BCEWithLogitsLoss(reduction="none")
-
+    def adjacency_matrix(self, n, link):
+        mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
+        link = torch.from_numpy(link)
+        if len(link) > 0:
+            mat[link[:, 0], link[:, 1]] = 1
+            mat[link[:, 1], link[:, 0]] = 1
+        return mat
+    def load_meta(self, data_path):
+        with np.load(data_path) as npz:
+            target = {
+                name: torch.from_numpy(npz[name]).float()
+                for name in["jmap", "joff", "lmap"]
+            }
+            lpos = np.random.permutation(npz["lpos"])[:M.n_stc_posl]
+            lneg = np.random.permutation(npz["lneg"])[:M.n_stc_negl]
+            npos, nneg = len(lpos), len(lneg)
+            lpre = np.concatenate([lpos, lneg], 0)
+            for i in range(len(lpre)):
+                if random.random() > 0.5:
+                    lpre[i] = lpre[i, ::-1]
+            ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
+            ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
+            feat = [
+                lpre[:, :, :2].reshape(-1, 4) / 128 * M.use_cood,
+                ldir * M.use_slop,
+                lpre[:, :, 2],
+            ]
+            feat = np.concatenate(feat, 1)
+            meta = {
+                "junc": torch.from_numpy(npz["junc"][:, :2]),
+                "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
+                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
+                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
+                "lpre": torch.from_numpy(lpre[:, :, :2]),
+                "lpre_label": torch.cat([torch.ones(npos), torch.zeros(nneg)]),
+                "lpre_feat": torch.from_numpy(feat),
+                "jmap": torch.from_numpy(npz["jmap"]),
+                "joff": torch.from_numpy(npz["joff"]),
+            }
+        return meta
     def forward(self, input_dict):
         result = self.backbone(input_dict)
         h = result["preds"]
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
-
+        meta = self.load_meta('C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz')
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
-        for i, meta in enumerate(input_dict["meta"]):
-            # p, label, feat, jc = self.sample_lines(
-            #     meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
-            # )
+        #for i, meta in enumerate(meta_data):
+        i = 0
+        print(type(meta))
+        p, label, feat, jc = self.sample_lines(
+            meta, meta["jmap"], meta["joff"], input_dict["mode"]
+        )
+        # print("p.shape:", p.shape)
+        ys.append(label)
+        if input_dict["mode"] == "training" and self.do_static_sampling:
+            p = torch.cat([p, meta["lpre"]])
+            feat = torch.cat([feat, meta["lpre_feat"]])
+            ys.append(meta["lpre_label"])
+            del jc
+        else:
+            jcs.append(jc)
+            ps.append(p)
+        fs.append(feat)
 
-            data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
+        p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
+        p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
+        px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
+        px0 = px.floor().clamp(min=0, max=127)
+        py0 = py.floor().clamp(min=0, max=127)
+        px1 = (px0 + 1).clamp(min=0, max=127)
+        py1 = (py0 + 1).clamp(min=0, max=127)
+        px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
 
-            with np.load(data_path) as data:
-                jmap = data["jmap"][i]
-                jmap = torch.from_numpy(jmap)
-                joff = data["joff"]
-                joff = torch.from_numpy(joff)
-
-            #print("joff_new \n",joff.shape,'joff_org: \n', h["joff"][i].shape)
-            data = np.load(data_path)
-            p, label, feat, jc = self.sample_lines(
-                     data ,jmap, joff, input_dict["mode"]
-                 )
-
-            # print("p.shape:", p.shape)
-            ys.append(label)
-            if input_dict["mode"] == "training" and self.do_static_sampling:
-                p = torch.cat([p, meta["lpre"]])
-                feat = torch.cat([feat, meta["lpre_feat"]])
-                ys.append(meta["lpre_label"])
-                del jc
-            else:
-                jcs.append(jc)
-                ps.append(p)
-            fs.append(feat)
-
-
-            # print("jcs list :" , jcs)
-            # data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
-            # with np.load(data_path) as data:
-            #     junc_sym = data['junc']
-            #     # Slice to keep only the first two columns
-            #     junc_sym = junc_sym[:, :2]
-            #     junc_sym = torch.from_numpy(junc_sym)
-            #
-            # jcs = [[junc_sym]]
-
-
-            p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
-            p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
-            px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
-            px0 = px.floor().clamp(min=0, max=127)
-            py0 = py.floor().clamp(min=0, max=127)
-            px1 = (px0 + 1).clamp(min=0, max=127)
-            py1 = (py0 + 1).clamp(min=0, max=127)
-            px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
-
-            # xp: [N_LINE, N_CHANNEL, N_POINT]
-            xp = (
-                (
-                    x[i, :, px0l, py0l] * (px1 - px) * (py1 - py)
-                    + x[i, :, px1l, py0l] * (px - px0) * (py1 - py)
-                    + x[i, :, px0l, py1l] * (px1 - px) * (py - py0)
-                    + x[i, :, px1l, py1l] * (px - px0) * (py - py0)
-                )
-                .reshape(n_channel, -1, M.n_pts0)
-                .permute(1, 0, 2)
+        # xp: [N_LINE, N_CHANNEL, N_POINT]
+        xp = (
+            (
+                x[i, :, px0l, py0l] * (px1 - px) * (py1 - py)
+                + x[i, :, px1l, py0l] * (px - px0) * (py1 - py)
+                + x[i, :, px0l, py1l] * (px1 - px) * (py - py0)
+                + x[i, :, px1l, py1l] * (px - px0) * (py - py0)
             )
-            xp = self.pooling(xp)
-            xs.append(xp)
-            idx.append(idx[-1] + xp.shape[0])
+            .reshape(n_channel, -1, M.n_pts0)
+            .permute(1, 0, 2)
+        )
+        xp = self.pooling(xp)
+        xs.append(xp)
+        idx.append(idx[-1] + xp.shape[0])
 
         x, y = torch.cat(xs), torch.cat(ys)
         f = torch.cat(fs)
@@ -177,45 +191,15 @@ class LineVectorizer(nn.Module):
         return result
 
     def sample_lines(self, meta, jmap, joff, mode):
+        print(meta.keys())
         with torch.no_grad():
-
-            junc = torch.from_numpy(meta["junc"])
-            junc = junc[:,:-1]# [N, 2]
-            print("size junc: \n", junc)
-            #jtyp = meta["jtyp"]  # [N]
-            jtyp = torch.ones(len(junc), dtype=torch.int64)
-            Lpos = torch.from_numpy(meta["Lpos"])
-            Lneg = torch.from_numpy(meta["Lneg"])
-
-            print("LPos               ", Lpos)
-            print("LNeg                ",Lneg)
-
-            # data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
-            # # Load the .npz file
-            # with np.load(data_path) as data:
-            #     junc_sym = data['junc']
-            #     # Slice to keep only the first two columns
-            #     junc_sym = junc_sym[:, :2]
-            #     junc_sym = torch.from_numpy(junc_sym)
-            #
-            # # Assuming junc is defined somewhere above in your code
-            # junc = torch.cat((junc, junc_sym))
-            # junc = junc_sym
-
-
-            # padding = (0, len(junc)-len(jtyp))
-            # # Pad tensor
-            # jtyp = F.pad(jtyp, padding, "constant", 0)
-            #
-            # padding = (0,len(junc)-len(Lpos)+1, 0, len(junc)-len(Lpos)+1)
-            # Lpos = F.pad(Lpos, padding, "constant", 0)
-            # print("size_lpos", Lpos.shape)
-
-
+            junc = meta["junc"]  # [N, 2]
+            jtyp = meta["jtyp"]  # [N]
+            Lpos = meta["Lpos"]
+            Lneg = meta["Lneg"]
 
             n_type = jmap.shape[0]
-            #jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
-            jmap = jmap.reshape(n_type, -1)
+            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -252,12 +236,7 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            print("u , v , up, vp                    \n",u,v,up,vp)
-            up_clamped = up.clamp(max=Lpos.shape[0] - 1)
-            vp_clamped = vp.clamp(max=Lpos.shape[1] - 1)
-
-            label = Lpos[up_clamped, vp_clamped]
-            #label = Lpos[up, vp]
+            label = Lpos[up, vp]
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -265,7 +244,7 @@ class LineVectorizer(nn.Module):
                 # sample positive lines
                 cdx = label.nonzero().flatten()
                 if len(cdx) > M.n_dyn_posl:
-                    print("too many positive lines")
+                    # print("too many positive lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
                     cdx = cdx[perm]
                 c[cdx] = 1
@@ -273,7 +252,7 @@ class LineVectorizer(nn.Module):
                 # sample negative lines
                 cdx = Lneg[up, vp].nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
-                    print("too many negative lines")
+                    # print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
                     cdx = cdx[perm]
                 c[cdx] = 1
@@ -289,20 +268,20 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
-            # deltas = xyv - xyu
-            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            #
-            # # mask for horizontal lines
-            # horizontal_mask = torch.abs(slopes) < 0.05
-            #
-            # # mask for vertical lines
-            # vertical_mask = torch.abs(slopes) > 100  # A large number to approximate infinity
-            #
-            # valid_lines_mask = horizontal_mask | vertical_mask
-            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
-            # u, v = u[valid_lines_mask], v[valid_lines_mask]
+            deltas=xyv-xyu
+            slopes=torch.where(deltas[:,0]!=0,deltas[:,1]/deltas[:,0],float('inf'))
 
-            # label = label[valid_lines_mask]
+            #maskforhorizontallines
+            horizontal_mask=torch.abs(slopes)<0.05
+
+            #maskforverticallines
+            vertical_mask=torch.abs(slopes)>100 # A large number to approximate infinity
+
+            valid_lines_mask=horizontal_mask|vertical_mask
+            xyu,xyv = xyu[valid_lines_mask],xyv[valid_lines_mask]
+            u,v = u[valid_lines_mask],v[valid_lines_mask]
+
+            label=label[valid_lines_mask]
 
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
@@ -320,8 +299,6 @@ class LineVectorizer(nn.Module):
 
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print("jcs:\n",jcs,"Jmap:\n", jmap, 'juncs:\n',junc)
-            print("line \n ", line)
             return line, label.float(), feat, jcs
 
 
