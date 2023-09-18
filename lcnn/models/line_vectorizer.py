@@ -59,10 +59,10 @@ class LineVectorizer(nn.Module):
             with np.load(data_path) as data:
                 jmap = data["jmap"][i]
                 jmap = torch.from_numpy(jmap)
-
                 joff = data["joff"]
                 joff = torch.from_numpy(joff)
-            print("joff_new \n",joff.shape,'joff_org: \n', h["joff"][i].shape)
+
+            #print("joff_new \n",joff.shape,'joff_org: \n', h["joff"][i].shape)
             data = np.load(data_path)
             p, label, feat, jc = self.sample_lines(
                      data ,jmap, joff, input_dict["mode"]
@@ -183,12 +183,12 @@ class LineVectorizer(nn.Module):
             junc = junc[:,:-1]# [N, 2]
             print("size junc: \n", junc)
             #jtyp = meta["jtyp"]  # [N]
-            jtyp = torch.zeros(len(junc), dtype=torch.int64)
+            jtyp = torch.ones(len(junc), dtype=torch.int64)
             Lpos = torch.from_numpy(meta["Lpos"])
             Lneg = torch.from_numpy(meta["Lneg"])
 
-
-
+            print("LPos               ", Lpos)
+            print("LNeg                ",Lneg)
 
             # data_path = 'C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz'
             # # Load the .npz file
@@ -252,6 +252,7 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
+            print("u , v , up, vp                    \n",u,v,up,vp)
             up_clamped = up.clamp(max=Lpos.shape[0] - 1)
             vp_clamped = vp.clamp(max=Lpos.shape[1] - 1)
 
@@ -288,20 +289,20 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
-            deltas = xyv - xyu
-            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            # deltas = xyv - xyu
+            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            #
+            # # mask for horizontal lines
+            # horizontal_mask = torch.abs(slopes) < 0.05
+            #
+            # # mask for vertical lines
+            # vertical_mask = torch.abs(slopes) > 100  # A large number to approximate infinity
+            #
+            # valid_lines_mask = horizontal_mask | vertical_mask
+            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
+            # u, v = u[valid_lines_mask], v[valid_lines_mask]
 
-            # mask for horizontal lines
-            horizontal_mask = torch.abs(slopes) < 0.05
-
-            # mask for vertical lines
-            vertical_mask = torch.abs(slopes) > 100  # A large number to approximate infinity
-
-            valid_lines_mask = horizontal_mask | vertical_mask
-            xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
-            u, v = u[valid_lines_mask], v[valid_lines_mask]
-
-            label = label[valid_lines_mask]
+            # label = label[valid_lines_mask]
 
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
