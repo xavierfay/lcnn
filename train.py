@@ -88,8 +88,8 @@ def main():
     # 1. dataset
 
     # uncomment for debug DataLoader
-    wireframe.datasets.WireframeDataset(datadir, split="train")[0]
-    sys.exit(0)
+    # wireframe.datasets.WireframeDataset(datadir, split="train")[0]
+    # sys.exit(0)
 
     datadir = C.io.datadir
     kwargs = {
@@ -110,8 +110,8 @@ def main():
         **kwargs,
     )
     epoch_size = len(train_loader)
-    # print("epoch_size (train):", epoch_size)
-    # print("epoch_size (valid):", len(val_loader))
+    print("epoch_size (train):", epoch_size)
+    print("epoch_size (valid):", len(val_loader))
 
     if resume_from:
         checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))
