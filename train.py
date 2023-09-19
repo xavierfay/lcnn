@@ -88,8 +88,8 @@ def main():
     # 1. dataset
 
     # uncomment for debug DataLoader
-    # wireframe.datasets.WireframeDataset(datadir, split="train")[0]
-    # sys.exit(0)
+    wireframe.datasets.WireframeDataset(datadir, split="train")[0]
+    sys.exit(0)
 
     datadir = C.io.datadir
     kwargs = {
@@ -135,7 +135,6 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
-    print("check1")
 
     # 3. optimizer
     if C.optim.name == "Adam":
@@ -154,7 +153,6 @@ def main():
         )
     else:
         raise NotImplementedError
-    print("check2")
     if resume_from:
         optim.load_state_dict(checkpoint["optim_state_dict"])
     outdir = resume_from or get_outdir(args["--identifier"])
@@ -176,7 +174,6 @@ def main():
                 trainer.iteration -= trainer.iteration % epoch_size
             trainer.best_mean_loss = checkpoint["best_mean_loss"]
             del checkpoint
-        print("check 3")
         trainer.train()
     except BaseException:
         if len(glob.glob(f"{outdir}/viz/*")) <= 1:
