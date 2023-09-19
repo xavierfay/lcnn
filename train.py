@@ -176,12 +176,13 @@ def main():
                 trainer.iteration -= trainer.iteration % epoch_size
             trainer.best_mean_loss = checkpoint["best_mean_loss"]
             del checkpoint
+        print("check 3")
         trainer.train()
     except BaseException:
         if len(glob.glob(f"{outdir}/viz/*")) <= 1:
             shutil.rmtree(outdir)
         raise
 
-    print("check3")
+
 if __name__ == "__main__":
     main()
