@@ -41,16 +41,13 @@ class LineVectorizer(nn.Module):
                 nn.Linear(M.dim_fc, 1),
             )
         self.loss = nn.BCEWithLogitsLoss(reduction="none")
-
     def adjacency_matrix(self, n, link):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
-        if not isinstance(link, torch.Tensor):  # Check if link is not a tensor
-            link = torch.from_numpy(link)
+        link = torch.from_numpy(link)
         if len(link) > 0:
             mat[link[:, 0], link[:, 1]] = 1
             mat[link[:, 1], link[:, 0]] = 1
         return mat
-
     def load_meta(self, data_path):
         with np.load(data_path) as npz:
             target = {
@@ -89,45 +86,14 @@ class LineVectorizer(nn.Module):
         h = result["preds"]
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
-
+        meta = self.load_meta('C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz')
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
-        loaded_meta = self.load_meta('C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\dataset\\output_prefix_label.npz')
-
-        for i in range(n_batch):
-            current_meta = input_dict["meta"][i]
-
-            # Merging "junc" and "jtyp"
-            current_meta["junc"] = torch.cat([current_meta["junc"], loaded_meta["junc"]], dim=0)
-            current_meta["jtyp"] = torch.cat([current_meta["jtyp"], loaded_meta["jtyp"]], dim=0)
-
-            offset = len(input_dict["meta"][i]["junc"])
-
-            # Add the offset to the loaded_meta's indices
-            loaded_meta["Lpos"] += offset
-            loaded_meta["Lneg"] += offset
-
-            max_index = len(current_meta["junc"]) - 1
-            valid_indices = (loaded_meta["Lpos"][:, 0] <= max_index) & (loaded_meta["Lpos"][:, 1] <= max_index)
-            filtered_Lpos = loaded_meta["Lpos"][valid_indices]
-
-
-            valid_indices = (loaded_meta["Lneg"][:, 0] <= max_index) & (loaded_meta["Lneg"][:, 1] <= max_index)
-            filtered_Lneg = loaded_meta["Lneg"][valid_indices]
-
-            # Recreate "Lpos" and "Lneg" based on merged junction data
-            current_meta["Lpos"] = self.adjacency_matrix(len(current_meta["junc"]), filtered_Lpos)
-            current_meta["Lneg"] = self.adjacency_matrix(len(current_meta["junc"]), filtered_Lneg)
-
-            # Merging "lpre", "lpre_label", and "lpre_feat"
-            # current_meta["lpre"] = torch.cat([current_meta["lpre"], loaded_meta["lpre"]], dim=0)
-            # current_meta["lpre_label"] = torch.cat([current_meta["lpre_label"], loaded_meta["lpre_label"]], dim=0)
-            # current_meta["lpre_feat"] = torch.cat([current_meta["lpre_feat"], loaded_meta["lpre_feat"]], dim=0)
-            current_meta["jmap"] = (h["jmap"][i] + loaded_meta["jmap"]) / 2.0
-            current_meta["joff"] = (h["joff"][i] + loaded_meta["joff"]) / 2.0
-
-            p, label, feat, jc = self.sample_lines(
-                current_meta, current_meta["jmap"], current_meta["joff"], input_dict["mode"]
-            )
+        #for i, meta in enumerate(meta_data):
+        i = 0
+        print(type(meta))
+        p, label, feat, jc = self.sample_lines(
+            meta, meta["jmap"], meta["joff"], input_dict["mode"]
+        )
         # print("p.shape:", p.shape)
         ys.append(label)
         if input_dict["mode"] == "training" and self.do_static_sampling:
