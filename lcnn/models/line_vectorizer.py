@@ -195,7 +195,7 @@ class LineVectorizer(nn.Module):
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
             label = Lpos[up, vp]
-            print("u, v, up, vp", u, v, up, vp)
+            #print("u, v, up, vp", u, v, up, vp)
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
 
@@ -225,7 +225,7 @@ class LineVectorizer(nn.Module):
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
-            print("xyu, xyv", xyu, xyv)
+            #print("xyu, xyv", xyu, xyv)
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
             feat = torch.cat(
@@ -239,7 +239,7 @@ class LineVectorizer(nn.Module):
                 1,
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
-            print("u, v, up, vp", u, v, up, vp)
+            #print("u, v, up, vp", u, v, up, vp)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label.float(), feat, jcs
