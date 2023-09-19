@@ -135,6 +135,8 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
+    print("check1")
+
     # 3. optimizer
     if C.optim.name == "Adam":
         optim = torch.optim.Adam(
@@ -152,7 +154,7 @@ def main():
         )
     else:
         raise NotImplementedError
-
+    print("check2")
     if resume_from:
         optim.load_state_dict(checkpoint["optim_state_dict"])
     outdir = resume_from or get_outdir(args["--identifier"])
@@ -180,6 +182,6 @@ def main():
             shutil.rmtree(outdir)
         raise
 
-
+    print("check3")
 if __name__ == "__main__":
     main()
