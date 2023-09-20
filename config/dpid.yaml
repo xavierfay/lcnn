@@ -1,6 +1,6 @@
 io:
-  logdir: logs/
-  datadir: data/dpid_2/
+  logdir: logs_2/
+  datadir: data/dpid_large/
   resume_from:
   num_workers: 4
   tensorboard_port: 0
@@ -8,8 +8,8 @@ io:
 
 model:
   image:
-      mean: [109.730, 103.832, 98.681]
-      stddev: [22.275, 22.124, 23.229]
+      mean: [0]
+      stddev: [1] # already binary with preprocessing
 
   batch_size: 6
   batch_size_eval: 2

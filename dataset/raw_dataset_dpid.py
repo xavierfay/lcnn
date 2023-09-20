@@ -54,18 +54,18 @@ def convert_txt_to_json_in_directory(directory):
     random.shuffle(data)
 
     # Split the data into test and validation sets
-    split_idx = int(0.2 * len(data))
-    test_data = data[:split_idx]
+    split_idx = int(0.8 * len(data))
+    train_data = data[:split_idx]
     val_data = data[split_idx:]
 
     # Write the test and validation sets to separate .json files
     with open(os.path.join(directory, 'valid.json'), 'w') as test_json_file:
-        json.dump(test_data, test_json_file, indent=4)
+        json.dump(val_data, test_json_file, indent=4)
 
     with open(os.path.join(directory, 'train.json'), 'w') as val_json_file:
-        json.dump(val_data, val_json_file, indent=4)
+        json.dump(train_data, val_json_file, indent=4)
 
 
 # Example usage:
-directory = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_P&IDs\\test\\'
+directory = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_PIDs\\test\\'
 convert_txt_to_json_in_directory(directory)
