@@ -4,7 +4,7 @@ io:
   resume_from:  /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/binary_large
   num_workers: 2
   tensorboard_port: 0
-  validation_interval: 24000
+  validation_interval: 240
 
 model:
   image:
