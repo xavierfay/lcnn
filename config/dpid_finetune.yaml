@@ -1,17 +1,17 @@
 io:
-  logdir: logs_2/
-  datadir: data/dpid_large/
-  resume_from:
-  num_workers: 4
+  logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/
+  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/dpid_longlines
+  resume_from: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/vanilla/
+  num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
 
 model:
   image:
-      mean: [0]
-      stddev: [1] # already binary with preprocessing
+      mean: [109.730, 103.832, 98.681]
+      stddev: [22.275, 22.124, 23.229]
 
-  batch_size: 6
+  batch_size: 8
   batch_size_eval: 2
 
   # backbone multi-task parameters
@@ -62,8 +62,8 @@ model:
 
 optim:
   name: Adam
-  lr: 4.0e-4
+  lr: 2.0e-5
   amsgrad: True
   weight_decay: 1.0e-4
-  max_epoch: 24
-  lr_decay_epoch: 10
+  max_epoch: 50
+  lr_decay_epoch: 5

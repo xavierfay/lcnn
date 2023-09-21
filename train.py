@@ -110,8 +110,8 @@ def main():
         **kwargs,
     )
     epoch_size = len(train_loader)
-    # print("epoch_size (train):", epoch_size)
-    # print("epoch_size (valid):", len(val_loader))
+    print("epoch_size (train):", epoch_size)
+    print("epoch_size (valid):", len(val_loader))
 
     if resume_from:
         checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))
@@ -135,6 +135,7 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
+
     # 3. optimizer
     if C.optim.name == "Adam":
         optim = torch.optim.Adam(
@@ -152,7 +153,6 @@ def main():
         )
     else:
         raise NotImplementedError
-
     if resume_from:
         optim.load_state_dict(checkpoint["optim_state_dict"])
     outdir = resume_from or get_outdir(args["--identifier"])

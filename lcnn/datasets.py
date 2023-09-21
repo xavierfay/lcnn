@@ -29,7 +29,8 @@ class WireframeDataset(Dataset):
 
     def __getitem__(self, idx):
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
-        image = io.imread(iname).astype(float)[:, :, :3]
+        image = io.imread(iname, as_gray=True).astype(float)
+        image = image[:, :, np.newaxis]
         if "a1" in self.filelist[idx]:
             image = image[:, ::-1, :]
         image = (image - M.image.mean) / M.image.stddev
@@ -61,7 +62,7 @@ class WireframeDataset(Dataset):
             ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
             ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
             feat = [
-                lpre[:, :, :2].reshape(-1, 4) / 128 * M.use_cood,
+                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
                 ldir * M.use_slop,
                 lpre[:, :, 2],
             ]

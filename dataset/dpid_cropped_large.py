@@ -1,16 +1,50 @@
-import numpy as np
-import cv2
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
-import torch
-import skimage.draw
-from scipy.ndimage import zoom
+#!/usr/bin/env python
+"""Process Huang's wireframe dataset for L-CNN network
+Usage:
+    dataset/wireframe.py <src> <dst>
+    dataset/wireframe.py (-h | --help )
+
+Examples:
+    python dataset/wireframe.py /datadir/wireframe data/wireframe
+
+Arguments:
+    <src>                Original data directory of Huang's wireframe dataset
+    <dst>                Directory of the output
+
+Options:
+   -h --help             Show this screen.
+"""
+
+import os
+import sys
+import json
 from itertools import combinations
+
+import cv2
+import numpy as np
+import skimage.draw
+from docopt import docopt
+from scipy.ndimage import zoom
+
+try:
+    sys.path.append(".")
+    sys.path.append("..")
+    from lcnn.utils import parmap
+except Exception:
+    raise
+
+
+def inrange(v, shape):
+    return 0 <= v[0] < shape[0] and 0 <= v[1] < shape[1]
+
+
 def to_int(x):
     return tuple(map(int, x))
+
+
 def save_heatmap(prefix, image, lines):
-    im_rescale = (512, 512)
-    heatmap_scale = (128, 128)
+    im_rescale = (1024, 1024)
+    heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
     jmap = np.zeros((1,) + heatmap_scale, dtype=np.float32)
@@ -66,8 +100,6 @@ def save_heatmap(prefix, image, lines):
     lpos = np.array(lpos, dtype=np.float32)
     lneg = np.array([l[:2] for l in lneg[:2000]], dtype=np.float32)
 
-    print('joff', joff)
-
     image = cv2.resize(image, im_rescale)
     np.savez_compressed(
         f"{prefix}_label.npz",
@@ -85,36 +117,66 @@ def save_heatmap(prefix, image, lines):
 
 
 
-symbol_path = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_PIDs\\DigitizePID_Dataset-20230516T150124Z-001\\DigitizePID_Dataset\\0\\0_symbols.npy'
-image = cv2.imread('/data/dpid_raw/images/0.png')
-symbols = np.load(symbol_path, allow_pickle=True)
-print(symbols )
 
-fig, ax = plt.subplots(1)
-ax.imshow(image)
-center_points = [(0.5 * (x1 + x2), 0.5 * (y1 + y2)) for _, [x1, y1, x2, y2], _ in symbols]
-tensor_sym = torch.Tensor(center_points)
-zeros = torch.zeros(tensor_sym.size(0), 1)
-tensor_sym = torch.cat((tensor_sym, zeros), dim=1)
+def handle_wrapper(args):
+    data, data_root, data_output, batch = args
+    img = cv2.imread(os.path.join(data_root, "images", data["filename"]))
+    if img is None:
+        print(f"Failed to load image from {file_path}")
+        return  # exit the function
 
-print(tensor_sym)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-lines = np.array(center_points)[:, :2]
-lines = np.array([lines[:-1], lines[1:]]).transpose(1, 0, 2)
-save_heatmap("output_prefix", image, lines)
+    # Binarize the image using a threshold
+    _, binarized = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
 
-torch.save(tensor_sym, '/data/tensor_sym.pt')
-
-for entry in symbols:
-    symbol, (x1, y1, x2, y2), _ = entry
-    center_points = (0.5 * (x1 + x2), 0.5 * (y1 + y2))
-    x_coords, y_coords = center_points
-    plt.scatter(x_coords, y_coords, color='blue', label='Center Points')
-    rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1, linewidth=1, edgecolor='r', facecolor='none')
-    ax.add_patch(rect)
-    ax.text(x1, y1, symbol, color='blue', fontsize=12, verticalalignment='top')
-
-plt.show()
+    # Crop the image to 4/5 of its left size
+    height, width = binarized.shape
+    left = 0
+    top = 0
+    right = width * 4 // 5
+    bottom = height
+    img = binarized[top:bottom, left:right]
 
 
+
+    prefix = data["filename"].split(".")[0]
+    lines = np.array(data["lines"]).reshape(-1, 2, 2)
+    os.makedirs(os.path.join(data_output, batch), exist_ok=True)
+
+    lines0 = lines.copy()
+    lines1 = lines.copy()
+    lines1[:, :, 0] = img.shape[1] - lines1[:, :, 0]
+    lines2 = lines.copy()
+    lines2[:, :, 1] = img.shape[0] - lines2[:, :, 1]
+    lines3 = lines.copy()
+    lines3[:, :, 0] = img.shape[1] - lines3[:, :, 0]
+    lines3[:, :, 1] = img.shape[0] - lines3[:, :, 1]
+
+    path = os.path.join(data_output, batch, prefix)
+    save_heatmap(f"{path}_0", img[::, ::], lines0)
+    if batch != "train":
+        save_heatmap(f"{path}_1", img[::, ::-1], lines1)
+        save_heatmap(f"{path}_2", img[::-1, ::], lines2)
+        save_heatmap(f"{path}_3", img[::-1, ::-1], lines3)
+    print("Finishing", os.path.join(data_output, batch, prefix))
+
+
+def main():
+    args = docopt(__doc__)
+    data_root = args["<src>"]
+    data_output = args["<dst>"]
+
+    os.makedirs(data_output, exist_ok=True)
+    for batch in ["valid", "train"]:
+        anno_file = os.path.join(data_root, f"{batch}.json")
+
+        with open(anno_file, "r") as f:
+            dataset = json.load(f)
+
+        args_to_pass = [(data_item, data_root, data_output, batch) for data_item in dataset]
+        results = parmap(handle_wrapper, args_to_pass, 16)
+
+if __name__ == "__main__":
+    main()
 

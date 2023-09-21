@@ -225,7 +225,6 @@ class LineVectorizer(nn.Module):
         return result
 
     def sample_lines(self, meta, jmap, joff, mode):
-        print(meta.keys())
         with torch.no_grad():
             junc = meta["junc"]  # [N, 2]
             jtyp = meta["jtyp"]  # [N]
