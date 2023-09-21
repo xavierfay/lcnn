@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/
   datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/dpid_large
-  resume_from:
+  resume_from:  /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
