@@ -77,6 +77,7 @@ def main():
         num_blocks=M.num_blocks,
         num_classes=sum(sum(M.head_size, [])),
     )
+
     model = MultitaskLearner(model)
     model = LineVectorizer(model)
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -88,8 +89,8 @@ def main():
         im = skimage.io.imread(imname)
         if im.ndim == 2:
             im = np.repeat(im[:, :, None], 3, 2)
-        im = im[:, :, :3]
-        im_resized = skimage.transform.resize(im, (512, 512)) * 255
+        im = im[:, :, :1]
+        im_resized = skimage.transform.resize(im, (1024, 1024)) * 255
         image = (im_resized - M.image.mean) / M.image.stddev
         image = torch.from_numpy(np.rollaxis(image, 2)[None].copy()).float()
         with torch.no_grad():
@@ -104,14 +105,15 @@ def main():
                     }
                 ],
                 "target": {
-                    "jmap": torch.zeros([1, 1, 128, 128]).to(device),
-                    "joff": torch.zeros([1, 1, 2, 128, 128]).to(device),
+                    "jmap": torch.zeros([1, 1, 256, 256]).to(device),
+                    "joff": torch.zeros([1, 1, 2, 256, 256]).to(device),
                 },
                 "mode": "testing",
             }
             H = model(input_dict)["preds"]
 
-        lines = H["lines"][0].cpu().numpy() / 128 * im.shape[:2]
+
+        lines = H["lines"][0].cpu().numpy() / 256 * im.shape[:2]
         scores = H["score"][0].cpu().numpy()
         for i in range(1, len(lines)):
             if (lines[i] == lines[0]).all():

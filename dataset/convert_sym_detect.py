@@ -9,8 +9,8 @@ from itertools import combinations
 def to_int(x):
     return tuple(map(int, x))
 def save_heatmap(prefix, image, lines):
-    im_rescale = (512, 512)
-    heatmap_scale = (128, 128)
+    im_rescale = (1024, 1024)
+    heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
     jmap = np.zeros((1,) + heatmap_scale, dtype=np.float32)
@@ -86,7 +86,7 @@ def save_heatmap(prefix, image, lines):
 
 
 symbol_path = 'C:\\Users\\xavier\\Documents\\Thesis\\Demo_PIDs\\DigitizePID_Dataset-20230516T150124Z-001\\DigitizePID_Dataset\\0\\0_symbols.npy'
-image = cv2.imread('/data/dpid_raw/images/0.png')
+image = cv2.imread('C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\data\\dpid_raw\\images\\0.png')
 symbols = np.load(symbol_path, allow_pickle=True)
 print(symbols )
 
@@ -103,7 +103,7 @@ lines = np.array(center_points)[:, :2]
 lines = np.array([lines[:-1], lines[1:]]).transpose(1, 0, 2)
 save_heatmap("output_prefix", image, lines)
 
-torch.save(tensor_sym, '/data/tensor_sym.pt')
+#torch.save(tensor_sym, '/data/tensor_sym.pt')
 
 for entry in symbols:
     symbol, (x1, y1, x2, y2), _ = entry

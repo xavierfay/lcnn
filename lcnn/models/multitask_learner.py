@@ -40,6 +40,7 @@ class MultitaskLearner(nn.Module):
     def forward(self, input_dict):
         image = input_dict["image"]
         outputs, feature = self.backbone(image)
+
         result = {"feature": feature}
         batch, channel, row, col = outputs[0].shape
 
@@ -57,6 +58,7 @@ class MultitaskLearner(nn.Module):
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
+            # TODO: edit this to for better interation of the extra junctions, also change the annotations
             jmap = output[0 : offset[0]].reshape(n_jtyp, 2, batch, row, col)
             lmap = output[offset[0] : offset[1]].squeeze(0)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)

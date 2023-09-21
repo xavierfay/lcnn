@@ -67,7 +67,7 @@ class LineVectorizer(nn.Module):
             ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
             ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
             feat = [
-                lpre[:, :, :2].reshape(-1, 4) / 128 * M.use_cood,
+                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
                 ldir * M.use_slop,
                 lpre[:, :, 2],
             ]
@@ -246,8 +246,8 @@ class LineVectorizer(nn.Module):
 
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
-            y = (index // 128).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 128).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -320,8 +320,8 @@ class LineVectorizer(nn.Module):
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
             feat = torch.cat(
                 [
-                    xyu / 128 * M.use_cood,
-                    xyv / 128 * M.use_cood,
+                    xyu / 256 * M.use_cood,
+                    xyv / 256 * M.use_cood,
                     u2v * M.use_slop,
                     (u[:, None] > K).float(),
                     (v[:, None] > K).float(),

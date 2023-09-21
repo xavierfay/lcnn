@@ -1,6 +1,6 @@
 io:
   logdir: logs_2/
-  datadir: data/dpid_large/
+  datadir: data/Test/
   resume_from:
   num_workers: 4
   tensorboard_port: 0

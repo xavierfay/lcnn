@@ -28,6 +28,7 @@ class WireframeDataset(Dataset):
         return len(self.filelist)
 
     def __getitem__(self, idx):
+        predef_junc_name = self.filelist[idx][:-9].replace("_a0", "").replace("_a1", "") + "predef_junc.npz"
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
         image = io.imread(iname, as_gray=True).astype(float)
         image = image[:, :, np.newaxis]
