@@ -37,8 +37,14 @@ class Trainer(object):
         if not osp.exists(self.out):
             os.makedirs(self.out)
 
-        self.run_tensorboard()
-        time.sleep(1)
+        ### unable to run tensorboard on the cluster
+        # self.run_tensorboard()
+        # time.sleep(1)
+        self.board_out = osp.join(self.out, "tensorboard")
+        if not osp.exists(self.board_out):
+            os.makedirs(self.board_out)
+        self.writer = SummaryWriter(self.board_out)
+
 
         self.epoch = 0
         self.iteration = 0
@@ -51,20 +57,20 @@ class Trainer(object):
         self.avg_metrics = None
         self.metrics = np.zeros(0)
 
-    def run_tensorboard(self):
-        board_out = osp.join(self.out, "tensorboard")
-        if not osp.exists(board_out):
-            os.makedirs(board_out)
-        self.writer = SummaryWriter(board_out)
-        os.environ["CUDA_VISIBLE_DEVICES"] = ""
-        p = subprocess.Popen(
-            ["tensorboard", f"--logdir={board_out}", f"--port={C.io.tensorboard_port}"]
-        )
-
-        def killme():
-            os.kill(p.pid, signal.SIGTERM)
-
-        atexit.register(killme)
+    # def run_tensorboard(self):
+    #     board_out = osp.join(self.out, "tensorboard")
+    #     if not osp.exists(board_out):
+    #         os.makedirs(board_out)
+    #     self.writer = SummaryWriter(board_out)
+    #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
+    #     p = subprocess.Popen(
+    #         ["tensorboard", f"--logdir={board_out}", f"--port={C.io.tensorboard_port}"]
+    #     )
+    #
+    #     def killme():
+    #         os.kill(p.pid, signal.SIGTERM)
+    #
+    #     atexit.register(killme)
 
     def _loss(self, result):
         losses = result["losses"]
@@ -191,17 +197,16 @@ class Trainer(object):
             self._write_metrics(1, loss.item(), "training", do_print=False)
 
             if self.iteration % 4 == 0:
-                tprint(
+                pprint(
                     f"{self.epoch:03}/{self.iteration * self.batch_size // 1000:04}k| "
                     + "| ".join(map("{:.5f}".format, self.avg_metrics[0]))
                     + f"| {4 * self.batch_size / (timer() - time):04.1f} "
                 )
                 time = timer()
-            num_images = self.batch_size * self.iteration
-            # TODO: change to after epoch
-            if num_images % self.validation_interval == 0 or num_images == 600:
-                self.validate()
-                time = timer()
+            # num_images = self.batch_size * self.iteration
+            # if num_images % self.validation_interval == 0 or num_images == 600:
+            #     self.validate()
+            #     time = timer()
 
     def _write_metrics(self, size, total_loss, prefix, do_print=False):
         for i, metrics in enumerate(self.metrics):
@@ -289,6 +294,8 @@ class Trainer(object):
             if self.epoch == self.lr_decay_epoch:
                 self.optim.param_groups[0]["lr"] /= 10
             self.train_epoch()
+            self.validate()
+
 
 
 cmap = plt.get_cmap("jet")
@@ -322,11 +329,11 @@ def pprint(*args):
     print(*args)
 
 
-def _launch_tensorboard(board_out, port, out):
-    os.environ["CUDA_VISIBLE_DEVICES"] = ""
-    p = subprocess.Popen(["tensorboard", f"--logdir={board_out}", f"--port={port}"])
-
-    def kill():
-        os.kill(p.pid, signal.SIGTERM)
-
-    atexit.register(kill)
+# def _launch_tensorboard(board_out, port, out):
+#     os.environ["CUDA_VISIBLE_DEVICES"] = ""
+#     p = subprocess.Popen(["tensorboard", f"--logdir={board_out}", f"--port={port}"])
+#
+#     def kill():
+#         os.kill(p.pid, signal.SIGTERM)
+#
+#     atexit.register(kill)

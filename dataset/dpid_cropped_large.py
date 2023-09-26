@@ -47,8 +47,8 @@ def save_heatmap(prefix, image, lines):
     heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
-    jmap = np.zeros((3,) + heatmap_scale, dtype=np.float32)
-    joff = np.zeros((3, 2) + heatmap_scale, dtype=np.float32)
+    jmap = np.zeros((2,) + heatmap_scale, dtype=np.float32)
+    joff = np.zeros((2, 2) + heatmap_scale, dtype=np.float32)
     lmap = np.zeros(heatmap_scale, dtype=np.float32)
 
 
@@ -73,8 +73,8 @@ def save_heatmap(prefix, image, lines):
         lpos.append([junc[jid(v0)], junc[jid(v1)]])
 
         vint0, vint1 = to_int(v0[:2]), to_int(v1[:2])
-        jmap[int(v0[2])][vint0] = 1  # assuming v0[2] gives the correct index in the first dimension and the value to set is 1
-        jmap[int(v1[2])][vint1] = 1  # assuming v1[2] gives the correct index in the first dimension and the value to set is 1
+        jmap[int(v0[2]-1)][vint0] = 1  # assuming v0[2] gives the correct index in the first dimension and the value to set is 1
+        jmap[int(v1[2]-1)][vint1] = 1  # assuming v1[2] gives the correct index in the first dimension and the value to set is 1
         rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
         lmap[rr, cc] = np.maximum(lmap[rr, cc], value)
 
