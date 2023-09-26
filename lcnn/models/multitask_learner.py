@@ -71,7 +71,7 @@ class MultitaskLearner(nn.Module):
             print("Required elements: ", required_elements)
 
             #assert np.prod(original_shape) == required_elements, "Reshape will lose information"
-            jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row,col)  # You need to make sure this reshape is correct
+            jmap = output[0: offset[0]].reshape(n_jtyp, 1, batch, row,col)  # You need to make sure this reshape is correct
             # Rest of your code
             lmap = output[offset[0] : offset[1]].squeeze(0)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 1, batch, row, col)
