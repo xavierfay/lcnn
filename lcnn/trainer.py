@@ -270,6 +270,12 @@ class Trainer(object):
         jtyp = meta[i]["jtyp"].cpu().numpy()
         juncs = junc[jtyp == 0]
         junts = junc[jtyp == 1]
+
+        print("junc", junc)
+        print("type:", jtyp)
+        print("juncs:", juncs)
+        print("junts:", junts)
+
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjunts = None
         if "junts" in result:
@@ -286,8 +292,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
