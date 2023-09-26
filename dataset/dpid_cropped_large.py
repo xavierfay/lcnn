@@ -47,23 +47,23 @@ def save_heatmap(prefix, image, lines):
     heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
-    jmap = np.zeros((1,) + heatmap_scale, dtype=np.float32)
-    joff = np.zeros((1, 2) + heatmap_scale, dtype=np.float32)
+    jmap = np.zeros((3,) + heatmap_scale, dtype=np.float32)
+    joff = np.zeros((3, 2) + heatmap_scale, dtype=np.float32)
     lmap = np.zeros(heatmap_scale, dtype=np.float32)
+
 
     lines[:, :, 0] = np.clip(lines[:, :, 0] * fx, 0, heatmap_scale[0] - 1e-4)
     lines[:, :, 1] = np.clip(lines[:, :, 1] * fy, 0, heatmap_scale[1] - 1e-4)
-    lines = lines[:, :, ::-1]
 
     junc = []
     jids = {}
 
     def jid(jun):
-        jun = tuple(jun[:2])
+        jun = tuple(jun[:3])
         if jun in jids:
             return jids[jun]
         jids[jun] = len(junc)
-        junc.append(np.array(jun + (0,)))
+        junc.append(np.array(jun))
         return len(junc) - 1
 
     lnid = []
@@ -72,15 +72,16 @@ def save_heatmap(prefix, image, lines):
         lnid.append((jid(v0), jid(v1)))
         lpos.append([junc[jid(v0)], junc[jid(v1)]])
 
-        vint0, vint1 = to_int(v0), to_int(v1)
-        jmap[0][vint0] = 1
-        jmap[0][vint1] = 1
-        rr, cc, value = skimage.draw.line_aa(*to_int(v0), *to_int(v1))
+        vint0, vint1 = to_int(v0[:2]), to_int(v1[:2])
+        jmap[int(v0[2])][vint0] = 1  # assuming v0[2] gives the correct index in the first dimension and the value to set is 1
+        jmap[int(v1[2])][vint1] = 1  # assuming v1[2] gives the correct index in the first dimension and the value to set is 1
+        rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
         lmap[rr, cc] = np.maximum(lmap[rr, cc], value)
 
     for v in junc:
         vint = to_int(v[:2])
         joff[0, :, vint[0], vint[1]] = v[:2] - vint - 0.5
+        joff[1, :, vint[0], vint[1]] = v[:2] - vint - 0.5
 
     llmap = zoom(lmap, [0.5, 0.5])
     lineset = set([frozenset(l) for l in lnid])
@@ -141,7 +142,7 @@ def handle_wrapper(args):
 
 
     prefix = data["filename"].split(".")[0]
-    lines = np.array(data["lines"]).reshape(-1, 2, 2)
+    lines = np.array(data["lines"]).reshape(-1, 2, 3)
     os.makedirs(os.path.join(data_output, batch), exist_ok=True)
 
     lines0 = lines.copy()
@@ -168,7 +169,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in ["valid", "train"]:
+    for batch in ["valid_twoclass", "train_twoclass"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:

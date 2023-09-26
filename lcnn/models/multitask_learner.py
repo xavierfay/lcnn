@@ -34,6 +34,7 @@ class MultitaskLearner(nn.Module):
         super(MultitaskLearner, self).__init__()
         self.backbone = backbone
         head_size = M.head_size
+        print("head_size", head_size)
         self.num_class = sum(sum(head_size, []))
         self.head_off = np.cumsum([sum(h) for h in head_size])
 
@@ -46,22 +47,34 @@ class MultitaskLearner(nn.Module):
 
         T = input_dict["target"].copy()
         n_jtyp = T["jmap"].shape[1]
+        print("n_jtyp:", n_jtyp)
+        print("jmap shape", T["jmap"].shape)
 
         # switch to CNHW
         for task in ["jmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             T[task] = T[task].permute(1, 2, 0, 3, 4)
-
+    # TODO: fix this mismatch between the arrays
         offset = self.head_off
         loss_weight = M.loss_weight
         losses = []
         for stack, output in enumerate(outputs):
+            print("stack",stack)
+            print("output shape org: ", output.shape)
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-            # TODO: edit this to for better interation of the extra junctions, also change the annotations
-            jmap = output[0 : offset[0]].reshape(n_jtyp, 2, batch, row, col)
+            print("output shape: ", output.shape)
+            original_shape = output[0: offset[0]].shape
+            print("Original shape: ", original_shape)
+
+            required_elements = n_jtyp * 2 * batch * row * col  # Adjust as necessary
+            print("Required elements: ", required_elements)
+
+            #assert np.prod(original_shape) == required_elements, "Reshape will lose information"
+            jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row,col)  # You need to make sure this reshape is correct
+            # Rest of your code
             lmap = output[offset[0] : offset[1]].squeeze(0)
-            joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
+            joff = output[offset[1] : offset[2]].reshape(n_jtyp, 1, batch, row, col)
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],

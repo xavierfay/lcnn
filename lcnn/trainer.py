@@ -198,6 +198,7 @@ class Trainer(object):
                 )
                 time = timer()
             num_images = self.batch_size * self.iteration
+            # TODO: change to after epoch
             if num_images % self.validation_interval == 0 or num_images == 600:
                 self.validate()
                 time = timer()

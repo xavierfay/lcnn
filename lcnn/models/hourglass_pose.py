@@ -192,7 +192,7 @@ class HourglassNet(nn.Module):
 def hg(**kwargs):
     model = HourglassNet(
         Bottleneck2D,
-        head=kwargs.get("head", lambda c_in, c_out: nn.Conv2D(c_in, c_out, 1)),
+        head=kwargs.get("head", lambda c_in, c_out: nn.Conv2d(c_in, c_out, 2)),
         depth=kwargs["depth"],
         num_stacks=kwargs["num_stacks"],
         num_blocks=kwargs["num_blocks"],
