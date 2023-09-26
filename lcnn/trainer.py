@@ -268,13 +268,8 @@ class Trainer(object):
 
         junc = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
-        juncs = junc[jtyp == 0]
-        junts = junc[jtyp == 1]
-
-        print("junc", junc)
-        print("type:", jtyp)
-        print("juncs:", juncs)
-        print("junts:", junts)
+        juncs = junc[jtyp == 1]
+        junts = junc[jtyp == 2]
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjunts = None
