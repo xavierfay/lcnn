@@ -99,14 +99,14 @@ def main():
                 "meta": [
                     {
                         "junc": torch.zeros(2, 2).to(device),
-                        "jtyp": torch.zeros(2, dtype=torch.uint8).to(device),
-                        "Lpos": torch.zeros(2, 4, dtype=torch.uint8).to(device),
-                        "Lneg": torch.zeros(2, 4, dtype=torch.uint8).to(device),
+                        "jtyp": torch.zeros(1, dtype=torch.uint8).to(device),
+                        "Lpos": torch.zeros(2, 2, dtype=torch.uint8).to(device),
+                        "Lneg": torch.zeros(2, 2, dtype=torch.uint8).to(device),
                     }
                 ],
                 "target": {
-                    "jmap": torch.zeros([2, 2, 256, 256]).to(device),
-                    "joff": torch.zeros([2, 2, 2, 256, 256]).to(device),
+                    "jmap": torch.zeros([1, 2, 256, 256]).to(device),
+                    "joff": torch.zeros([1, 2, 2, 256, 256]).to(device),
                 },
                 "mode": "testing",
             }
