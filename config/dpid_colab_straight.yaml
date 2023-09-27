@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 2
+  batch_size: 3
   batch_size_eval: 1
 
   # backbone multi-task parameters
@@ -31,12 +31,12 @@ model:
 
   # sampler parameters
   ## static sampler
-  n_stc_posl: 300
+  n_stc_posl: 4000
   n_stc_negl: 40
 
   ## dynamic sampler
   n_dyn_junc: 300
-  n_dyn_posl: 300
+  n_dyn_posl: 4000
   n_dyn_negl: 80
   n_dyn_othr: 600
 

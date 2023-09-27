@@ -209,6 +209,7 @@ class LineVectorizer(nn.Module):
 
                 # sample positive lines
                 cdx = label.nonzero().flatten()
+                # print("cdx",cdx)
                 if len(cdx) > M.n_dyn_posl:
                     # print("too many positive lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
