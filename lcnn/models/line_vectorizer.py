@@ -156,7 +156,13 @@ class LineVectorizer(nn.Module):
             Lpos = meta["Lpos"]
             Lneg = meta["Lneg"]
 
+            print("junc:",junc, junc.shape)
+            print("jtype", jtyp, jtyp.shape)
+            print("Lpos:", Lpos, Lpos.shape)
+            print("Lneg", Lneg, Lneg.shape)
+
             n_type = jmap.shape[0]
+            print("ntype:", n_type)
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
@@ -171,8 +177,8 @@ class LineVectorizer(nn.Module):
 
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
-            y = (index // 128).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 128).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -189,11 +195,15 @@ class LineVectorizer(nn.Module):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
+            print("match", match)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
+
+            print(up.shape,vp.shape)
+
             label = Lpos[up, vp]
 
             if mode == "training":
@@ -230,8 +240,8 @@ class LineVectorizer(nn.Module):
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
             feat = torch.cat(
                 [
-                    xyu / 128 * M.use_cood,
-                    xyv / 128 * M.use_cood,
+                    xyu / 256 * M.use_cood,
+                    xyv / 256 * M.use_cood,
                     u2v * M.use_slop,
                     (u[:, None] > K).float(),
                     (v[:, None] > K).float(),
