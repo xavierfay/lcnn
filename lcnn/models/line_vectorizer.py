@@ -234,6 +234,21 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
+            deltas=xyv-xyu
+            slopes=torch.where(deltas[:,0]!=0,deltas[:,1]/deltas[:,0],float('inf'))
+
+            #maskforhorizontallines
+            horizontal_mask=torch.abs(slopes)<0.05
+
+            #maskforverticallines
+            vertical_mask=torch.abs(slopes)>100 # A large number to approximate infinity
+
+            valid_lines_mask=horizontal_mask|vertical_mask
+            xyu,xyv = xyu[valid_lines_mask],xyv[valid_lines_mask]
+            u,v = u[valid_lines_mask],v[valid_lines_mask]
+
+            label=label[valid_lines_mask]
+
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
             feat = torch.cat(
