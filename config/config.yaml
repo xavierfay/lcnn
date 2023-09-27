@@ -2,12 +2,12 @@ io:
   datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/Twoclass
   logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twoclass
   num_workers: 2
-  resume_from: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twoclass/230926-142433-98d3f67-baseline
+  resume_from:
   tensorboard_port: 0
   validation_interval: 24000
 model:
   backbone: stacked_hourglass
-  batch_size: 4
+  batch_size: 3
   batch_size_eval: 2
   depth: 4
   dim_fc: 1024
