@@ -12,7 +12,7 @@ model:
       stddev: [41.36]
 
   batch_size: 4
-  batch_size_eval: 2
+  batch_size_eval: 1
 
   # backbone multi-task parameters
   head_size: [[4], [1], [4]]
