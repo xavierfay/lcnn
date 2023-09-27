@@ -156,13 +156,12 @@ class LineVectorizer(nn.Module):
             Lpos = meta["Lpos"]
             Lneg = meta["Lneg"]
 
-            print("junc:",junc, junc.shape)
-            print("jtype", jtyp, jtyp.shape)
-            print("Lpos:", Lpos, Lpos.shape)
-            print("Lneg", Lneg, Lneg.shape)
+            # print("junc:", junc, junc.shape)
+            # print("jtype", jtyp, jtyp.shape)
+            # print("Lpos:", Lpos, Lpos.shape)
+            # print("Lneg", Lneg, Lneg.shape)
 
             n_type = jmap.shape[0]
-            print("ntype:", n_type)
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
@@ -195,14 +194,13 @@ class LineVectorizer(nn.Module):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
-            print("match", match.shape)
+            match = (match - 1).clamp(min=0)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
 
-            print(up.shape,vp.shape)
 
             label = Lpos[up, vp]
 

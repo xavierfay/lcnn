@@ -26,6 +26,8 @@ import skimage.draw
 from docopt import docopt
 from scipy.ndimage import zoom
 
+import matplotlib.pyplot as plt
+
 try:
     sys.path.append(".")
     sys.path.append("..")
@@ -51,9 +53,9 @@ def save_heatmap(prefix, image, lines):
     joff = np.zeros((2, 2) + heatmap_scale, dtype=np.float32)
     lmap = np.zeros(heatmap_scale, dtype=np.float32)
 
-
     lines[:, :, 0] = np.clip(lines[:, :, 0] * fx, 0, heatmap_scale[0] - 1e-4)
     lines[:, :, 1] = np.clip(lines[:, :, 1] * fy, 0, heatmap_scale[1] - 1e-4)
+    lines[:, :, :2] = lines[:, :, 1::-1]
 
     junc = []
     jids = {}
@@ -102,6 +104,22 @@ def save_heatmap(prefix, image, lines):
     lneg = np.array([l[:2] for l in lneg[:2000]], dtype=np.float32)
 
     image = cv2.resize(image, im_rescale)
+
+    # plt.subplot(131), plt.imshow(lmap)
+    # plt.subplot(132), plt.imshow(image)
+    # for i0, i1 in Lpos:
+    #     plt.scatter(junc[i0][1] * 4, junc[i0][0] * 4)
+    #     plt.scatter(junc[i1][1] * 4, junc[i1][0] * 4)
+    #     plt.plot([junc[i0][1] * 4, junc[i1][1] * 4], [junc[i0][0] * 4, junc[i1][0] * 4])
+    # plt.subplot(133), plt.imshow(lmap)
+    # for i0, i1 in Lneg[:150]:
+    #     plt.plot([junc[i0][1], junc[i1][1]], [junc[i0][0], junc[i1][0]])
+    # plt.show()
+    #
+    # # For junc, lpos, and lneg that stores the junction coordinates, the last
+    # # dimension is (y, x, t), where t represents the type of that junction.  In
+    # # the wireframe dataset, t is always zero.
+
     np.savez_compressed(
         f"{prefix}_label.npz",
         aspect_ratio=image.shape[1] / image.shape[0],
@@ -115,6 +133,63 @@ def save_heatmap(prefix, image, lines):
         lneg=lneg,  # [Nn, 2, 3]   Negative lines represented with junction coordinates
     )
     cv2.imwrite(f"{prefix}.png", image)
+
+    # plt.imshow(jmap[0])
+    # plt.savefig("/tmp/1jmap0.jpg")
+    # plt.imshow(jmap[1])
+    # plt.savefig("/tmp/2jmap1.jpg")
+    # plt.imshow(lmap)
+    # plt.savefig("/tmp/3lmap.jpg")
+    # plt.imshow(Lmap[2])
+    # plt.savefig("/tmp/4ymap.jpg")
+    # plt.imshow(jwgt[0])
+    # plt.savefig("/tmp/5jwgt.jpg")
+    # plt.cla()
+    # plt.imshow(jmap[0])
+    # for i in range(8):
+    #     plt.quiver(
+    #         8 * jmap[0] * cdir[i] * np.cos(2 * math.pi / 16 * i),
+    #         8 * jmap[0] * cdir[i] * np.sin(2 * math.pi / 16 * i),
+    #         units="xy",
+    #         angles="xy",
+    #         scale_units="xy",
+    #         scale=1,
+    #         minlength=0.01,
+    #         width=0.1,
+    #         zorder=10,
+    #         color="w",
+    #     )
+    # plt.savefig("/tmp/6cdir.jpg")
+    # plt.cla()
+    # plt.imshow(lmap)
+    # plt.quiver(
+    #     2 * lmap * np.cos(ldir),
+    #     2 * lmap * np.sin(ldir),
+    #     units="xy",
+    #     angles="xy",
+    #     scale_units="xy",
+    #     scale=1,
+    #     minlength=0.01,
+    #     width=0.1,
+    #     zorder=10,
+    #     color="w",
+    # )
+    # plt.savefig("/tmp/7ldir.jpg")
+    # plt.cla()
+    # plt.imshow(jmap[1])
+    # plt.quiver(
+    #     8 * jmap[1] * np.cos(tdir),
+    #     8 * jmap[1] * np.sin(tdir),
+    #     units="xy",
+    #     angles="xy",
+    #     scale_units="xy",
+    #     scale=1,
+    #     minlength=0.01,
+    #     width=0.1,
+    #     zorder=10,
+    #     color="w",
+    # )
+    # plt.savefig("/tmp/8tdir.jpg")
 
 
 

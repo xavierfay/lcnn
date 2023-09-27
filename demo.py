@@ -99,7 +99,7 @@ def main():
                 "meta": [
                     {
                         "junc": torch.zeros(2, 2).to(device),
-                        "jtyp": torch.zeros(1, dtype=torch.uint8).to(device),
+                        "jtyp": torch.zeros(2, dtype=torch.uint8).to(device),
                         "Lpos": torch.zeros(2, 2, dtype=torch.uint8).to(device),
                         "Lneg": torch.zeros(2, 2, dtype=torch.uint8).to(device),
                     }
