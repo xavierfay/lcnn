@@ -31,14 +31,15 @@ model:
 
   # sampler parameters
   ## static sampler
-  n_stc_posl: 40000
-  n_stc_negl: 400
+  n_stc_posl: 300
+  n_stc_negl: 40
 
   ## dynamic sampler
   n_dyn_junc: 300
-  n_dyn_posl: 40000
-  n_dyn_negl: 8000
-  n_dyn_othr: 6000
+  n_dyn_posl: 3000
+  n_dyn_negl: 800
+  n_dyn_othr: 600
+
 
   # LOIPool layer parameters
   n_pts0: 32
