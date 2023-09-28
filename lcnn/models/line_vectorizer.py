@@ -205,35 +205,36 @@ class LineVectorizer(nn.Module):
 
 
             label = Lpos[up, vp]
+            print("label before filtering", label.shape)
 
-            # if mode == "training":
-            #     c = torch.zeros_like(label, dtype=torch.bool)
-            #
-            #     # sample positive lines
-            #     cdx = label.nonzero().flatten()
-            #     # print("cdx",cdx)
-            #     if len(cdx) > M.n_dyn_posl:
-            #         # print("too many positive lines")
-            #         perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
-            #         cdx = cdx[perm]
-            #     c[cdx] = 1
-            #
-            #     # sample negative lines
-            #     cdx = Lneg[up, vp].nonzero().flatten()
-            #     if len(cdx) > M.n_dyn_negl:
-            #         # print("too many negative lines")
-            #         perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
-            #         cdx = cdx[perm]
-            #     c[cdx] = 1
-            #
-            #     # sample other (unmatched) lines
-            #     cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
-            #     c[cdx] = 1
-            # else:
-            #     c = (u < v).flatten()
+            if mode == "training":
+                c = torch.zeros_like(label, dtype=torch.bool)
 
-            # sample lines
-            # u, v, label = u[c], v[c], label[c]
+                # sample positive lines
+                cdx = label.nonzero().flatten()
+                # print("cdx",cdx)
+                # if len(cdx) > M.n_dyn_posl:
+                #     # print("too many positive lines")
+                #     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                #     cdx = cdx[perm]
+                c[cdx] = 1
+
+                # sample negative lines
+                cdx = Lneg[up, vp].nonzero().flatten()
+                # if len(cdx) > M.n_dyn_negl:
+                #     # print("too many negative lines")
+                #     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
+                #     cdx = cdx[perm]
+                c[cdx] = 1
+
+                # sample other (unmatched) lines
+                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+                c[cdx] = 1
+            else:
+                c = (u < v).flatten()
+
+            sample lines
+            u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
@@ -251,6 +252,8 @@ class LineVectorizer(nn.Module):
             u,v = u[valid_lines_mask],v[valid_lines_mask]
 
             label=label[valid_lines_mask]
+
+            print("label after filtering", label.shape)
 
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
