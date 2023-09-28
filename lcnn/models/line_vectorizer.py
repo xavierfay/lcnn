@@ -233,7 +233,7 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            sample lines
+            #sample lines
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
