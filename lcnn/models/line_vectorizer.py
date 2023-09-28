@@ -184,7 +184,7 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
-            print("xy_", xy_.shape, xy_)
+            #print("xy_", xy_.shape, xy_)
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
