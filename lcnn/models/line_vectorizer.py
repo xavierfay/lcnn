@@ -196,7 +196,7 @@ class LineVectorizer(nn.Module):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
-            match = (match - 1).clamp(min=0)
+            #match = (match - 1).clamp(min=0)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
