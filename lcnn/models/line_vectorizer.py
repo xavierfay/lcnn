@@ -212,19 +212,19 @@ class LineVectorizer(nn.Module):
 
                 # sample positive lines
                 cdx = label.nonzero().flatten()
-                # print("cdx",cdx)
-                # if len(cdx) > M.n_dyn_posl:
-                #     # print("too many positive lines")
-                #     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
-                #     cdx = cdx[perm]
+                print("cdx",cdx)
+                if len(cdx) > M.n_dyn_posl:
+                    # print("too many positive lines")
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                    cdx = cdx[perm]
                 c[cdx] = 1
 
                 # sample negative lines
                 cdx = Lneg[up, vp].nonzero().flatten()
-                # if len(cdx) > M.n_dyn_negl:
-                #     # print("too many negative lines")
-                #     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
-                #     cdx = cdx[perm]
+                if len(cdx) > M.n_dyn_negl:
+                    # print("too many negative lines")
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
+                    cdx = cdx[perm]
                 c[cdx] = 1
 
                 # sample other (unmatched) lines

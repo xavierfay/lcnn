@@ -37,7 +37,7 @@ model:
   ## dynamic sampler
   n_dyn_junc: 300
   n_dyn_posl: 40000
-  n_dyn_negl: 800
+  n_dyn_negl: 8000
   n_dyn_othr: 6000
 
   # LOIPool layer parameters
