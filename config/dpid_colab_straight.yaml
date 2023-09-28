@@ -42,8 +42,8 @@ model:
 
 
   # LOIPool layer parameters
-  n_pts0: 34*4
-  n_pts1: 8*4
+  n_pts0: 128
+  n_pts1: 32
 
   # line verification network parameters
   dim_loi: 128
