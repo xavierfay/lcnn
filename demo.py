@@ -112,6 +112,16 @@ def main():
             }
             H = model(input_dict)["preds"]
 
+        rjuncs = H["juncs"].cpu().numpy() / 256 * im.shape[:2]
+        rjunts = None
+        if "junts" in H:
+            rjunts = H["junts"].cpu().numpy() / 256 * im.shape[:2]
+
+        juncs = rjuncs
+        junts = rjunts
+
+        print("juncs", juncs.shape, juncs)
+        print("junts", junts.shape, junts)
 
         lines = H["lines"][0].cpu().numpy() / 256 * im.shape[:2]
         scores = H["score"][0].cpu().numpy()
@@ -135,6 +145,15 @@ def main():
                 plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=2, zorder=s)
                 plt.scatter(a[1], a[0], **PLTOPTS)
                 plt.scatter(b[1], b[0], **PLTOPTS)
+
+            if juncs is not None and juncs.size > 0 and not np.all(juncs[0, 0] == 0):
+                for j in juncs[0]:  # Access the second dimension of junts to iterate over points
+                    plt.scatter(j[1], j[0], c="red", s=10, zorder=100)
+
+            if junts is not None and junts.size > 0 and not np.all(junts[0, 0] == 0):
+                for j in junts[0]:  # Access the second dimension of junts to iterate over points
+                    plt.scatter(j[1], j[0], c="blue", s=10, zorder=100)
+
             plt.gca().xaxis.set_major_locator(plt.NullLocator())
             plt.gca().yaxis.set_major_locator(plt.NullLocator())
             plt.imshow(im)
