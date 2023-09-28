@@ -68,10 +68,10 @@ class LineVectorizer(nn.Module):
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
-            px0 = px.floor().clamp(min=0, max=127)
-            py0 = py.floor().clamp(min=0, max=127)
-            px1 = (px0 + 1).clamp(min=0, max=127)
-            py1 = (py0 + 1).clamp(min=0, max=127)
+            px0 = px.floor().clamp(min=0, max=256)
+            py0 = py.floor().clamp(min=0, max=256)
+            px1 = (px0 + 1).clamp(min=0, max=256)
+            py1 = (py0 + 1).clamp(min=0, max=256)
             px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
 
             # xp: [N_LINE, N_CHANNEL, N_POINT]
@@ -205,7 +205,7 @@ class LineVectorizer(nn.Module):
 
 
             label = Lpos[up, vp]
-            print("label before filtering", label.shape)
+            #print("label before filtering", label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -253,7 +253,7 @@ class LineVectorizer(nn.Module):
 
             label=label[valid_lines_mask]
 
-            print("label after filtering", label.shape)
+            #print("label after filtering", label.shape)
 
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
@@ -269,7 +269,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
 
-            print(line.shape)
+            #print(line.shape)
 
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
