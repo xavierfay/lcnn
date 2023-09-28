@@ -15,7 +15,7 @@ model:
   batch_size_eval: 2
 
   # backbone multi-task parameters
-  head_size: [[4], [1], [4  ]]
+  head_size: [[4], [1], [4 ]]
   loss_weight:
     jmap: 8.0
     lmap: 0.5
@@ -31,14 +31,14 @@ model:
 
   # sampler parameters
   ## static sampler
-  n_stc_posl: 300
-  n_stc_negl: 40
+  n_stc_posl: 30000
+  n_stc_negl: 4000
 
   ## dynamic sampler
-  n_dyn_junc: 300
-  n_dyn_posl: 300
-  n_dyn_negl: 80
-  n_dyn_othr: 600
+  n_dyn_junc: 30000
+  n_dyn_posl: 30000
+  n_dyn_negl: 8000
+  n_dyn_othr: 60000
 
   # LOIPool layer parameters
   n_pts0: 32
