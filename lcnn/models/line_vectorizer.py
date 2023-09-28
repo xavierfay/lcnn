@@ -68,10 +68,10 @@ class LineVectorizer(nn.Module):
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
-            px0 = px.floor().clamp(min=0, max=256)
-            py0 = py.floor().clamp(min=0, max=256)
-            px1 = (px0 + 1).clamp(min=0, max=256)
-            py1 = (py0 + 1).clamp(min=0, max=256)
+            px0 = px.floor().clamp(min=0, max=255)
+            py0 = py.floor().clamp(min=0, max=255)
+            px1 = (px0 + 1).clamp(min=0, max=255)
+            py1 = (py0 + 1).clamp(min=0, max=255)
             px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
 
             # xp: [N_LINE, N_CHANNEL, N_POINT]
