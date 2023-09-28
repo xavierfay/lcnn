@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twoclass
   datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/Twoclass
-  resume_from: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twoclass
+  resume_from:
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 2
+  batch_size: 3
   batch_size_eval: 1
 
   # backbone multi-task parameters
@@ -45,7 +45,7 @@ model:
   n_pts1: 8
 
   # line verification network parameters
-  dim_loi: 128
+  dim_loi: 256
   dim_fc: 1024
 
   # maximum junction and line outputs

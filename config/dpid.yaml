@@ -1,5 +1,5 @@
 io:
-  logdir: logs_2/
+  logdir: logs/
   datadir: data/Twoclass/
   resume_from:
   num_workers: 4

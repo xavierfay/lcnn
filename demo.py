@@ -112,6 +112,10 @@ def main():
             }
             H = model(input_dict)["preds"]
 
+        line_result = H["lmap"][0].cpu().numpy()
+        plt.imshow(line_result)
+        plt.show()
+
         rjuncs = H["juncs"].cpu().numpy() / 256 * im.shape[:2]
         rjunts = None
         if "junts" in H:
@@ -120,8 +124,8 @@ def main():
         juncs = rjuncs
         junts = rjunts
 
-        print("juncs", juncs.shape, juncs)
-        print("junts", junts.shape, junts)
+        # print("juncs", juncs.shape, juncs)
+        # print("junts", junts.shape, junts)
 
         lines = H["lines"][0].cpu().numpy() / 256 * im.shape[:2]
         scores = H["score"][0].cpu().numpy()
@@ -135,14 +139,16 @@ def main():
         diag = (im.shape[0] ** 2 + im.shape[1] ** 2) ** 0.5
         nlines, nscores = postprocess(lines, scores, diag * 0.01, 0, False)
 
-        for i, t in enumerate([0.94, 0.95, 0.96, 0.97, 0.98, 0.99]):
+        print("number lines in the plot", len(nlines))
+
+        for i, t in enumerate([0.0, 0.95, 0.96, 0.97, 0.98, 0.99]):
             plt.gca().set_axis_off()
             plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
             plt.margins(0, 0)
             for (a, b), s in zip(nlines, nscores):
                 if s < t:
                     continue
-                plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=2, zorder=s)
+                plt.plot([a[1], b[1]], [a[0], b[0]], c="red", linewidth=2, zorder=s)
                 plt.scatter(a[1], a[0], **PLTOPTS)
                 plt.scatter(b[1], b[0], **PLTOPTS)
 

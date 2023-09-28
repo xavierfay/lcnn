@@ -147,6 +147,13 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] == "training":
             del result["preds"]
 
+        # print(input_dict["mode"])
+        # print("lines result:", len(lines))#, torch.max(lines))
+        # print("results", len(result["preds"]["lines"][0].cpu().numpy()))
+        # non_zero_count = torch.count_nonzero(result["preds"]["lines"][0].cpu())
+        #
+        # print("number of non zeros in tensor", non_zero_count.item() )
+
         return result
 
     def sample_lines(self, meta, jmap, joff, mode):
@@ -196,7 +203,9 @@ class LineVectorizer(nn.Module):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
-            #match = (match - 1).clamp(min=0)
+
+            if mode == "testing":
+                match = (match - 1).clamp(min=0)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
@@ -269,7 +278,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
 
-            #print(line.shape)
+            # print("lines sample:", line.shape)
 
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
