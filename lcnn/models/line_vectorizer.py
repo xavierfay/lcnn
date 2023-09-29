@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from lcnn.config import M
 
-FEATURE_DIM = 32
+FEATURE_DIM = 16
 
 
 class LineVectorizer(nn.Module):
