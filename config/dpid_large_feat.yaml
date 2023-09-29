@@ -12,7 +12,7 @@ model:
       stddev: [41.36]
 
   batch_size: 3
-  batch_size_eval: 1
+  batch_size_eval: 2
 
   # backbone multi-task parameters
   head_size: [[4], [1], [4]]
@@ -31,26 +31,25 @@ model:
 
   # sampler parameters
   ## static sampler
-  n_stc_posl: 90000
+  n_stc_posl: 300
   n_stc_negl: 40
 
   ## dynamic sampler
   n_dyn_junc: 300
-  n_dyn_posl: 90000
-  n_dyn_negl: 80000
-  n_dyn_othr: 6000
-
+  n_dyn_posl: 300
+  n_dyn_negl: 80
+  n_dyn_othr: 600
 
   # LOIPool layer parameters
-  n_pts0: 32
-  n_pts1: 8
+  n_pts0: 128
+  n_pts1: 32
 
   # line verification network parameters
-  dim_loi: 128
-  dim_fc: 1024
+  dim_loi: 256
+  dim_fc: 2048
 
   # maximum junction and line outputs
-  n_out_junc: 500
+  n_out_junc: 250
   n_out_line: 2500
 
   # additional ablation study parameters
@@ -59,7 +58,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.00008
+  eval_junc_thres: 0.008
 
 optim:
   name: Adam

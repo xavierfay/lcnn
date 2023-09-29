@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from lcnn.config import M
 
-FEATURE_DIM = 8
+FEATURE_DIM = 32
 
 
 class LineVectorizer(nn.Module):
@@ -98,7 +98,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.sigmoid(x)
-            b = s > 0.5
+            b = s > 0.3
             lines = []
             score = []
             for i in range(n_batch):
