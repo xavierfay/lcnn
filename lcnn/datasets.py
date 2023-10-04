@@ -27,6 +27,8 @@ class WireframeDataset(Dataset):
     def __len__(self):
         return len(self.filelist)
 
+
+
     def __getitem__(self, idx):
         #predef_junc_name = self.filelist[idx][:-9].replace("_a0", "").replace("_a1", "") + "predef_junc.npz"
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
@@ -39,41 +41,56 @@ class WireframeDataset(Dataset):
 
         # npz["jmap"]: [J, H, W]    Junction heat map
         # npz["joff"]: [J, 2, H, W] Junction offset within each pixel
-        # npz["lmap"]: [H, W]       Line heat map with anti-aliasing
+        # npz["lmap"]: [L, H, W]    Line heat map with anti-aliasing
         # npz["junc"]: [Na, 3]      Junction coordinates
-        # npz["Lpos"]: [M, 2]       Positive lines represented with junction indices
-        # npz["Lneg"]: [M, 2]       Negative lines represented with junction indices
-        # npz["lpos"]: [Np, 2, 3]   Positive lines represented with junction coordinates
-        # npz["lneg"]: [Nn, 2, 3]   Negative lines represented with junction coordinates
+        # npz["Lpos"]: [L, M, 2]       Positive lines represented with junction indices
+        # npz["Lneg"]: [L, M, 2]       Negative lines represented with junction indices
+        # npz["lpos"]: [L, Np, 2, 3]   Positive lines represented with junction coordinates
+        # npz["lneg"]: [L, Nn, 2, 3]   Negative lines represented with junction coordinates
         #
         # For junc, lpos, and lneg that stores the junction coordinates, the last
         # dimension is (y, x, t), where t represents the type of that junction.
-        with np.load(self.filelist[idx]) as npz:
+
+        def print_shapes(npz):
+            for key, value in npz.items():
+                print(f"The shape of {key} is: {value.shape}")
+
+        with np.load(self.filelist[idx], allow_pickle=True) as npz:
+            print_shapes(npz)
             target = {
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
             }
-            lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl]
-            lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
-            npos, nneg = len(lpos), len(lneg)
-            lpre = np.concatenate([lpos, lneg], 0)
+            lpos = npz["lpos"][:, np.random.permutation(npz["lpos"].shape[1]), ...]
+            lneg = npz["lneg"][:, np.random.permutation(npz["lneg"].shape[1]), ...]
+
+            # Slice along the second axis
+            lpos = lpos[:, :M.n_stc_posl, ...]
+            lneg = lneg[:, :M.n_stc_negl, ...]
+
+            npos, nneg = lpos.shape[1], lneg.shape[1]
+            lpre = np.concatenate([lpos, lneg], axis=1)
+
             for i in range(len(lpre)):
-                if random.random() > 0.5:
-                    lpre[i] = lpre[i, ::-1]
-            ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
+                for j in range(len(lpre[i])):
+                    if random.random() > 0.5:
+                        lpre[i, j] = lpre[i, j, ::-1]
+
+            ldir = lpre[:, :, 0, :2] - lpre[:, :, 1, :2]
             ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
             feat = [
-                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
+                lpre[:,:, :, :2].reshape(lpre.shape[0], -1, lpre.shape[2]) / 256 * M.use_cood,
                 ldir * M.use_slop,
-                lpre[:, :, 2],
+                lpre[:,:, :, 2],
             ]
             feat = np.concatenate(feat, 1)
+
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
                 "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
-                "lpre": torch.from_numpy(lpre[:, :, :2]),
+                "lpre": torch.from_numpy(lpre[:,:, :, :2]),
                 "lpre_label": torch.cat([torch.ones(npos), torch.zeros(nneg)]),
                 "lpre_feat": torch.from_numpy(feat),
             }
@@ -82,6 +99,7 @@ class WireframeDataset(Dataset):
 
     def adjacency_matrix(self, n, link):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
+        link = np.array(link, dtype=np.int64)
         link = torch.from_numpy(link)
         if len(link) > 0:
             mat[link[:, 0], link[:, 1]] = 1

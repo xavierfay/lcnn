@@ -55,23 +55,31 @@ def line_score(path, threshold=5):
         lcnn_tp.append(tp)
         lcnn_fp.append(fp)
         lcnn_scores.append(lcnn_score)
+    print(lcnn_tp)
+    if len(lcnn_tp) > 0:  # Check if lcnn_tp is not empty
+        lcnn_tp = np.concatenate(lcnn_tp)
+        lcnn_fp = np.concatenate(lcnn_fp)
+        lcnn_scores = np.concatenate(lcnn_scores)
+        lcnn_index = np.argsort(-lcnn_scores)
+        lcnn_tp = np.cumsum(lcnn_tp[lcnn_index]) / n_gt
+        lcnn_fp = np.cumsum(lcnn_fp[lcnn_index]) / n_gt
+    else:
+        print("check")
+        # Handle the case when lcnn_tp is empty, maybe return some default value or raise a custom error
+        lcnn_tp = np.array([])
 
-    lcnn_tp = np.concatenate(lcnn_tp)
-    lcnn_fp = np.concatenate(lcnn_fp)
-    lcnn_scores = np.concatenate(lcnn_scores)
-    lcnn_index = np.argsort(-lcnn_scores)
-    lcnn_tp = np.cumsum(lcnn_tp[lcnn_index]) / n_gt
-    lcnn_fp = np.cumsum(lcnn_fp[lcnn_index]) / n_gt
+
 
     return lcnn.metric.ap(lcnn_tp, lcnn_fp)
+
+def work(path):
+    print(f"Working on {path}")
+    return [100 * line_score(f"{path}/*.npz", t) for t in [1, 10, 15]]
 
 
 if __name__ == "__main__":
     args = docopt(__doc__)
 
-    def work(path):
-        print(f"Working on {path}")
-        return [100 * line_score(f"{path}/*.npz", t) for t in [5, 10, 15]]
 
     dirs = sorted(sum([glob.glob(p) for p in args["<path>"]], []))
     results = lcnn.utils.parmap(work, dirs)

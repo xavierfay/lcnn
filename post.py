@@ -59,71 +59,75 @@ def imshow(im):
     plt.ylim([sizes[0] - 0.5, -0.5])
     plt.imshow(im)
 
+def handle(allname, thresholds, args, prefix):
+    fname, iname, gtname = allname
+    print("Processing", fname)
+    im = cv2.imread(iname)
+    with np.load(fname) as f:
+        lines = f["lines"]
+        scores = f["score"]
+    with np.load(gtname) as f:
+        gtlines = f["lpos"][:, :, :2]
+    gtlines[:, :, 0] *= im.shape[0] / 256
+    gtlines[:, :, 1] *= im.shape[1] / 256
+    for i in range(1, len(lines)):
+        if (lines[i] == lines[0]).all():
+            lines = lines[:i]
+            scores = scores[:i]
+            break
 
+    lines[:, :, 0] *= im.shape[0] / 256
+    lines[:, :, 1] *= im.shape[1] / 256
+    diag = (im.shape[0] ** 2 + im.shape[1] ** 2) ** 0.5
+
+    for threshold in thresholds:
+        nlines, nscores = postprocess(lines, scores, diag * threshold, 0, False)
+
+        outdir = osp.join(prefix, f"{threshold:.3f}".replace(".", "_"))
+        os.makedirs(outdir, exist_ok=True)
+        npz_name = osp.join(outdir, osp.split(fname)[-1])
+
+        if args["--plot"]:
+            # plot gt
+            imshow(im[:, :, ::-1])
+            for (a, b) in gtlines:
+                plt.plot([a[1], b[1]], [a[0], b[0]], c="orange", linewidth=0.5)
+                plt.scatter(a[1], a[0], **PLTOPTS)
+                plt.scatter(b[1], b[0], **PLTOPTS)
+            plt.savefig(npz_name.replace(".npz", ".png"), dpi=500, bbox_inches=0)
+
+            thres = [0.96, 0.97, 0.98, 0.99]
+            for i, t in enumerate(thres):
+                imshow(im[:, :, ::-1])
+                for (a, b), s in zip(nlines[nscores > t], nscores[nscores > t]):
+                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=0.5)
+                    plt.scatter(a[1], a[0], **PLTOPTS)
+                    plt.scatter(b[1], b[0], **PLTOPTS)
+                plt.savefig(
+                    npz_name.replace(".npz", f"_{i}.png"), dpi=500, bbox_inches=0
+                )
+
+        nlines[:, :, 0] *= 256 / im.shape[0]
+        nlines[:, :, 1] *= 256 / im.shape[1]
+        np.savez_compressed(npz_name, lines=nlines, score=nscores)
+def wrapper(args):
+    return handle(*args)
 def main():
     args = docopt(__doc__)
 
     files = sorted(glob.glob(osp.join(args["<input-dir>"], "*.npz")))
-    inames = sorted(glob.glob("data/wireframe/valid-images/*.jpg"))
-    gts = sorted(glob.glob("data/wireframe/valid/*.npz"))
+    inames = sorted(glob.glob("data/Twoclass/valid/*.png"))
+    gts = sorted(glob.glob("data/Twoclass/valid/*.npz"))
     prefix = args["<output-dir>"]
-
+    print(files)
     inputs = list(zip(files, inames, gts))
     thresholds = list(map(float, args["--thresholds"].split(",")))
 
-    def handle(allname):
-        fname, iname, gtname = allname
-        print("Processing", fname)
-        im = cv2.imread(iname)
-        with np.load(fname) as f:
-            lines = f["lines"]
-            scores = f["score"]
-        with np.load(gtname) as f:
-            gtlines = f["lpos"][:, :, :2]
-        gtlines[:, :, 0] *= im.shape[0] / 128
-        gtlines[:, :, 1] *= im.shape[1] / 128
-        for i in range(1, len(lines)):
-            if (lines[i] == lines[0]).all():
-                lines = lines[:i]
-                scores = scores[:i]
-                break
+    modified_inputs = [(input_tuple, thresholds, args, prefix) for input_tuple in inputs]
 
-        lines[:, :, 0] *= im.shape[0] / 128
-        lines[:, :, 1] *= im.shape[1] / 128
-        diag = (im.shape[0] ** 2 + im.shape[1] ** 2) ** 0.5
 
-        for threshold in thresholds:
-            nlines, nscores = postprocess(lines, scores, diag * threshold, 0, False)
 
-            outdir = osp.join(prefix, f"{threshold:.3f}".replace(".", "_"))
-            os.makedirs(outdir, exist_ok=True)
-            npz_name = osp.join(outdir, osp.split(fname)[-1])
-
-            if args["--plot"]:
-                # plot gt
-                imshow(im[:, :, ::-1])
-                for (a, b) in gtlines:
-                    plt.plot([a[1], b[1]], [a[0], b[0]], c="orange", linewidth=0.5)
-                    plt.scatter(a[1], a[0], **PLTOPTS)
-                    plt.scatter(b[1], b[0], **PLTOPTS)
-                plt.savefig(npz_name.replace(".npz", ".png"), dpi=500, bbox_inches=0)
-
-                thres = [0.96, 0.97, 0.98, 0.99]
-                for i, t in enumerate(thres):
-                    imshow(im[:, :, ::-1])
-                    for (a, b), s in zip(nlines[nscores > t], nscores[nscores > t]):
-                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=0.5)
-                        plt.scatter(a[1], a[0], **PLTOPTS)
-                        plt.scatter(b[1], b[0], **PLTOPTS)
-                    plt.savefig(
-                        npz_name.replace(".npz", f"_{i}.png"), dpi=500, bbox_inches=0
-                    )
-
-            nlines[:, :, 0] *= 128 / im.shape[0]
-            nlines[:, :, 1] *= 128 / im.shape[1]
-            np.savez_compressed(npz_name, lines=nlines, score=nscores)
-
-    parmap(handle, inputs, 12)
+    parmap(wrapper, modified_inputs, 12)
 
 
 if __name__ == "__main__":

@@ -87,6 +87,16 @@ def main():
     for imname in args["<images>"]:
         print(f"Processing {imname}")
         im = skimage.io.imread(imname)
+
+        # # Normalize the image to have pixel values between 0 and 255
+        # img = (im * 255).astype('uint8')
+        # # Set the threshold value
+        # threshold_value = 127
+        # # Apply thresholding
+        # binary_img = img > threshold_value
+        # binary_img = binary_img * 255  # Convert boolean array to uint8 (0 or 255)
+        # im = binary_img
+
         if im.ndim == 2:
             im = np.repeat(im[:, :, None], 3, 2)
         im = im[:, :, :1]
@@ -112,9 +122,9 @@ def main():
             }
             H = model(input_dict)["preds"]
 
-        line_result = H["lmap"][0].cpu().numpy()
-        plt.imshow(line_result)
-        plt.show()
+        # line_result = H["lmap"][0].cpu().numpy()
+        # plt.imshow(line_result)
+        # plt.show()
 
         rjuncs = H["juncs"].cpu().numpy() / 256 * im.shape[:2]
         rjunts = None
@@ -148,7 +158,7 @@ def main():
             for (a, b), s in zip(nlines, nscores):
                 if s < t:
                     continue
-                plt.plot([a[1], b[1]], [a[0], b[0]], c="red", linewidth=2, zorder=s)
+                plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=2, zorder=s)
                 plt.scatter(a[1], a[0], **PLTOPTS)
                 plt.scatter(b[1], b[0], **PLTOPTS)
 
@@ -162,8 +172,8 @@ def main():
 
             plt.gca().xaxis.set_major_locator(plt.NullLocator())
             plt.gca().yaxis.set_major_locator(plt.NullLocator())
-            plt.imshow(im)
-            plt.savefig(imname.replace(".png", f"-{t:.02f}.svg"), bbox_inches="tight")
+            plt.imshow(im, cmap='gray')
+            #plt.savefig(imname.replace(".png", f"-{t:.02f}.svg"), bbox_inches="tight")
             plt.show()
             plt.close()
 

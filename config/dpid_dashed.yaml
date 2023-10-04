@@ -1,6 +1,6 @@
 io:
-  logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twoclass
-  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/Twoclass
+  logdir: logs/
+  datadir: data/dpid_twolines_2
   resume_from:
   num_workers: 2
   tensorboard_port: 0
@@ -15,6 +15,7 @@ model:
   batch_size_eval: 1
 
   # backbone multi-task parameters
+  # jmap, lmap, joff
   head_size: [[4], [2], [4]]
   loss_weight:
     jmap: 8.0

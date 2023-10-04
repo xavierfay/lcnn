@@ -26,15 +26,16 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 from scipy import interpolate
 from docopt import docopt
+import matplotlib.font_manager
 
 mpl.rcParams.update({"font.size": 18})
 plt.rcParams["font.family"] = "Times New Roman"
 del mpl.font_manager.weight_dict["roman"]
-mpl.font_manager._rebuild()
+#mpl.font_manager._rebuild()
 
-image_path = "data/wireframe/valid-images/"
-line_gt_path = "data/wireframe/valid/"
-output_size = 128
+image_path = "data/Twoclass/valid/"
+line_gt_path = "data/Twoclass/valid/"
+output_size = 256
 
 
 def main():
