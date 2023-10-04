@@ -49,6 +49,12 @@ class WireframeDataset(Dataset):
         # For junc, lpos, and lneg that stores the junction coordinates, the last
         # dimension is (y, x, t), where t represents the type of that junction.
         with np.load(self.filelist[idx]) as npz:
+            # def print_shapes(npz):
+            #     for key, value in npz.items():
+            #         print(f"The shape of {key} is: {value.shape}")
+            #
+            # print_shapes(npz)
+
             target = {
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
