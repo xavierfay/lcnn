@@ -243,11 +243,12 @@ class Trainer(object):
             imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
         for j, result in enumerate(result["lmap"][i]):
-            line_result = result[j].cpu().numpy()
+            line_result = result.cpu().numpy()
+            print(line_result.shape)
             imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
-            line_target = target[j].cpu().numpy()
+            line_target = target.cpu().numpy()
             imshow(line_target), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
         def draw_vecl(lines, sline, juncs, junts, fn):

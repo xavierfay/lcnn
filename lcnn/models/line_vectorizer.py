@@ -165,7 +165,7 @@ class LineVectorizer(nn.Module):
 
             # print("junc:", junc, junc.shape)
             # print("jtype", jtyp, jtyp.shape)
-            # print("Lpos:", Lpos, Lpos.shape)
+            print("Lpos:", Lpos, Lpos.shape)
             # print("Lneg", Lneg, Lneg.shape)
 
 
@@ -218,13 +218,12 @@ class LineVectorizer(nn.Module):
                 c = torch.zeros_like(label, dtype=torch.bool)
 
                 # sample positive lines
-                cdx = label.nonzero().flatten()
-                #print("cdx",cdx)
-                if len(cdx) > M.n_dyn_posl:
-                    # print("too many positive lines")
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
-                    cdx = cdx[perm]
-                c[cdx] = 1
+                for lbl in [0, 1, 2]:
+                    cdx = (label == lbl).nonzero().flatten()
+                    if len(cdx) > M.n_dyn_posl:
+                        perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                        cdx = cdx[perm]
+                    c[cdx] = 1
 
                 # sample negative lines
                 cdx = Lneg[up, vp].nonzero().flatten()
@@ -276,7 +275,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             # print("lines sample:", line.shape)
-
+            print("label", label)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label.float(), feat, jcs
