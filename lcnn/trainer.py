@@ -125,8 +125,9 @@ class Trainer(object):
                     "mode": "validation",
                 }
                 result = self.model(input_dict)
+                H = result["preds"]
 
-                for key, value in result.items():
+                for key, value in H.items():
                     if isinstance(value, (torch.Tensor, np.ndarray)):
                         print(f"{key}: {value.shape}")
                     else:
@@ -134,7 +135,6 @@ class Trainer(object):
 
                 total_loss += self._loss(result)
 
-                H = result["preds"]
                 for i in range(H["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i
                     np.savez(
