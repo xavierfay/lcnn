@@ -79,21 +79,29 @@ class WireframeDataset(Dataset):
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
-                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
-                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
+                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"][0], npz["Lpos"][1]),
+                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"][0], npz["Lneg"][1]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": torch.cat([torch.ones(npos0), torch.zeros(nneg0), torch.full((npos1, 1), 2).squeeze(1), torch.zeros(nneg0)]),
                 "lpre_feat": torch.from_numpy(feat),
             }
-
+            for key, value in meta.items():
+                print(f"{key}: {value.shape}")
         return torch.from_numpy(image).float(), meta, target
 
-    def adjacency_matrix(self, n, link):
+    def adjacency_matrix(self, n, link1, link2):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
-        link = torch.from_numpy(link)
-        if len(link) > 0:
-            mat[link[:, 0], link[:, 1]] = 1
-            mat[link[:, 1], link[:, 0]] = 1
+        link1 = torch.from_numpy(link1)
+        link2 = torch.from_numpy(link2)
+
+        if len(link1) > 0:
+            mat[link1[:, 0], link1[:, 1]] = 1
+            mat[link1[:, 1], link1[:, 0]] = 1
+
+        if len(link2) > 0:
+            mat[link2[:, 0], link2[:, 1]] = 2
+            mat[link2[:, 1], link2[:, 0]] = 2
+
         return mat
 
 
