@@ -62,7 +62,6 @@ class WireframeDataset(Dataset):
             lneg1 = slice_permute(lneg[1], M.n_stc_negl)
 
             lpre = np.concatenate([lpos0, lneg0, lpos1, lneg1], 0)
-            print("This is new lpre",lpre.shape, lpre)
             npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
 

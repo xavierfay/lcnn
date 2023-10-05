@@ -45,8 +45,6 @@ class MultitaskLearner(nn.Module):
         batch, channel, row, col = outputs[0].shape
 
         T = input_dict["target"].copy()
-        for key, value in T.items():
-            print(f"{key}: Type: {type(value)}, Shape: {np.shape(value)}")
         n_jtyp = T["jmap"].shape[1]
         n_ltyp = T["lmap"].shape[1]
 

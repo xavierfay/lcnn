@@ -163,10 +163,10 @@ class LineVectorizer(nn.Module):
             Lpos = meta["Lpos"]  # [N+1, N+1]
             Lneg = meta["Lneg"]  # [N+1, N+1]
 
-            print("junc:", junc, junc.shape)
-            print("jtype", jtyp, jtyp.shape)
-            print("Lpos:", Lpos, Lpos.shape)
-            print("Lneg", Lneg, Lneg.shape)
+            # print("junc:", junc, junc.shape)
+            # print("jtype", jtyp, jtyp.shape)
+            # print("Lpos:", Lpos, Lpos.shape)
+            # print("Lneg", Lneg, Lneg.shape)
 
 
             n_type = jmap.shape[0]
@@ -275,8 +275,6 @@ class LineVectorizer(nn.Module):
                 1,
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
-            print(line.shape)
-
             # print("lines sample:", line.shape)
 
             xy = xy.reshape(n_type, K, 2)
