@@ -85,8 +85,8 @@ class WireframeDataset(Dataset):
                 "lpre_label": torch.cat([torch.ones(npos0), torch.zeros(nneg0), torch.full((npos1, 1), 2).squeeze(1), torch.zeros(nneg0)]),
                 "lpre_feat": torch.from_numpy(feat),
             }
-            for key, value in meta.items():
-                print(f"{key}: {value.shape}")
+            # for key, value in meta.items():
+            #     print(f"{key}: {value.shape}")
         return torch.from_numpy(image).float(), meta, target
 
     def adjacency_matrix(self, n, link1, link2):

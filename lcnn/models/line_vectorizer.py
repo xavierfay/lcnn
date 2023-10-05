@@ -40,7 +40,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, 1),
             )
-        self.loss = nn.BCEWithLogitsLoss(reduction="none")
+        self.loss = nn.CrossEntropyLoss()
 
     def forward(self, input_dict):
         result = self.backbone(input_dict)
