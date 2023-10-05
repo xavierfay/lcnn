@@ -127,8 +127,10 @@ class Trainer(object):
                 result = self.model(input_dict)
 
                 for key, value in result.items():
-                    print(f"{key}: {value.shape}")
-
+                    if isinstance(value, (torch.Tensor, np.ndarray)):
+                        print(f"{key}: {value.shape}")
+                    else:
+                        print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
                 total_loss += self._loss(result)
 
