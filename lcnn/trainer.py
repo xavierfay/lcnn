@@ -127,7 +127,7 @@ class Trainer(object):
                 result = self.model(input_dict)
 
                 for key, value in result.items():
-                    print(f"{key}: {value.shape}"
+                    print(f"{key}: {value.shape}")
 
 
                 total_loss += self._loss(result)
