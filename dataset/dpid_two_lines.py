@@ -145,13 +145,9 @@ def save_heatmap(prefix, image, lines, classes):
     lnid = pad_and_convert_to_array(lnid)
     Lpos = np.array(lnid, dtype=int)
 
-    Lneg = np.empty((2,), dtype=object)
-    Lneg[0] = np.array([l[2:4] for l in lneg[0][:4000]], dtype=int)
-    Lneg[1] = np.array([l[2:4] for l in lneg[1][:4000]], dtype=int)
-
-    # print("Shapes within Lneg:")
-    # for i, arr in enumerate(Lneg):
-    #     print(f"Shape of Lneg[{i}]: {arr.shape}")
+    Lneg_0 = np.array([l[2:4] for l in lneg[0][:4000]], dtype=int)
+    Lneg_1 = np.array([l[2:4] for l in lneg[1][:4000]], dtype=int)
+    Lneg = np.array([Lneg_0, Lneg_1])
 
     lpos = pad_and_convert_to_array(lpos)
     lpos = np.array(lpos, dtype=np.float32)
@@ -180,10 +176,10 @@ def save_heatmap(prefix, image, lines, classes):
     np.savez_compressed(
         f"{prefix}_label.npz",
         aspect_ratio=image.shape[1] / image.shape[0],
-        jmap=jmap,  # [J, H, W]    Junction heat map
-        joff=joff,  # [J, 2, H, W] Junction offset within each pixel
+        jmap=jmap,  # [J, H, W]       Junction heat map
+        joff=joff,  # [J, 2, H, W]    Junction offset within each pixel
         lmap=lmap,  # [L, H, W]       Line heat map with anti-aliasing
-        junc=junc,  # [Na, 3]      Junction coordinate
+        junc=junc,  # [Na, 3]         Junction coordinate
         Lpos=Lpos,  # [L, M, 2]       Positive lines represented with junction indices
         Lneg=Lneg,  # [L, M, 2]       Negative lines represented with junction indices
         lpos=lpos,  # [L, Np, 2, 3]   Positive lines represented with junction coordinates

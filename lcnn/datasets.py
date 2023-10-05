@@ -27,10 +27,7 @@ class WireframeDataset(Dataset):
     def __len__(self):
         return len(self.filelist)
 
-
-
     def __getitem__(self, idx):
-        #predef_junc_name = self.filelist[idx][:-9].replace("_a0", "").replace("_a1", "") + "predef_junc.npz"
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
         image = io.imread(iname, as_gray=True).astype(float)
         image = image[:, :, np.newaxis]
@@ -50,48 +47,43 @@ class WireframeDataset(Dataset):
         #
         # For junc, lpos, and lneg that stores the junction coordinates, the last
         # dimension is (y, x, t), where t represents the type of that junction.
-
-        def print_shapes(npz):
-            for key, value in npz.items():
-                print(f"The shape of {key} is: {value.shape}")
-
-        with np.load(self.filelist[idx], allow_pickle=True) as npz:
-            print_shapes(npz)
+        with np.load(self.filelist[idx]) as npz:
             target = {
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
             }
-            lpos = npz["lpos"][:, np.random.permutation(npz["lpos"].shape[1]), ...]
-            lneg = npz["lneg"][:, np.random.permutation(npz["lneg"].shape[1]), ...]
+            lpos = npz["lpos"].copy()
 
-            # Slice along the second axis
-            lpos = lpos[:, :M.n_stc_posl, ...]
-            lneg = lneg[:, :M.n_stc_negl, ...]
+            lpos0 = slice_permute(lpos[0], M.n_stc_posl)
+            lpos1 = slice_permute(lpos[1], M.n_stc_posl)
 
-            npos, nneg = lpos.shape[1], lneg.shape[1]
-            lpre = np.concatenate([lpos, lneg], axis=1)
+            lneg = npz["lneg"].copy()
+            lneg0 = slice_permute(lneg[0], M.n_stc_negl)
+            lneg1 = slice_permute(lneg[1], M.n_stc_negl)
+
+            lpre = np.concatenate([lpos0, lneg0, lpos1, lneg1], 0)
+            print("This is new lpre",lpre.shape, lpre)
+            npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
+
 
             for i in range(len(lpre)):
-                for j in range(len(lpre[i])):
-                    if random.random() > 0.5:
-                        lpre[i, j] = lpre[i, j, ::-1]
-
-            ldir = lpre[:, :, 0, :2] - lpre[:, :, 1, :2]
+                if random.random() > 0.5:
+                    lpre[i] = lpre[i, ::-1]
+            ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
             ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
             feat = [
-                lpre[:,:, :, :2].reshape(lpre.shape[0], -1, lpre.shape[2]) / 256 * M.use_cood,
+                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
                 ldir * M.use_slop,
-                lpre[:,:, :, 2],
+                lpre[:, :, 2],
             ]
             feat = np.concatenate(feat, 1)
-
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
                 "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
-                "lpre": torch.from_numpy(lpre[:,:, :, :2]),
-                "lpre_label": torch.cat([torch.ones(npos), torch.zeros(nneg)]),
+                "lpre": torch.from_numpy(lpre[:, :, :2]),
+                "lpre_label": torch.cat([torch.ones(npos0), torch.zeros(nneg0), torch.full((npos1, 1), 2).squeeze(1), torch.zeros(nneg0)]),
                 "lpre_feat": torch.from_numpy(feat),
             }
 
@@ -99,12 +91,35 @@ class WireframeDataset(Dataset):
 
     def adjacency_matrix(self, n, link):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
-        link = np.array(link, dtype=np.int64)
         link = torch.from_numpy(link)
         if len(link) > 0:
             mat[link[:, 0], link[:, 1]] = 1
             mat[link[:, 1], link[:, 0]] = 1
         return mat
+
+
+import numpy as np
+
+
+def slice_permute(lpos, n_stc_posl):
+    # Ensure lpos is a NumPy array
+    lpos = np.array(lpos)
+    # Check and remove slices containing -1
+    contains_neg_one = np.any(lpos == -1, axis=(1, 2))
+    lpos_processed = lpos[~contains_neg_one]
+    # Check if lpos_processed is empty
+    if lpos_processed.size == 0:
+        print("Warning: All slices removed, returning empty array.")
+        return lpos_processed
+
+    # Permute the slices
+    lpos_processed = np.random.permutation(lpos_processed)
+
+    # Ensure n_stc_posl is a valid index
+    if n_stc_posl < lpos_processed.shape[0]:
+        lpos_processed = lpos_processed[:n_stc_posl]
+
+    return lpos_processed
 
 
 def collate(batch):

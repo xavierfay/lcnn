@@ -45,12 +45,14 @@ class MultitaskLearner(nn.Module):
         batch, channel, row, col = outputs[0].shape
 
         T = input_dict["target"].copy()
+        for key, value in T.items():
+            print(f"{key}: Type: {type(value)}, Shape: {np.shape(value)}")
         n_jtyp = T["jmap"].shape[1]
         n_ltyp = T["lmap"].shape[1]
 
 
         # switch to CNHW
-        for task in ["jmap"]:
+        for task in ["jmap", "lmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             T[task] = T[task].permute(1, 2, 0, 3, 4)
@@ -62,12 +64,12 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row,col)
 
-            lmap = output[offset[0] : offset[1]]
+            lmap = output[offset[0] : offset[1]].reshape(n_ltyp, 2, batch, row,col)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "lmap": lmap.softmax(),
+                    "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
@@ -77,7 +79,7 @@ class MultitaskLearner(nn.Module):
             L["jmap"] = sum(
                 cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
             )
-            L["lmap"] = (
+            L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
 

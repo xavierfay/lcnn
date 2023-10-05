@@ -160,13 +160,14 @@ class LineVectorizer(nn.Module):
         with torch.no_grad():
             junc = meta["junc"]  # [N, 2]
             jtyp = meta["jtyp"]  # [N]
-            Lpos = meta["Lpos"]
-            Lneg = meta["Lneg"]
+            Lpos = meta["Lpos"]  # [N+1, N+1]
+            Lneg = meta["Lneg"]  # [N+1, N+1]
 
-            # print("junc:", junc, junc.shape)
-            # print("jtype", jtyp, jtyp.shape)
-            # print("Lpos:", Lpos, Lpos.shape)
-            # print("Lneg", Lneg, Lneg.shape)
+            print("junc:", junc, junc.shape)
+            print("jtype", jtyp, jtyp.shape)
+            print("Lpos:", Lpos, Lpos.shape)
+            print("Lneg", Lneg, Lneg.shape)
+
 
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
@@ -211,10 +212,7 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-
-
             label = Lpos[up, vp]
-            #print("label before filtering", label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -277,6 +275,7 @@ class LineVectorizer(nn.Module):
                 1,
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
+            print(line.shape)
 
             # print("lines sample:", line.shape)
 

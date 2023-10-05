@@ -1,6 +1,6 @@
 io:
   logdir: logs/
-  datadir: data/dpid_twolines_2
+  datadir: data/dpid_twolines
   resume_from:
   num_workers: 2
   tensorboard_port: 0
@@ -16,7 +16,7 @@ model:
 
   # backbone multi-task parameters
   # jmap, lmap, joff
-  head_size: [[4], [2], [4]]
+  head_size: [[4], [4], [4]]
   loss_weight:
     jmap: 8.0
     lmap: 0.5
