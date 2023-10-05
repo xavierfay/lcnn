@@ -277,8 +277,8 @@ class Trainer(object):
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjunts = None
-        if "junts" in result:
-            rjunts = result["junts"][i].cpu().numpy() * 4
+        # if "junts" in result:
+        #     rjunts = result["junts"][i].cpu().numpy() * 4
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         vecl_target = meta[i]["lpre_label"].cpu().numpy()
