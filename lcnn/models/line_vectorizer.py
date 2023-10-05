@@ -208,11 +208,35 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
+            class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
+
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
+            print("up max",torch.max(up))
+
+            # Ensuring Class 2 Inclusion in up and vp
+            # Define how many entries you want to ensure are class 2
+            num_class_two_to_include = 100
+
+            # Randomly select some class 2 indices
+            selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
+
+            selected_class_two_indices_row = class_two_indices[0][selected_indices]
+            selected_class_two_indices_col = class_two_indices[1][selected_indices]
+
+            # Replace some of the initially sampled indices with class 2 indices
+            up[:num_class_two_to_include] = selected_class_two_indices_row
+            vp[:num_class_two_to_include] = selected_class_two_indices_col
+
+            # # Optionally shuffle up and vp if order matters
+            # up = up[torch.randperm(up.size(0))]
+            # vp = vp[torch.randperm(vp.size(0))]
+
+
             label = Lpos[up, vp]
+            print("after sampling", label, torch.max(label), label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -241,6 +265,7 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
+            print("label before straight line",label)
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
@@ -275,7 +300,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             # print("lines sample:", line.shape)
-            print("label", label)
+            print("label", label, label.shape)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label.float(), feat, jcs
