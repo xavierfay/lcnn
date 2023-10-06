@@ -273,6 +273,7 @@ class Trainer(object):
             imshow(img)
             if len(lines) > 0 and not (lines[0] == 0).all():
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
+                    print("this are the lines", a,b,s)
                     if i > 0 and (lines[i] == lines[0]).all():
                         break
                     plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=4)
@@ -313,8 +314,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
