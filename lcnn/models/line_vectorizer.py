@@ -131,6 +131,12 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
+            y = torch.argmax(y, dim=1) #.long()
+            x = x.float()
+            #print("this is x", x)
+
+            y = y.float()
+            #print("this is y", y)
             loss = self.loss(x, y)
             lpos_mask, lneg_mask = y, 2 - y
             loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
@@ -218,8 +224,8 @@ class LineVectorizer(nn.Module):
 
             # Ensuring Class 2 Inclusion in up and vp
             # Define how many entries you want to ensure are class 2
-            num_class_two_to_include = 100
-
+            # num_class_two_to_include = 100
+            #
             # # Randomly select some class 2 indices
             # selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
             #
@@ -229,37 +235,44 @@ class LineVectorizer(nn.Module):
             # # Replace some of the initially sampled indices with class 2 indices
             # up[:num_class_two_to_include] = selected_class_two_indices_row
             # vp[:num_class_two_to_include] = selected_class_two_indices_col
-            #
-            # # # Optionally shuffle up and vp if order matters
-            # # up = up[torch.randperm(up.size(0))]
-            # # vp = vp[torch.randperm(vp.size(0))]
 
+            # # Optionally shuffle up and vp if order matters
+            # up = up[torch.randperm(up.size(0))]
+            # vp = vp[torch.randperm(vp.size(0))]
 
-            label = Lpos[up, vp]
+            scalar_labels = Lpos[up, vp]
+            scalar_labels = scalar_labels.long()
+            # Initialize a tensor of zeros with shape [N, 3]
+            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
+
+            # Assign a "1" in the respective column according to the scalar label
+            label[torch.arange(label.shape[0]), scalar_labels] = 1
             #print("after sampling", label, torch.max(label), label.shape)
 
             if mode == "training":
-                c = torch.zeros_like(label, dtype=torch.bool)
+                c = torch.zeros_like(label[:, 0], dtype=torch.bool)
 
-                # sample positive lines
-                for lbl in [0, 1, 2]:
-                    cdx = (label == lbl).nonzero().flatten()
-                    if len(cdx) > M.n_dyn_posl:
-                        perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
-                        cdx = cdx[perm]
-                    c[cdx] = 1
+                # Sample negative Lines (Class 0)
+                cdx = (label[:, 0] == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                    cdx = cdx[perm]
+                c[cdx] = 1
 
-                # sample negative lines
-                cdx = Lneg[up, vp].nonzero().flatten()
+                # Sample continous Lines (Class 1)
+                cdx = (label[:, 1] == 1).nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
-                    # print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # sample other (unmatched) lines
-                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+                # Sample dashed Lines (Class 2)
+                cdx = (label[:, 2] == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_othr:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_othr]
+                    cdx = cdx[perm]
                 c[cdx] = 1
+
             else:
                 c = (u < v).flatten()
 
@@ -304,7 +317,7 @@ class LineVectorizer(nn.Module):
             # print("label", label, label.shape)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            return line, label.float(), feat, jcs
+            return line, label, feat, jcs
 
 
 def non_maximum_suppression(a):
