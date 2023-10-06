@@ -302,9 +302,12 @@ class Trainer(object):
         vecl_result = result["lines"][i].cpu().numpy() * 4
         print("results for lines",vecl_result)
         score = result["score"][i].cpu().numpy()
-        lpre = lpre[vecl_target == 1]
+        print("score =", np.max(score), score)
 
-        draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_a.jpg")
+        for i in range(1,2):
+            lpre = lpre[vecl_target == i]
+            draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
+
         draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):
