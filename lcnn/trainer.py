@@ -305,10 +305,10 @@ class Trainer(object):
         score = result["score"][i].cpu().numpy()
         print("score =", np.max(score), score)
 
-        for i in range(1,2):
-            lpre = lpre[vecl_target == i]
-            draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
-
+        # for i in range(1,2):
+        #     lpre = lpre[vecl_target == i]
+        #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
+        draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_a.jpg")
         draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):

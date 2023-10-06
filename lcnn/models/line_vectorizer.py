@@ -132,10 +132,12 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
             y = torch.argmax(y, dim=1) #.long()
+            y = y.float()
+
+
+            x = torch.softmax(x, dim=-1) * 2
             x = x.float()
             #print("this is x", x)
-
-            y = y.float()
             #print("this is y", y)
             loss = self.loss(x, y)
             lpos_mask, lneg_mask = y, 2 - y
@@ -247,7 +249,7 @@ class LineVectorizer(nn.Module):
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
-            #print("after sampling", label, torch.max(label), label.shape)
+            # print("after sampling", label, torch.max(label), label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)

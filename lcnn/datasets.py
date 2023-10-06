@@ -121,7 +121,7 @@ def slice_permute(lpos, n_stc_posl):
     # Check if lpos_processed is empty
     if lpos_processed.size == 0:
         print("Warning: All slices removed, returning empty array.")
-        return lpos_processed
+    return lpos_processed
 
     # Permute the slices
     lpos_processed = np.random.permutation(lpos_processed)
