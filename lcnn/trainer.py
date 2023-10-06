@@ -276,7 +276,7 @@ class Trainer(object):
                     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
             plt.savefig(fn), plt.close()
 
-        for key, value in H.items():
+        for key, value in result.items():
             if isinstance(value, (torch.Tensor, np.ndarray)):
                 print(f"plot function {key}: {value.shape}")
             else:
