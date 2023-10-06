@@ -220,19 +220,19 @@ class LineVectorizer(nn.Module):
             # Define how many entries you want to ensure are class 2
             num_class_two_to_include = 100
 
-            # Randomly select some class 2 indices
-            selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
-
-            selected_class_two_indices_row = class_two_indices[0][selected_indices]
-            selected_class_two_indices_col = class_two_indices[1][selected_indices]
-
-            # Replace some of the initially sampled indices with class 2 indices
-            up[:num_class_two_to_include] = selected_class_two_indices_row
-            vp[:num_class_two_to_include] = selected_class_two_indices_col
-
-            # # Optionally shuffle up and vp if order matters
-            # up = up[torch.randperm(up.size(0))]
-            # vp = vp[torch.randperm(vp.size(0))]
+            # # Randomly select some class 2 indices
+            # selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
+            #
+            # selected_class_two_indices_row = class_two_indices[0][selected_indices]
+            # selected_class_two_indices_col = class_two_indices[1][selected_indices]
+            #
+            # # Replace some of the initially sampled indices with class 2 indices
+            # up[:num_class_two_to_include] = selected_class_two_indices_row
+            # vp[:num_class_two_to_include] = selected_class_two_indices_col
+            #
+            # # # Optionally shuffle up and vp if order matters
+            # # up = up[torch.randperm(up.size(0))]
+            # # vp = vp[torch.randperm(vp.size(0))]
 
 
             label = Lpos[up, vp]

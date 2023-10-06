@@ -300,6 +300,7 @@ class Trainer(object):
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         vecl_target = meta[i]["lpre_label"].cpu().numpy()
         vecl_result = result["lines"][i].cpu().numpy() * 4
+        print("results for lines",vecl_result, vecl_result.shape())
         score = result["score"][i].cpu().numpy()
         lpre = lpre[vecl_target == 1]
 
