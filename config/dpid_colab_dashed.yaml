@@ -1,5 +1,5 @@
 io:
-  logdir: logs/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines
+  logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines
   datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/twolines
   resume_from:
   num_workers: 2
