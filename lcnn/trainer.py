@@ -129,7 +129,7 @@ class Trainer(object):
 
                 for key, value in H.items():
                     if isinstance(value, (torch.Tensor, np.ndarray)):
-                        print(f"{key}: {value.shape}")
+                        print(f"Validate function {key}: {value.shape}")
                     else:
                         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
@@ -276,17 +276,23 @@ class Trainer(object):
                     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
             plt.savefig(fn), plt.close()
 
+        for key, value in H.items():
+            if isinstance(value, (torch.Tensor, np.ndarray)):
+                print(f"plot function {key}: {value.shape}")
+            else:
+                print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+
         junc = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
         juncs = junc[jtyp == 1]
         junts = junc[jtyp == 2]
 
 
-        #rjuncs = result["juncs"][i].cpu().numpy() * 4
+        rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjuncs = None
         rjunts = None
-        # if "junts" in result:
-        #     rjunts = result["junts"][i].cpu().numpy() * 4
+        if "junts" in result:
+            rjunts = result["junts"][i].cpu().numpy() * 4
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         vecl_target = meta[i]["lpre_label"].cpu().numpy()
@@ -299,8 +305,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
