@@ -65,8 +65,8 @@ class MultitaskLearner(nn.Module):
             lmap = output[offset[0] : offset[1]].reshape(n_ltyp, 2, batch, row,col)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
 
-            print("jmap", jmap.shape)
-            print("lmap",lmap.shape)
+            print("jmap in forward pass", jmap.shape)
+            print("lmap in forward pass",lmap.shape)
 
             if stack == 0:
                 result["preds"] = {
@@ -95,7 +95,7 @@ class MultitaskLearner(nn.Module):
             losses.append(L)
 
             for key, value in T.items():
-                print(f"{key}: {value.shape}")
+                print(f"{key} shape when in results forward: {value.shape}")
 
         result["losses"] = losses
         return result

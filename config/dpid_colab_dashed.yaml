@@ -12,7 +12,7 @@ model:
       stddev: [41.36]
 
   batch_size: 3
-  batch_size_eval: 1
+  batch_size_eval: 2
 
   # backbone multi-task parameters
   # jmap, lmap, joff
