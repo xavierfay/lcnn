@@ -296,8 +296,6 @@ class Trainer(object):
 
         print("rjuncs shape results",result["juncs"].shape)
         rjuncs = result["juncs"][i].cpu().numpy() * 4
-        rjuncs = None
-        rjunts = None
         if "junts" in result:
             rjunts = result["junts"][i].cpu().numpy() * 4
 
