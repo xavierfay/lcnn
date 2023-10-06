@@ -276,14 +276,14 @@ class Trainer(object):
                     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
             plt.savefig(fn), plt.close()
 
-        print(result)
+        print("result shape",result.shape)
 
         junc = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
         juncs = junc[jtyp == 1]
         junts = junc[jtyp == 2]
 
-
+        print("rjuncs shape results",result["juncs"].shape)
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjuncs = None
         rjunts = None
