@@ -97,7 +97,7 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
-            s = torch.sigmoid(x)
+            s = torch.softmax(x, 2)
             b = s > 0.3
             lines = []
             score = []
