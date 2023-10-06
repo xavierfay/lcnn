@@ -68,7 +68,7 @@ class WireframeDataset(Dataset):
             labels_1 = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0
             labels_2 = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1
             lpre_label = torch.cat([labels_0, labels_1, labels_2], dim=0)
-            print("lpre_label size",lpre_label.size())
+
 
             for i in range(len(lpre)):
                 if random.random() > 0.5:
