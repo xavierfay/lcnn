@@ -141,6 +141,13 @@ class Trainer(object):
                         f"{npz}/{index:06}.npz",
                         **{k: v[i].cpu().numpy() for k, v in H.items()},
                     )
+
+                    for key, value in H.items():
+                        if isinstance(value, (torch.Tensor, np.ndarray)):
+                            print(f"Validate function {key}: {value.shape}")
+                        else:
+                            print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+
                     if index >= 20:
                         continue
                     self._plot_samples(i, index, H, meta, target, f"{viz}/{index:06}")
@@ -238,6 +245,12 @@ class Trainer(object):
         return total_loss
 
     def _plot_samples(self, i, index, result, meta, target, prefix):
+        for key, value in result.items():
+            if isinstance(value, (torch.Tensor, np.ndarray)):
+                print(f"plot sample function {key}: {value.shape}")
+            else:
+                print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+
         fn = self.val_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
@@ -248,8 +261,8 @@ class Trainer(object):
             imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
             imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
-        for j, result in enumerate(result["lmap"][i]):
-            line_result = result.cpu().numpy()
+        for j, results in enumerate(result["lmap"][i]):
+            line_result = results.cpu().numpy()
             print(line_result.shape)
             imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
@@ -276,28 +289,26 @@ class Trainer(object):
                     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
             plt.savefig(fn), plt.close()
 
-        # print("result shape",result.shape)
-        #
-        # junc = meta[i]["junc"].cpu().numpy() * 4
-        # jtyp = meta[i]["jtyp"].cpu().numpy()
-        # juncs = junc[jtyp == 1]
-        # junts = junc[jtyp == 2]
-        #
-        # print("rjuncs shape results",result["juncs"].shape)
-        # rjuncs = result["juncs"][i].cpu().numpy() * 4
-        # rjuncs = None
-        # rjunts = None
-        # if "junts" in result:
-        #     rjunts = result["junts"][i].cpu().numpy() * 4
-        #
-        # lpre = meta[i]["lpre"].cpu().numpy() * 4
-        # vecl_target = meta[i]["lpre_label"].cpu().numpy()
-        # vecl_result = result["lines"][i].cpu().numpy() * 4
-        # score = result["score"][i].cpu().numpy()
-        # lpre = lpre[vecl_target == 1]
-        #
-        # draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_a.jpg")
-        # draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
+        junc = meta[i]["junc"].cpu().numpy() * 4
+        jtyp = meta[i]["jtyp"].cpu().numpy()
+        juncs = junc[jtyp == 1]
+        junts = junc[jtyp == 2]
+
+        print("rjuncs shape results",result["juncs"].shape)
+        rjuncs = result["juncs"][i].cpu().numpy() * 4
+        rjuncs = None
+        rjunts = None
+        if "junts" in result:
+            rjunts = result["junts"][i].cpu().numpy() * 4
+
+        lpre = meta[i]["lpre"].cpu().numpy() * 4
+        vecl_target = meta[i]["lpre_label"].cpu().numpy()
+        vecl_result = result["lines"][i].cpu().numpy() * 4
+        score = result["score"][i].cpu().numpy()
+        lpre = lpre[vecl_target == 1]
+
+        draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_a.jpg")
+        draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
