@@ -132,7 +132,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
             loss = self.loss(x, y)
-            lpos_mask, lneg_mask = y, 1 - y
+            lpos_mask, lneg_mask = y, 2 - y
             loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
 
             def sum_batch(x):
