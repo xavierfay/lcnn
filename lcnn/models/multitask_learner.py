@@ -64,6 +64,10 @@ class MultitaskLearner(nn.Module):
 
             lmap = output[offset[0] : offset[1]].reshape(n_ltyp, 2, batch, row,col)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
+
+            print("jmap", jmap.shape)
+            print("lmap",lmap.shape)
+
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
@@ -89,6 +93,10 @@ class MultitaskLearner(nn.Module):
             for loss_name in L:
                 L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
+
+            for key, value in T.items():
+                print(f"{key}: {value.shape}")
+
         result["losses"] = losses
         return result
 

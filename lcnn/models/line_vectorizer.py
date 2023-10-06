@@ -214,7 +214,7 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            print("up max",torch.max(up))
+            #print("up max",torch.max(up))
 
             # Ensuring Class 2 Inclusion in up and vp
             # Define how many entries you want to ensure are class 2
@@ -236,7 +236,7 @@ class LineVectorizer(nn.Module):
 
 
             label = Lpos[up, vp]
-            print("after sampling", label, torch.max(label), label.shape)
+            #print("after sampling", label, torch.max(label), label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label, dtype=torch.bool)
@@ -265,7 +265,8 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
-            print("label before straight line",label)
+
+            #print("label before straight line",label)
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
