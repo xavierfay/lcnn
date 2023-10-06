@@ -299,12 +299,13 @@ class Trainer(object):
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         vecl_target = meta[i]["lpre_label"].cpu().numpy()
+        print("vecl target max", np.max(vecl_target))
         vecl_result = result["lines"][i].cpu().numpy() * 4
         print("results for lines",vecl_result)
         score = result["score"][i].cpu().numpy()
         print("score =", np.max(score), score)
 
-        for i in range(0,2):
+        for i in range(1,2):
             lpre = lpre[vecl_target == i]
             draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
 
