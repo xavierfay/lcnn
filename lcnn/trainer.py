@@ -127,11 +127,11 @@ class Trainer(object):
                 result = self.model(input_dict)
                 H = result["preds"]
 
-                for key, value in H.items():
-                    if isinstance(value, (torch.Tensor, np.ndarray)):
-                        print(f"Validate function {key}: {value.shape}")
-                    else:
-                        print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+                # for key, value in H.items():
+                #     if isinstance(value, (torch.Tensor, np.ndarray)):
+                #         print(f"Validate function {key}: {value.shape}")
+                #     else:
+                #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
                 total_loss += self._loss(result)
 
@@ -142,11 +142,11 @@ class Trainer(object):
                         **{k: v[i].cpu().numpy() for k, v in H.items()},
                     )
 
-                    for key, value in H.items():
-                        if isinstance(value, (torch.Tensor, np.ndarray)):
-                            print(f"Validate function {key}: {value.shape}")
-                        else:
-                            print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+                    # for key, value in H.items():
+                    #     if isinstance(value, (torch.Tensor, np.ndarray)):
+                    #         print(f"Validate function {key}: {value.shape}")
+                    #     else:
+                    #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
                     if index >= 20:
                         continue
@@ -245,11 +245,11 @@ class Trainer(object):
         return total_loss
 
     def _plot_samples(self, i, index, result, meta, target, prefix):
-        for key, value in result.items():
-            if isinstance(value, (torch.Tensor, np.ndarray)):
-                print(f"plot sample function {key}: {value.shape}")
-            else:
-                print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+        # for key, value in result.items():
+        #     if isinstance(value, (torch.Tensor, np.ndarray)):
+        #         print(f"plot sample function {key}: {value.shape}")
+        #     else:
+        #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
         fn = self.val_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
         img = io.imread(fn)
@@ -263,7 +263,6 @@ class Trainer(object):
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
-            print(line_result.shape)
             imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
@@ -294,7 +293,6 @@ class Trainer(object):
         juncs = junc[jtyp == 1]
         junts = junc[jtyp == 2]
 
-        print("rjuncs shape results",result["juncs"].shape)
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         if "junts" in result:
             rjunts = result["junts"][i].cpu().numpy() * 4

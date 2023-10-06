@@ -165,7 +165,7 @@ class LineVectorizer(nn.Module):
 
             # print("junc:", junc, junc.shape)
             # print("jtype", jtyp, jtyp.shape)
-            print("Lpos:", Lpos, Lpos.shape)
+            # print("Lpos:", Lpos, Lpos.shape)
             # print("Lneg", Lneg, Lneg.shape)
 
 
@@ -301,7 +301,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             # print("lines sample:", line.shape)
-            print("label", label, label.shape)
+            # print("label", label, label.shape)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label.float(), feat, jcs
