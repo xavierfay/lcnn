@@ -304,7 +304,7 @@ class Trainer(object):
         score = result["score"][i].cpu().numpy()
         print("score =", np.max(score), score)
 
-        for i in range(1,2):
+        for i in range(1,3):
             lpre = lpre[vecl_target == i]
             draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
 
