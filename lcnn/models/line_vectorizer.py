@@ -29,7 +29,7 @@ class LineVectorizer(nn.Module):
                 Bottleneck1D(M.dim_loi, M.dim_loi),
             )
             self.fc2 = nn.Sequential(
-                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 1)
+                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 3)
             )
         else:
             self.pooling = nn.MaxPool1d(scale_factor, scale_factor)
@@ -38,7 +38,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, M.dim_fc),
                 nn.ReLU(inplace=True),
-                nn.Linear(M.dim_fc, 1),
+                nn.Linear(M.dim_fc, 3),
             )
         self.loss = nn.CrossEntropyLoss()
 
@@ -93,7 +93,7 @@ class LineVectorizer(nn.Module):
         #f = torch.cat(fs)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
         #x = torch.cat([x, f], 1)
-        x = self.fc2(x).flatten()
+        x = self.fc2(x)
 
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
@@ -132,11 +132,11 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
             y = torch.argmax(y, dim=1) #.long()
-            y = y.float()
+            #y = y.float()
 
 
             x = torch.softmax(x, dim=-1) * 2
-            x = x.float()
+            #x = x.float()
             #print("this is x", x)
             #print("this is y", y)
             loss = self.loss(x, y)
@@ -316,7 +316,7 @@ class LineVectorizer(nn.Module):
             )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             # print("lines sample:", line.shape)
-            # print("label", label, label.shape)
+            print("label", label.shape)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label, feat, jcs

@@ -61,13 +61,14 @@ class WireframeDataset(Dataset):
             lneg0 = slice_permute(lneg[0], M.n_stc_negl)
             lneg1 = slice_permute(lneg[1], M.n_stc_negl)
 
-            lpre = np.concatenate([ lneg0, lneg1, lpos0,lpos1], 0)
+            lpre = np.concatenate([lneg0, lneg1, lpos0,lpos1], 0)
             npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
             labels_0 = torch.tensor([1, 0, 0]).float().repeat((nneg0+nneg1, 1))  # Class 0 for nneg all
             labels_1 = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0
             labels_2 = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1
             lpre_label = torch.cat([labels_0, labels_1, labels_2], dim=0)
+            print("lpre_label size",lpre_label.size())
 
             for i in range(len(lpre)):
                 if random.random() > 0.5:
