@@ -137,7 +137,7 @@ class LineVectorizer(nn.Module):
             #y = y.float()
 
 
-            x = torch.softmax(x, dim=-1)
+            #x = torch.softmax(x, dim=-1)
             #x = x.float()
             print("this is x, y", x[1], y[1])
             loss = self.loss(x, y)
