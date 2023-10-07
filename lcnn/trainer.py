@@ -271,13 +271,19 @@ class Trainer(object):
 
         def draw_vecl(lines, sline, juncs, junts, fn):
             imshow(img)
+
+
             if len(lines) > 0 and not (lines[0] == 0).all():
                 # print("This is the shape of lines", lines.shape)
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
-                    #print("this are the lines", a,b,s)
+                    line_type = torch.argmax(s, dim=1)
                     if i > 0 and (lines[i] == lines[0]).all():
                         break
-                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
+                    if line_type == 1:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
+                    if line_type == 2:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
+
             if not (juncs[0] == 0).all():
                 for i, j in enumerate(juncs):
                     if i > 0 and (i == juncs[0]).all():
@@ -312,7 +318,7 @@ class Trainer(object):
         # for i in range(1,2):
         #     lpre = lpre[vecl_target == i]
         #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
-        draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_a.jpg")
+        draw_vecl(lpre, vecl_target, juncs, junts, f"{prefix}_vecl_a.jpg")
         draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):
