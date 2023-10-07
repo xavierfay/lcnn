@@ -133,7 +133,7 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
-            #y = torch.argmax(y, dim=1) #.long()
+            y = torch.argmax(y, dim=1) #.long()
             #y = y.float()
 
 
