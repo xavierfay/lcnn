@@ -278,7 +278,9 @@ class Trainer(object):
 
                     line_type = np.argmax(s)
                     if i > 0 and (lines[i] == lines[0]).all():
+                        print("broken because double line")
                         break
+
                     if line_type == 1:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
                     if line_type == 2:
@@ -308,8 +310,8 @@ class Trainer(object):
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("lpre_label", lpre_label.shape)
-        vecl_target = meta[i]["lpre_label"].cpu().numpy()
-        #print("vecl target max", np.max(vecl_target))
+        lpre_label = meta[i]["lpre_label"].cpu().numpy()
+        print("vecl target max", np.max(lpre_label), lpre_label)
         vecl_result = result["lines"][i].cpu().numpy() * 4
         #print("results for lines",vecl_result.shape, vecl_result[1])
         score = result["score"][i].cpu().numpy()
@@ -318,7 +320,7 @@ class Trainer(object):
         # for i in range(1,2):
         #     lpre = lpre[vecl_target == i]
         #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
-        draw_vecl(lpre, vecl_target, juncs, junts, f"{prefix}_vecl_a.jpg")
+        draw_vecl(lpre, lpre_label, juncs, junts, f"{prefix}_vecl_a.jpg")
         draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):
