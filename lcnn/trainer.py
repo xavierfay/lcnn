@@ -272,11 +272,10 @@ class Trainer(object):
         def draw_vecl(lines, sline, juncs, junts, fn):
             imshow(img)
 
-
             if len(lines) > 0 and not (lines[0] == 0).all():
                 # print("This is the shape of lines", lines.shape)
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
-                    line_type = torch.argmax(s, dim=1)
+                    line_type = np.argmax(s, dim=1)
                     if i > 0 and (lines[i] == lines[0]).all():
                         break
                     if line_type == 1:
