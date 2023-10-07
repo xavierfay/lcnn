@@ -280,7 +280,8 @@ class Trainer(object):
                     if i > 0 and (lines[i] == lines[0]).all():
                         print("broken because double line")
                         break
-
+                    if line_type == 0:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c="green", linewidth=4)
                     if line_type == 1:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
                     if line_type == 2:
@@ -325,8 +326,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        if self.iteration == 0:
-            self.validate()
+        # if self.iteration == 0:
+        #     self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):

@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from lcnn.config import M
 
-FEATURE_DIM = 0
+FEATURE_DIM = 8
 
 
 class LineVectorizer(nn.Module):
@@ -91,9 +91,9 @@ class LineVectorizer(nn.Module):
             idx.append(idx[-1] + xp.shape[0])
 
         x, y = torch.cat(xs), torch.cat(ys)
-        #f = torch.cat(fs)
+        f = torch.cat(fs)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
-        #x = torch.cat([x, f], 1)
+        x = torch.cat([x, f], 1)
         x = self.fc2(x)
 
         if input_dict["mode"] != "training":
@@ -209,6 +209,8 @@ class LineVectorizer(nn.Module):
 
             # xy: [N_TYPE * K, 2]
             # match: [N_TYPE, K]
+            # TODO: this flatten can help
+
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
