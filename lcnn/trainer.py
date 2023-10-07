@@ -343,7 +343,7 @@ def imshow(im):
     plt.close()
     plt.tight_layout()
     plt.imshow(im)
-    plt.colorbar(fraction=0.046)
+    plt.colorbar(sm, fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 
