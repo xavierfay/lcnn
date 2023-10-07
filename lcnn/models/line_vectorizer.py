@@ -65,6 +65,7 @@ class LineVectorizer(nn.Module):
                 ps.append(p)
             fs.append(feat)
 
+
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
@@ -111,7 +112,8 @@ class LineVectorizer(nn.Module):
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
                     score.append(torch.zeros([1, M.n_out_line], device=p.device))
                 else:
-                    arg = torch.argsort(s0, descending=True)
+                    max_score_indices = torch.argmax(s0, dim=1)
+                    arg = torch.argsort(max_score_indices, descending=True)
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
@@ -137,7 +139,6 @@ class LineVectorizer(nn.Module):
 
             x = torch.softmax(x, dim=-1) * 2
             #x = x.float()
-            #print("this is x", x)
             #print("this is y", y)
             loss = self.loss(x, y)
             lpos_mask, lneg_mask = y, 2 - y

@@ -272,8 +272,9 @@ class Trainer(object):
         def draw_vecl(lines, sline, juncs, junts, fn):
             imshow(img)
             if len(lines) > 0 and not (lines[0] == 0).all():
+                # print("This is the shape of lines", lines.shape)
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
-                    print("this are the lines", a,b,s)
+                    #print("this are the lines", a,b,s)
                     if i > 0 and (lines[i] == lines[0]).all():
                         break
                     plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=4)
@@ -299,12 +300,14 @@ class Trainer(object):
             rjunts = result["junts"][i].cpu().numpy() * 4
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
+        lpre_label = meta[i]["lpre_label"].cpu().numpy()
+        #print("lpre_label", lpre_label.shape)
         vecl_target = meta[i]["lpre_label"].cpu().numpy()
-        print("vecl target max", np.max(vecl_target))
+        #print("vecl target max", np.max(vecl_target))
         vecl_result = result["lines"][i].cpu().numpy() * 4
-        print("results for lines",vecl_result)
+        #print("results for lines",vecl_result.shape, vecl_result[1])
         score = result["score"][i].cpu().numpy()
-        print("score =", np.max(score), score)
+        #print("score =", np.max(score), score)
 
         # for i in range(1,2):
         #     lpre = lpre[vecl_target == i]
@@ -340,7 +343,7 @@ def imshow(im):
     plt.close()
     plt.tight_layout()
     plt.imshow(im)
-    plt.colorbar(sm, fraction=0.046)
+    plt.colorbar(fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 
