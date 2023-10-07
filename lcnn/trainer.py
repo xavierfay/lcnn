@@ -277,7 +277,7 @@ class Trainer(object):
                     #print("this are the lines", a,b,s)
                     if i > 0 and (lines[i] == lines[0]).all():
                         break
-                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=4)
+                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
             if not (juncs[0] == 0).all():
                 for i, j in enumerate(juncs):
                     if i > 0 and (i == juncs[0]).all():
