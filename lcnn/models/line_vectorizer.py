@@ -137,9 +137,13 @@ class LineVectorizer(nn.Module):
             #y = y.float()
             #x = torch.softmax(x, dim=-1)
             #x = x.float()
-            #print("this is x, y", x[1], y[1])
+            print("this is x, y", x[1], y[1])
             loss = self.loss(x, y)
-            lpos_mask, lneg_mask = y, 2 - y
+            #lpos_mask, lneg_mask = y, 2 - y
+            lpos_dashed_mask = (y == 1).float()
+            lpos_continous_mask = (y == 2).float()
+            lpos_mask = lpos_continous_mask + lpos_dashed_mask
+            lneg_mask = (y == 0).float()
             loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
 
             def sum_batch(x):
