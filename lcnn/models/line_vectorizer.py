@@ -293,6 +293,7 @@ class LineVectorizer(nn.Module):
 
             # Flatten jcs and extract xyu and xyv using u, v
             jcs_flat = torch.cat(jcs, dim=0)
+            print("shape jcs, shape u,v", jcs.shape, u.shape, v.shape )
             xyu, xyv = jcs_flat[u], jcs_flat[v]
 
             # Compute slopes and create masks for valid lines (horizontal/vertical)
