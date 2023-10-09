@@ -301,10 +301,11 @@ class LineVectorizer(nn.Module):
             horizontal_mask = torch.abs(slopes) < 0.05
             vertical_mask = torch.abs(slopes) > 100
             valid_lines_mask = horizontal_mask | vertical_mask
+            print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
             # Ensure that valid_lines_mask does not contain invalid indices
             assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
-            print("shapes", valid_lines_mask.shape[0] , xyu.shape[0])
+
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
