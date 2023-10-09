@@ -11,7 +11,6 @@ from lcnn.config import M
 
 FEATURE_DIM = 0
 
-
 class LineVectorizer(nn.Module):
     def __init__(self, backbone):
         super().__init__()
@@ -29,7 +28,7 @@ class LineVectorizer(nn.Module):
                 Bottleneck1D(M.dim_loi, M.dim_loi),
             )
             self.fc2 = nn.Sequential(
-                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 3)
+                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 2)
             )
         else:
             self.pooling = nn.MaxPool1d(scale_factor, scale_factor)
@@ -38,7 +37,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, M.dim_fc),
                 nn.ReLU(inplace=True),
-                nn.Linear(M.dim_fc, 3),
+                nn.Linear(M.dim_fc, 2),
             )
         self.loss = nn.CrossEntropyLoss()
 
@@ -53,18 +52,14 @@ class LineVectorizer(nn.Module):
             p, label, jc = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
             )
-            # print("p.shape:", p.shape)
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
                 p = torch.cat([p, meta["lpre"]])
-                #feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 del jc
             else:
                 jcs.append(jc)
                 ps.append(p)
-            #fs.append(feat)
-
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
@@ -74,14 +69,13 @@ class LineVectorizer(nn.Module):
             px1 = (px0 + 1).clamp(min=0, max=255)
             py1 = (py0 + 1).clamp(min=0, max=255)
             px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
-
-            # xp: [N_LINE, N_CHANNEL, N_POINT]
+            print(f"Shape of x: {x.shape}")
             xp = (
                 (
-                    x[i, :, px0l, py0l] * (px1 - px) * (py1 - py)
-                    + x[i, :, px1l, py0l] * (px - px0) * (py1 - py)
-                    + x[i, :, px0l, py1l] * (px1 - px) * (py - py0)
-                    + x[i, :, px1l, py1l] * (px - px0) * (py - py0)
+                        x[i, :, px0l, py0l] * (px1 - px) * (py1 - py)
+                        + x[i, :, px1l, py0l] * (px - px0) * (py1 - py)
+                        + x[i, :, px0l, py1l] * (px1 - px) * (py - py0)
+                        + x[i, :, px1l, py1l] * (px - px0) * (py - py0)
                 )
                 .reshape(n_channel, -1, M.n_pts0)
                 .permute(1, 0, 2)
@@ -90,11 +84,9 @@ class LineVectorizer(nn.Module):
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
 
-        x, y = torch.cat(xs), torch.cat(ys)
-        #f = torch.cat(fs)
-        x = x.reshape(-1, M.n_pts1 * M.dim_loi)
-        #x = torch.cat([x, f], 1)
-        x = self.fc2(x)
+            x, y = torch.cat(xs), torch.cat(ys)
+            x = x.reshape(-1, M.n_pts1 * M.dim_loi)
+            x = self.fc2(x)
 
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
@@ -103,9 +95,9 @@ class LineVectorizer(nn.Module):
             lines = []
             score = []
             for i in range(n_batch):
-                p0 = p[idx[i] : idx[i + 1]]
-                s0 = s[idx[i] : idx[i + 1]]
-                mask = b[idx[i] : idx[i + 1]]
+                p0 = p[idx[i]: idx[i + 1]]
+                s0 = s[idx[i]: idx[i + 1]]
+                mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
                 if len(p0) == 0:
@@ -133,13 +125,8 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
-            y = torch.argmax(y, dim=1) #.long()
-            #y = y.float()
-            #x = torch.softmax(x, dim=-1)
-            #x = x.float()
-            # print("this is x, y", x[1], y[1])
+            y = torch.argmax(y, dim=1)  # .long()
             loss = self.loss(x, y)
-            #lpos_mask, lneg_mask = y, 2 - y
             lpos_dashed_mask = (y == 1).float()
             lpos_continous_mask = (y == 2).float()
             lpos_mask = lpos_continous_mask + lpos_dashed_mask
@@ -147,7 +134,7 @@ class LineVectorizer(nn.Module):
             loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
 
             def sum_batch(x):
-                xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
+                xs = [x[idx[i]: idx[i + 1]].sum()[None] for i in range(n_batch)]
                 return torch.cat(xs)
 
             lpos = sum_batch(loss_lpos) / sum_batch(lpos_mask).clamp(min=1)
@@ -158,13 +145,6 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] == "training":
             del result["preds"]
 
-        # print(input_dict["mode"])
-        # print("lines result:", len(lines))#, torch.max(lines))
-        # print("results", len(result["preds"]["lines"][0].cpu().numpy()))
-        # non_zero_count = torch.count_nonzero(result["preds"]["lines"][0].cpu())
-        #
-        # print("number of non zeros in tensor", non_zero_count.item() )
-
         return result
 
     def sample_lines(self, meta, jmap, joff, mode):
@@ -173,12 +153,6 @@ class LineVectorizer(nn.Module):
             jtyp = meta["jtyp"]  # [N]
             Lpos = meta["Lpos"]  # [N+1, N+1]
             Lneg = meta["Lneg"]  # [N+1, N+1]
-
-            # print("junc:", junc, junc.shape)
-            # print("jtype", jtyp, jtyp.shape)
-            # print("Lpos:", Lpos, Lpos.shape)
-            # print("Lneg", Lneg, Lneg.shape)
-
 
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
@@ -203,15 +177,9 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
-            #print("xy_", xy_.shape, xy_)
-
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
-
-            # xy: [N_TYPE * K, 2]
-            # match: [N_TYPE, K]
-            # TODO: this flatten can help
 
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
@@ -221,36 +189,17 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
-            # class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            #print("up max",torch.max(up))
-
-            # Ensuring Class 2 Inclusion in up and vp
-            # Define how many entries you want to ensure are class 2
-            # num_class_two_to_include = 100
-            #
-            # # Randomly select some class 2 indices
-            # selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
-            #
-            # selected_class_two_indices_row = class_two_indices[0][selected_indices]
-            # selected_class_two_indices_col = class_two_indices[1][selected_indices]
-            #
-            # # Replace some of the initially sampled indices with class 2 indices
-            # up[:num_class_two_to_include] = selected_class_two_indices_row
-            # vp[:num_class_two_to_include] = selected_class_two_indices_col
-
-            # # Optionally shuffle up and vp if order matters
-            # up = up[torch.randperm(up.size(0))]
-            # vp = vp[torch.randperm(vp.size(0))]
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
+            print("scalar labels", scalar_labels)
             # Initialize a tensor of zeros with shape [N, 3]
-            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
+            label = torch.zeros(scalar_labels.shape[0], 2, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
@@ -260,24 +209,29 @@ class LineVectorizer(nn.Module):
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
-                cdx = (label[:, 0] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
-                    cdx = cdx[perm]
-                c[cdx] = 1
-
-                # Sample continous Lines (Class 1)
-                cdx = (label[:, 1] == 1).nonzero().flatten()
+                cdx = Lneg[up, vp].nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
+                    # print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # Sample dashed Lines (Class 2)
-                cdx = (label[:, 2] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_othr:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_othr]
+                # Sample continous Lines (Class 1)
+                cdx = (label[:, 0] == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_negl:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
                     cdx = cdx[perm]
+                c[cdx] = 1
+
+                # Sample dashed Lines (Class 2)
+                cdx = (label[:, 1] == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_othr:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                    cdx = cdx[perm]
+                c[cdx] = 1
+
+                # sample other (unmatched) lines
+                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
                 c[cdx] = 1
 
             else:
@@ -287,16 +241,6 @@ class LineVectorizer(nn.Module):
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
-            # Reshape xy and generate jcs
-            # xy = xy.reshape(n_type * K, 2)
-            # xy = xy.reshape(n_type, K, 2)
-            # jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            #
-            # # Flatten jcs and extract xyu and xyv using u, v
-            # jcs_flat = torch.cat(jcs, dim=0)
-            # print("shape jcs, shape u,v", len(jcs_flat), len(u), len(v) )
-            # xyu, xyv = jcs_flat[u], jcs_flat[v]
-
 
 
 
@@ -315,25 +259,10 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
-            #print("label after filtering", label.shape)
-
-            # u2v = xyu - xyv
-            # u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
-            # feat = torch.cat(
-            #     [
-            #         xyu / 256 * M.use_cood,
-            #         xyv / 256 * M.use_cood,
-            #         u2v * M.use_slop,
-            #         (u[:, None] > K).float(),
-            #         (v[:, None] > K).float(),
-            #     ],
-            #     1,
-            # )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            # print("lines sample:", line.shape)
-            # print("label", label.shape)
+            print("label shape", label)
             return line, label, jcs
 
 

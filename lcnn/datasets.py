@@ -64,9 +64,9 @@ class WireframeDataset(Dataset):
             lpre = np.concatenate([lpos0, lpos1,lneg0, lneg1], 0)
             npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
-            labels_0 = torch.tensor([1, 0, 0]).float().repeat((nneg0+nneg1, 1))  # Class 0 for nneg all
-            labels_1 = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0
-            labels_2 = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1
+            labels_0 = torch.tensor([1, 0]).float().repeat((npos0, 1))  # Class 0 for lpos0
+            labels_1 = torch.tensor([0, 1]).float().repeat((npos1, 1))  # Class 1 for lpos1
+            labels_2 = torch.tensor([0, 0]).float().repeat((nneg0+nneg1, 1))  # Class 2 for all lneg
             lpre_label = torch.cat([labels_1, labels_2, labels_0], dim=0)
 
 
@@ -104,8 +104,8 @@ class WireframeDataset(Dataset):
             mat[link1[:, 1], link1[:, 0]] = 1
 
         if len(link2) > 0:
-            mat[link2[:, 0], link2[:, 1]] = 2
-            mat[link2[:, 1], link2[:, 0]] = 2
+            mat[link2[:, 0], link2[:, 1]] = 1
+            mat[link2[:, 1], link2[:, 0]] = 1
 
         return mat
 
