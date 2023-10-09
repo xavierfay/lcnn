@@ -91,7 +91,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.01).any(dim=-1)
+            b = (s > 0.3).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
@@ -261,7 +261,8 @@ class LineVectorizer(nn.Module):
 
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
-            jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            #jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             # print("label shape", label)
             return line, label, jcs
 
