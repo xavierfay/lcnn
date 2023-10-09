@@ -304,15 +304,15 @@ class LineVectorizer(nn.Module):
 
             # Ensure that valid_lines_mask does not contain invalid indices
             assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
-
+            print("shapes", valid_lines_mask.shape[0] , xyu.shape[0])
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
             #print("label after filtering", label.shape)
 
-            u2v = xyu - xyv
-            u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
+            # u2v = xyu - xyv
+            # u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
             # feat = torch.cat(
             #     [
             #         xyu / 256 * M.use_cood,
