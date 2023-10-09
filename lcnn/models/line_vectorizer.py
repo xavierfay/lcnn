@@ -50,20 +50,20 @@ class LineVectorizer(nn.Module):
 
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
-            p, label, feat, jc = self.sample_lines(
+            p, label, jc = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
                 p = torch.cat([p, meta["lpre"]])
-                feat = torch.cat([feat, meta["lpre_feat"]])
+                #feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 del jc
             else:
                 jcs.append(jc)
                 ps.append(p)
-            fs.append(feat)
+            #fs.append(feat)
 
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
@@ -221,7 +221,7 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
-            class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
+            # class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
@@ -288,7 +288,10 @@ class LineVectorizer(nn.Module):
 
             #print("label before straight line",label)
             xy = xy.reshape(n_type * K, 2)
-            xyu, xyv = xy[u], xy[v]
+            xy = xy.reshape(n_type, K, 2)
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jcs_flat = torch.cat(jcs, dim=0)
+            xyu, xyv = jcs_flat[u], jcs_flat[v]
 
             deltas=xyv-xyu
             slopes=torch.where(deltas[:,0]!=0,deltas[:,1]/deltas[:,0],float('inf'))
@@ -309,22 +312,20 @@ class LineVectorizer(nn.Module):
 
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
-            feat = torch.cat(
-                [
-                    xyu / 256 * M.use_cood,
-                    xyv / 256 * M.use_cood,
-                    u2v * M.use_slop,
-                    (u[:, None] > K).float(),
-                    (v[:, None] > K).float(),
-                ],
-                1,
-            )
+            # feat = torch.cat(
+            #     [
+            #         xyu / 256 * M.use_cood,
+            #         xyv / 256 * M.use_cood,
+            #         u2v * M.use_slop,
+            #         (u[:, None] > K).float(),
+            #         (v[:, None] > K).float(),
+            #     ],
+            #     1,
+            # )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             # print("lines sample:", line.shape)
             # print("label", label.shape)
-            xy = xy.reshape(n_type, K, 2)
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            return line, label, feat, jcs
+            return line, label, jcs
 
 
 def non_maximum_suppression(a):
