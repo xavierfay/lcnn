@@ -127,10 +127,10 @@ class LineVectorizer(nn.Module):
             y = torch.cat(ys)
             y = torch.argmax(y, dim=1)  # .long()
             loss = self.loss(x, y)
-            lpos_dashed_mask = (y == 1).float()
-            lpos_continous_mask = (y == 2).float()
-            lpos_mask = lpos_continous_mask + lpos_dashed_mask
+            lpos_mask = (y == 1).float()
             lneg_mask = (y == 0).float()
+            #lpos_mask = lpos_continous_mask + lpos_dashed_mask
+            #lneg_mask = (y == 0).float()
             loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
 
             def sum_batch(x):
@@ -209,12 +209,12 @@ class LineVectorizer(nn.Module):
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
-                cdx = Lneg[up, vp].nonzero().flatten()
-                if len(cdx) > M.n_dyn_negl:
-                    # print("too many negative lines")
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
-                    cdx = cdx[perm]
-                c[cdx] = 1
+                # cdx = Lneg[up, vp].nonzero().flatten()
+                # if len(cdx) > M.n_dyn_negl:
+                #     # print("too many negative lines")
+                #     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
+                #     cdx = cdx[perm]
+                # c[cdx] = 1
 
                 # Sample continous Lines (Class 1)
                 cdx = (label[:, 0] == 1).nonzero().flatten()
