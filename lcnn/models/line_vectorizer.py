@@ -197,7 +197,7 @@ class LineVectorizer(nn.Module):
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
-            print("scalar labels", scalar_labels)
+            #print("scalar labels", scalar_labels)
             # Initialize a tensor of zeros with shape [N, 3]
             label = torch.zeros(scalar_labels.shape[0], 2, device=scalar_labels.device)
 
@@ -262,7 +262,7 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            print("label shape", label)
+            # print("label shape", label)
             return line, label, jcs
 
 
