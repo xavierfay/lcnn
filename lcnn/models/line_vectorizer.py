@@ -69,7 +69,7 @@ class LineVectorizer(nn.Module):
             px1 = (px0 + 1).clamp(min=0, max=255)
             py1 = (py0 + 1).clamp(min=0, max=255)
             px0l, py0l, px1l, py1l = px0.long(), py0.long(), px1.long(), py1.long()
-            print(f"Shape of x: {x.shape}")
+            #print(f"Shape of x: {x.shape}")
             xp = (
                 (
                         x[i, :, px0l, py0l] * (px1 - px) * (py1 - py)
