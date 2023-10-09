@@ -285,16 +285,20 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
-
-            # Reshape xy and generate jcs
             xy = xy.reshape(n_type * K, 2)
-            xy = xy.reshape(n_type, K, 2)
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            xyu, xyv = xy[u], xy[v]
+            # Reshape xy and generate jcs
+            # xy = xy.reshape(n_type * K, 2)
+            # xy = xy.reshape(n_type, K, 2)
+            # jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            #
+            # # Flatten jcs and extract xyu and xyv using u, v
+            # jcs_flat = torch.cat(jcs, dim=0)
+            # print("shape jcs, shape u,v", len(jcs_flat), len(u), len(v) )
+            # xyu, xyv = jcs_flat[u], jcs_flat[v]
 
-            # Flatten jcs and extract xyu and xyv using u, v
-            jcs_flat = torch.cat(jcs, dim=0)
-            print("shape jcs, shape u,v", len(jcs_flat), len(u), len(v) )
-            xyu, xyv = jcs_flat[u], jcs_flat[v]
+
+
 
             # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
@@ -326,6 +330,8 @@ class LineVectorizer(nn.Module):
             #     1,
             # )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
+            xy = xy.reshape(n_type, K, 2)
+            jcs = [xy[i, score[i]] for i in range(n_type)]
             # print("lines sample:", line.shape)
             # print("label", label.shape)
             return line, label, jcs
