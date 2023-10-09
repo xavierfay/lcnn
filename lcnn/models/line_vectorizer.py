@@ -286,27 +286,28 @@ class LineVectorizer(nn.Module):
             #sample lines
             u, v, label = u[c], v[c], label[c]
 
-            #print("label before straight line",label)
+            # Reshape xy and generate jcs
             xy = xy.reshape(n_type * K, 2)
             xy = xy.reshape(n_type, K, 2)
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+
+            # Flatten jcs and extract xyu and xyv using u, v
             jcs_flat = torch.cat(jcs, dim=0)
             xyu, xyv = jcs_flat[u], jcs_flat[v]
 
-            deltas=xyv-xyu
-            slopes=torch.where(deltas[:,0]!=0,deltas[:,1]/deltas[:,0],float('inf'))
+            # Compute slopes and create masks for valid lines (horizontal/vertical)
+            deltas = xyv - xyu
+            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            horizontal_mask = torch.abs(slopes) < 0.05
+            vertical_mask = torch.abs(slopes) > 100
+            valid_lines_mask = horizontal_mask | vertical_mask
 
-            #maskforhorizontallines
-            horizontal_mask=torch.abs(slopes)<0.05
+            # Ensure that valid_lines_mask does not contain invalid indices
+            assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
 
-            #maskforverticallines
-            vertical_mask=torch.abs(slopes)>100 # A large number to approximate infinity
-
-            valid_lines_mask=horizontal_mask|vertical_mask
-            xyu,xyv = xyu[valid_lines_mask],xyv[valid_lines_mask]
-            u,v = u[valid_lines_mask],v[valid_lines_mask]
-
-            label=label[valid_lines_mask]
+            # Filter xyu, xyv, and label using the valid_lines_mask
+            xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
+            label = label[valid_lines_mask]
 
             #print("label after filtering", label.shape)
 
