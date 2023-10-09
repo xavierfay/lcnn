@@ -33,20 +33,20 @@ model:
   # sampler parameters
   ## static sampler
   n_stc_posl: 300
-  n_stc_negl: 20
+  n_stc_negl: 40
 
   ## dynamic sampler
-  n_dyn_junc: 30
+  n_dyn_junc: 300
   n_dyn_posl: 300
-  n_dyn_negl: 40
+  n_dyn_negl: 80
   n_dyn_othr: 600
 
   # LOIPool layer parameters
-  n_pts0: 128
-  n_pts1: 32
+  n_pts0: 32
+  n_pts1: 8
 
   # line verification network parameters
-  dim_loi: 128
+  dim_loi: 256
   dim_fc: 1024
 
   # maximum junction and line outputs
