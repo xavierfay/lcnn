@@ -40,7 +40,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, 3),
             )
-        self.loss = nn.CrossEntropyLoss()
+        self.loss = nn.BCEWithLogitsLoss()
 
     def forward(self, input_dict):
         result = self.backbone(input_dict)
@@ -133,26 +133,28 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
-            y = torch.argmax(y, dim=1) #.long()
+
             #y = y.float()
             #x = torch.softmax(x, dim=-1)
             #x = x.float()
             # print("this is x, y", x[1], y[1])
             loss = self.loss(x, y)
             #lpos_mask, lneg_mask = y, 2 - y
-            lpos_dashed_mask = (y == 1).float()
-            lpos_continous_mask = (y == 2).float()
-            lpos_mask = lpos_continous_mask + lpos_dashed_mask
+            y = torch.argmax(y, dim=1)  # .long()
+            lpos0_mask = (y == 1).float()
+            lpos1_mask = (y == 2).float()
             lneg_mask = (y == 0).float()
-            loss_lpos, loss_lneg = loss * lpos_mask, loss * lneg_mask
+            loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
 
             def sum_batch(x):
                 xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
                 return torch.cat(xs)
 
-            lpos = sum_batch(loss_lpos) / sum_batch(lpos_mask).clamp(min=1)
+            lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1)
+            lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1)
             lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1)
-            result["losses"][0]["lpos"] = lpos * M.loss_weight["lpos"]
+            result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
+            result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
 
         if input_dict["mode"] == "training":

@@ -326,8 +326,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
@@ -352,7 +352,7 @@ def imshow(im):
     plt.close()
     plt.tight_layout()
     plt.imshow(im)
-    plt.colorbar(sm, fraction=0.046)
+    plt.colorbar(fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 
