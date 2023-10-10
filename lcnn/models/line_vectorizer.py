@@ -40,7 +40,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, 3),
             )
-        self.loss = nn.BCEWithLogitsLoss()
+        self.loss = nn.CrossEntropyLoss()
 
     def forward(self, input_dict):
         result = self.backbone(input_dict)
@@ -99,7 +99,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.01).any(dim=-1)
+            b = (s > 0.3).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
@@ -133,14 +133,8 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
             y = torch.cat(ys)
-
-            #y = y.float()
-            #x = torch.softmax(x, dim=-1)
-            #x = x.float()
-            # print("this is x, y", x[1], y[1])
-            loss = self.loss(x, y)
-            #lpos_mask, lneg_mask = y, 2 - y
             y = torch.argmax(y, dim=1)  # .long()
+            loss = self.loss(x, y)
             lpos0_mask = (y == 1).float()
             lpos1_mask = (y == 2).float()
             lneg_mask = (y == 0).float()
@@ -262,24 +256,29 @@ class LineVectorizer(nn.Module):
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
-                cdx = (label[:, 0] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                cdx = Lneg[up, vp].nonzero().flatten()
+                if len(cdx) > M.n_dyn_negl:
+                    # print("too many negative lines")
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
                 # Sample continous Lines (Class 1)
                 cdx = (label[:, 1] == 1).nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
                 # Sample dashed Lines (Class 2)
                 cdx = (label[:, 2] == 1).nonzero().flatten()
                 if len(cdx) > M.n_dyn_othr:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_othr]
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
                     cdx = cdx[perm]
+                c[cdx] = 1
+
+                # sample other (unmatched) lines
+                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
                 c[cdx] = 1
 
             else:
@@ -333,9 +332,8 @@ class LineVectorizer(nn.Module):
             # )
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
-            jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            # print("lines sample:", line.shape)
-            # print("label", label.shape)
+            #jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
             return line, label, jcs
 
 
