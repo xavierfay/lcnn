@@ -99,7 +99,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.3).any(dim=-1)
+            b = (s > 0.5).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
@@ -135,11 +135,14 @@ class LineVectorizer(nn.Module):
             y = torch.cat(ys)
             y = torch.argmax(y, dim=1)  # .long()
             loss = self.loss(x, y)
+            #print(loss)
             lpos0_mask = (y == 1).float()
             lpos1_mask = (y == 2).float()
             lneg_mask = (y == 0).float()
             loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
 
+            #print(f"Unique labels in batch: {y.unique()}")
+            #print(f"Loss components: {loss_lpos0.sum().item()}, {loss_lpos1.sum().item()}, {loss_lneg.sum().item()}")
             def sum_batch(x):
                 xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
                 return torch.cat(xs)
@@ -147,6 +150,8 @@ class LineVectorizer(nn.Module):
             lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1)
             lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1)
             lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1)
+            #print(f"lpos0 after sum_batch: {lpos0}")
+
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
