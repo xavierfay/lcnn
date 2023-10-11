@@ -134,23 +134,6 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "testing":
 
             def cross_entropy_loss_per_class(x, y, num_classes=3):
-                """
-                Calculate cross entropy loss per class.
-
-                Parameters:
-                x (torch.Tensor): Raw output from the network. Shape: [N, C]
-                y (torch.Tensor): True labels. Shape: [N]
-                num_classes (int): Number of classes.
-
-                Returns:
-                torch.Tensor: Loss per class. Shape: [C]
-                """
-
-                assert x.dim() == 2, f"x should be 2D: {x.shape}"
-                assert x.size(1) == num_classes, f"x should have {num_classes} columns: {x.shape}"
-                assert y.dim() == 1, f"y should be 1D: {y.shape}"
-                assert y.size(0) == x.size(0), f"y and x should have the same number of rows: {y.shape}, {x.shape}"
-
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
                 y = y.long()
