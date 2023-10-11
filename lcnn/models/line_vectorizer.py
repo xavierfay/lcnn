@@ -132,25 +132,69 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
-            y = torch.cat(ys)
-            y = torch.argmax(y, dim=1)  # .long()
-            loss = self.loss(x, y)
-            #print(loss)
-            lpos0_mask = (y == 1).float()
-            lpos1_mask = (y == 2).float()
-            lneg_mask = (y == 0).float()
-            loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
-
-            #print(f"Unique labels in batch: {y.unique()}")
-            #print(f"Loss components: {loss_lpos0.sum().item()}, {loss_lpos1.sum().item()}, {loss_lneg.sum().item()}")
-            def sum_batch(x):
-                xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
-                return torch.cat(xs)
-
-            lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1e-8)
-            lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1e-8)
-            lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1e-8)
+            # y = torch.cat(ys)
+            # y = torch.argmax(y, dim=1)  # .long()
+            # loss = self.loss(x, y)
+            # #print(loss)
+            # lpos0_mask = (y == 1).float()
+            # lpos1_mask = (y == 2).float()
+            # lneg_mask = (y == 0).float()
+            # loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
+            #
+            # #print(f"Unique labels in batch: {y.unique()}")
+            # #print(f"Loss components: {loss_lpos0.sum().item()}, {loss_lpos1.sum().item()}, {loss_lneg.sum().item()}")
+            # def sum_batch(x):
+            #     xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
+            #     return torch.cat(xs)
+            #
+            # lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1e-8)
+            # lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1e-8)
+            # lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1e-8)
             #print(f"lpos0 after sum_batch: {lpos0}")
+
+            def cross_entropy_loss_per_class(x, y, num_classes=3):
+                """
+                Calculate cross entropy loss per class.
+
+                Parameters:
+                x (torch.Tensor): Raw output from the network. Shape: [N, C]
+                y (torch.Tensor): True labels. Shape: [N]
+                num_classes (int): Number of classes.
+
+                Returns:
+                torch.Tensor: Loss per class. Shape: [C]
+                """
+                # Ensure the logits are float
+                x = x.float()
+                # Convert labels to long
+                y = y.long()
+
+                # Calculate the softmax along the second dimension
+                softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
+
+                # Initialize an empty tensor to store the per-class losses
+                loss_per_class = torch.zeros(num_classes).float()
+
+                # Loop over each class and calculate the loss
+                for c in range(num_classes):
+                    # Create a mask that selects only the samples of class c
+                    mask = (y == c).float()
+
+                    # Calculate the loss for class c
+                    # Note: The true label for these samples is always c
+                    loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
+
+                    # Average the loss over all samples
+                    loss_per_class[c] = loss_c.sum() / (
+                                mask.sum() + 1e-8)  # adding a small value to avoid division by zero
+
+                return loss_per_class
+
+            loss_per_class = cross_entropy_loss_per_class(x, y, num_classes=3)
+            lneg = loss_per_class[0].item()
+            lpos0 = loss_per_class[1].item()
+            lpos1 = loss_per_class[2].item()
+
 
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
