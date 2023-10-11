@@ -57,6 +57,10 @@ class Trainer(object):
         self.avg_metrics = None
         self.metrics = np.zeros(0)
 
+        wandb.init(project='my_project_name', entity='my_username')
+        config = wandb.config
+        config.update({'batch_size': self.batch_size, ...}, allow_val_change=True)
+
     # def run_tensorboard(self):
     #     board_out = osp.join(self.out, "tensorboard")
     #     if not osp.exists(board_out):
