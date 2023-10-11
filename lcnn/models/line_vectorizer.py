@@ -132,25 +132,6 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
-            # y = torch.cat(ys)
-            # y = torch.argmax(y, dim=1)  # .long()
-            # loss = self.loss(x, y)
-            # #print(loss)
-            # lpos0_mask = (y == 1).float()
-            # lpos1_mask = (y == 2).float()
-            # lneg_mask = (y == 0).float()
-            # loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
-            #
-            # #print(f"Unique labels in batch: {y.unique()}")
-            # #print(f"Loss components: {loss_lpos0.sum().item()}, {loss_lpos1.sum().item()}, {loss_lneg.sum().item()}")
-            # def sum_batch(x):
-            #     xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
-            #     return torch.cat(xs)
-            #
-            # lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1e-8)
-            # lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1e-8)
-            # lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1e-8)
-            #print(f"lpos0 after sum_batch: {lpos0}")
 
             def cross_entropy_loss_per_class(x, y, num_classes=3):
                 """
@@ -170,9 +151,8 @@ class LineVectorizer(nn.Module):
                 assert y.dim() == 1, f"y should be 1D: {y.shape}"
                 assert y.size(0) == x.size(0), f"y and x should have the same number of rows: {y.shape}, {x.shape}"
 
-                # Ensure the logits are float
+                # Ensure the logits are float, Convert labels to long
                 x = x.float()
-                # Convert labels to long
                 y = y.long()
 
                 # Calculate the softmax along the second dimension
@@ -185,12 +165,7 @@ class LineVectorizer(nn.Module):
                 for c in range(num_classes):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
-
-                    # Calculate the loss for class c
-                    # Note: The true label for these samples is always c
                     loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
-
-                    # Average the loss over all samples
                     loss_per_class[c] = loss_c.sum() / (
                                 mask.sum() + 1e-8)  # adding a small value to avoid division by zero
 
@@ -203,20 +178,12 @@ class LineVectorizer(nn.Module):
             lpos0 = loss_per_class[1]
             lpos1 = loss_per_class[2]
 
-
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
 
         if input_dict["mode"] == "training":
             del result["preds"]
-
-        # print(input_dict["mode"])
-        # print("lines result:", len(lines))#, torch.max(lines))
-        # print("results", len(result["preds"]["lines"][0].cpu().numpy()))
-        # non_zero_count = torch.count_nonzero(result["preds"]["lines"][0].cpu())
-        #
-        # print("number of non zeros in tensor", non_zero_count.item() )
 
         return result
 
@@ -226,12 +193,6 @@ class LineVectorizer(nn.Module):
             jtyp = meta["jtyp"]  # [N]
             Lpos = meta["Lpos"]  # [N+1, N+1]
             Lneg = meta["Lneg"]  # [N+1, N+1]
-
-            # print("junc:", junc, junc.shape)
-            # print("jtype", jtyp, jtyp.shape)
-            # print("Lpos:", Lpos, Lpos.shape)
-            # print("Lneg", Lneg, Lneg.shape)
-
 
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
@@ -282,24 +243,6 @@ class LineVectorizer(nn.Module):
             up, vp = match[u], match[v]
             #print("up max",torch.max(up))
 
-            # Ensuring Class 2 Inclusion in up and vp
-            # Define how many entries you want to ensure are class 2
-            # num_class_two_to_include = 100
-            #
-            # # Randomly select some class 2 indices
-            # selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
-            #
-            # selected_class_two_indices_row = class_two_indices[0][selected_indices]
-            # selected_class_two_indices_col = class_two_indices[1][selected_indices]
-            #
-            # # Replace some of the initially sampled indices with class 2 indices
-            # up[:num_class_two_to_include] = selected_class_two_indices_row
-            # vp[:num_class_two_to_include] = selected_class_two_indices_col
-
-            # # Optionally shuffle up and vp if order matters
-            # up = up[torch.randperm(up.size(0))]
-            # vp = vp[torch.randperm(vp.size(0))]
-
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
@@ -320,17 +263,17 @@ class LineVectorizer(nn.Module):
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # Sample continous Lines (Class 1)
+                # Sample dashed Lines (Class 1)
                 cdx = (label[:, 1] == 1).nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl0]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # Sample dashed Lines (Class 2)
+                # Sample continous Lines (Class 2)
                 cdx = (label[:, 2] == 1).nonzero().flatten()
                 if len(cdx) > M.n_dyn_othr:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl1]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
@@ -361,8 +304,8 @@ class LineVectorizer(nn.Module):
             # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
             slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            horizontal_mask = torch.abs(slopes) < 0.05
-            vertical_mask = torch.abs(slopes) > 100
+            horizontal_mask = torch.abs(slopes) < 0.01
+            vertical_mask = torch.abs(slopes) > 1000
             valid_lines_mask = horizontal_mask | vertical_mask
             #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
