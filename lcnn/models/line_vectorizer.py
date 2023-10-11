@@ -196,7 +196,9 @@ class LineVectorizer(nn.Module):
 
                 return loss_per_class
 
+            y = torch.argmax(y, dim=1)
             loss_per_class = cross_entropy_loss_per_class(x, y, num_classes=3)
+
             lneg = loss_per_class[0].item()
             lpos0 = loss_per_class[1].item()
             lpos1 = loss_per_class[2].item()
