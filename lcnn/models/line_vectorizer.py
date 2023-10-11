@@ -110,7 +110,7 @@ class LineVectorizer(nn.Module):
                 s0 = s0[mask]
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
-                    score.append(torch.zeros([1, M.n_out_line], device=p.device))
+                    score.append(torch.zeros([1, M.n_out_line, 3], device=p.device))
                 else:
                     max_score_indices = torch.argmax(s0, dim=1)
                     arg = torch.argsort(max_score_indices, descending=True)
