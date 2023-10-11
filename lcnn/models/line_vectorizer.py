@@ -172,6 +172,7 @@ class LineVectorizer(nn.Module):
                 return loss_per_class
 
             y = torch.argmax(y, dim=1)
+            print(torch.bincount(y))
             loss_per_class = cross_entropy_loss_per_class(x, y, num_classes=3)
 
             lneg = loss_per_class[0]
@@ -234,13 +235,11 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
-            # class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            #print("up max",torch.max(up))
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
@@ -249,7 +248,6 @@ class LineVectorizer(nn.Module):
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
-            # print("after sampling", label, torch.max(label), label.shape)
 
             if mode == "training":
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
