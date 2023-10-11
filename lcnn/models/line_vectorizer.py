@@ -147,9 +147,9 @@ class LineVectorizer(nn.Module):
                 xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
                 return torch.cat(xs)
 
-            lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1)
-            lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1)
-            lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1)
+            lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1e-8)
+            lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1e-8)
+            lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1e-8)
             #print(f"lpos0 after sum_batch: {lpos0}")
 
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
