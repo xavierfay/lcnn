@@ -19,6 +19,8 @@ from tensorboardX import SummaryWriter
 from lcnn.config import C, M
 from lcnn.utils import recursive_to
 
+import wandb
+
 
 class Trainer(object):
     def __init__(self, device, model, optimizer, train_loader, val_loader, out):
@@ -56,6 +58,10 @@ class Trainer(object):
         self.loss_labels = None
         self.avg_metrics = None
         self.metrics = np.zeros(0)
+
+        wandb.init(project='line_reader', entity='xfung')
+        config = wandb.config
+        config.update(M, allow_val_change=True)
 
     # def run_tensorboard(self):
     #     board_out = osp.join(self.out, "tensorboard")
@@ -155,16 +161,15 @@ class Trainer(object):
         self._write_metrics(len(self.val_loader), total_loss, "validation", True)
         self.mean_loss = total_loss / len(self.val_loader)
 
-        torch.save(
-            {
-                "iteration": self.iteration,
-                "arch": self.model.__class__.__name__,
-                "optim_state_dict": self.optim.state_dict(),
-                "model_state_dict": self.model.state_dict(),
-                "best_mean_loss": self.best_mean_loss,
-            },
-            osp.join(self.out, "checkpoint_latest.pth"),
-        )
+        checkpoint_path = osp.join(self.out, "checkpoint_latest.pth")
+        torch.save({
+            "iteration": self.iteration,
+            "arch": self.model.__class__.__name__,
+            "optim_state_dict": self.optim.state_dict(),
+            "model_state_dict": self.model.state_dict(),
+            "best_mean_loss": self.best_mean_loss,
+        }, checkpoint_path)
+        wandb.save(checkpoint_path)
         shutil.copy(
             osp.join(self.out, "checkpoint_latest.pth"),
             osp.join(npz, "checkpoint.pth"),
@@ -200,6 +205,8 @@ class Trainer(object):
             if np.isnan(loss.item()):
                 raise ValueError("loss is nan while training")
             loss.backward()
+            wandb.log({"grad_norm": torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)},
+                      step=self.iteration)
             self.optim.step()
 
             if self.avg_metrics is None:
@@ -224,6 +231,10 @@ class Trainer(object):
     def _write_metrics(self, size, total_loss, prefix, do_print=False):
         for i, metrics in enumerate(self.metrics):
             for label, metric in zip(self.loss_labels, metrics):
+                wandb.log(
+                    {f"{prefix}/{i}/{label}": metric / size for i, metrics in enumerate(self.metrics) for label, metric
+                     in zip(self.loss_labels, metrics)}, step=self.iteration)
+                wandb.log({f"{prefix}/total_loss": total_loss / size}, step=self.iteration)
                 self.writer.add_scalar(
                     f"{prefix}/{i}/{label}", metric / size, self.iteration
                 )
@@ -282,10 +293,10 @@ class Trainer(object):
                         break
                     # if line_type == 0:
                     #     plt.plot([a[1], b[1]], [a[0], b[0]], c="green", linewidth=4)
-                    # if line_type == 1:
-                    #     plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
-                    if line_type == 2:
-                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
+                    if line_type == 1:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
+                    # if line_type == 2:
+                    #     plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
 
             if not (juncs[0] == 0).all():
                 for i, j in enumerate(juncs):
@@ -351,8 +362,8 @@ def c(x):
 def imshow(im):
     plt.close()
     plt.tight_layout()
-    plt.imshow(im)
-    plt.colorbar(sm, fraction=0.046)
+    plt.imshow(im, cmap="gray")
+    plt.colorbar( fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 
