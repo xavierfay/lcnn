@@ -334,9 +334,9 @@ class LineVectorizer(nn.Module):
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # sample other (unmatched) lines
-                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
-                c[cdx] = 1
+                # # sample other (unmatched) lines
+                # cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+                # c[cdx] = 1
 
             else:
                 c = (u < v).flatten()
