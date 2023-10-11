@@ -226,7 +226,6 @@ class LineVectorizer(nn.Module):
             # xy: [N_TYPE * K, 2]
             # match: [N_TYPE, K]
             # TODO: this flatten can help
-
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
@@ -288,6 +287,7 @@ class LineVectorizer(nn.Module):
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
+
             # Reshape xy and generate jcs
             # xy = xy.reshape(n_type * K, 2)
             # xy = xy.reshape(n_type, K, 2)
