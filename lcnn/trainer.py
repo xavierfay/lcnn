@@ -282,8 +282,8 @@ class Trainer(object):
                         break
                     # if line_type == 0:
                     #     plt.plot([a[1], b[1]], [a[0], b[0]], c="green", linewidth=4)
-                    if line_type == 1:
-                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
+                    # if line_type == 1:
+                    #     plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
                     if line_type == 2:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
 

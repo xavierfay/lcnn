@@ -61,7 +61,7 @@ class WireframeDataset(Dataset):
             lneg0 = slice_permute(lneg[0], M.n_stc_negl)
             lneg1 = slice_permute(lneg[1], M.n_stc_negl)
 
-            lpre = np.concatenate([lpos0, lpos1,lneg0, lneg1], 0)
+            lpre = np.concatenate([lneg0, lneg1, lpos0, lpos1], 0)
             npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
             labels_0 = torch.tensor([1, 0, 0]).float().repeat((nneg0+nneg1, 1))  # Class 0 for nneg all
