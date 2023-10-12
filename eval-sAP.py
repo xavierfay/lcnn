@@ -28,7 +28,7 @@ from docopt import docopt
 import lcnn.utils
 import lcnn.metric
 
-GT = "data/wireframe/valid/*.npz"
+GT = "data/Twoclass/valid/*.npz"
 
 
 def line_score(path, threshold=5):
@@ -56,22 +56,27 @@ def line_score(path, threshold=5):
         lcnn_fp.append(fp)
         lcnn_scores.append(lcnn_score)
 
-    lcnn_tp = np.concatenate(lcnn_tp)
-    lcnn_fp = np.concatenate(lcnn_fp)
-    lcnn_scores = np.concatenate(lcnn_scores)
-    lcnn_index = np.argsort(-lcnn_scores)
-    lcnn_tp = np.cumsum(lcnn_tp[lcnn_index]) / n_gt
-    lcnn_fp = np.cumsum(lcnn_fp[lcnn_index]) / n_gt
+    if len(lcnn_tp) > 0:
+        lcnn_tp = np.concatenate(lcnn_tp)
+        lcnn_fp = np.concatenate(lcnn_fp)
+        lcnn_scores = np.concatenate(lcnn_scores)
+        lcnn_index = np.argsort(-lcnn_scores)
+        lcnn_tp = np.cumsum(lcnn_tp[lcnn_index]) / n_gt
+        lcnn_fp = np.cumsum(lcnn_fp[lcnn_index]) / n_gt
+    else:
+        lcnn_tp = np.array([])
+        lcnn_fp = np.array([])
 
     return lcnn.metric.ap(lcnn_tp, lcnn_fp)
 
+def work(path):
+    print(f"Working on {path}")
+    return [100 * line_score(f"{path}/*.npz", t) for t in [5, 10, 15]]
 
 if __name__ == "__main__":
     args = docopt(__doc__)
 
-    def work(path):
-        print(f"Working on {path}")
-        return [100 * line_score(f"{path}/*.npz", t) for t in [5, 10, 15]]
+
 
     dirs = sorted(sum([glob.glob(p) for p in args["<path>"]], []))
     results = lcnn.utils.parmap(work, dirs)
