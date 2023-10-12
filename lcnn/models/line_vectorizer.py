@@ -133,6 +133,10 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
 
+            def sum_batch(x):
+                xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
+                return torch.cat(xs)
+
             def cross_entropy_loss_per_class(x, y, num_classes=3):
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
@@ -149,8 +153,8 @@ class LineVectorizer(nn.Module):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
                     loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
-                    loss_per_class[c] = loss_c.sum() / (
-                                mask.sum() + 1e-8)  # adding a small value to avoid division by zero
+                    loss_per_class[c] = sum_batch(loss_c) / (
+                                sum_batch(mask) + 1e-8)  # adding a small value to avoid division by zero
 
                 return loss_per_class
 
