@@ -173,9 +173,11 @@ class LineVectorizer(nn.Module):
             lpos0 = loss_per_class[1]
             lpos1 = loss_per_class[2]
 
+
+            result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
-            result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
+
 
         if input_dict["mode"] == "training":
             del result["preds"]
@@ -268,15 +270,16 @@ class LineVectorizer(nn.Module):
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # # sample other (unmatched) lines
-                # cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
-                # c[cdx] = 1
+                # sample other (unmatched) lines
+                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+                c[cdx] = 1
 
             else:
                 c = (u < v).flatten()
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
+            xy = (xy[i, score[i] > 0.1] for i in range(n_type))
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
@@ -325,7 +328,7 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jcs = xy
             return line, label, jcs
 
 
