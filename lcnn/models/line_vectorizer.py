@@ -153,8 +153,10 @@ class LineVectorizer(nn.Module):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
                     loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
-                    loss_per_class[c] = sum_batch(loss_c) / (
-                                sum_batch(mask) + 1e-8)  # adding a small value to avoid division by zero
+                    loss_per_class[c] = loss_c.sum()  # Summing up the loss
+
+                # Normalize by the total number of samples in the batch
+                loss_per_class /= x.shape[0]
 
                 return loss_per_class
 
