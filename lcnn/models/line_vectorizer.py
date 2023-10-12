@@ -161,7 +161,7 @@ class LineVectorizer(nn.Module):
 
                 return loss_per_class
 
-            class_weights = torch.tensor([1, 100, 100]).to(x.device)
+            class_weights = torch.tensor([100, 100, 100]).to(x.device)
 
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
@@ -279,8 +279,8 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
-            xy = xy.reshape(n_type, K, 2)
-            xy = torch.tensor(xy[i, score[i] > 0.1] for i in range(n_type))
+            filtered_xy = [xy[i, score[i] > 0.1] for i in range(n_type)]
+            xy = torch.cat(filtered_xy, dim=0)
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
