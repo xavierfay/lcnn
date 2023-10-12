@@ -99,7 +99,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.7).any(dim=-1)
+            b = (s > 0.3).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
@@ -159,7 +159,7 @@ class LineVectorizer(nn.Module):
 
                 return loss_per_class
 
-            class_weights = torch.tensor([0.01, 0.01, 10.0]).to(x.device)
+            class_weights = torch.tensor([1, 100, 100]).to(x.device)
 
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
