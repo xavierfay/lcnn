@@ -133,11 +133,8 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
 
-            def sum_batch(x):
-                xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
-                return torch.cat(xs)
 
-            def cross_entropy_loss_per_class(x, y, num_classes=3):
+            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3):
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
                 y = y.long()
@@ -146,25 +143,29 @@ class LineVectorizer(nn.Module):
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
 
                 # Initialize an empty tensor to store the per-class losses
-                loss_per_class = torch.zeros(num_classes).float()
+                loss_per_class = torch.zeros(num_classes).float().to(
+                    x.device)  # ensure the tensor is on the same device as x
 
                 # Loop over each class and calculate the loss
                 for c in range(num_classes):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
                     loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
-                    loss_per_class[c] = loss_c.sum()  # Summing up the loss
+                    loss_per_class[c] = loss_c.sum() * class_weights[
+                        c]  # Summing up the loss and adjusting by class weight
 
                 # Normalize by the total number of samples in the batch
                 loss_per_class /= x.shape[0]
 
                 return loss_per_class
 
+            class_weights = torch.tensor([0.01, 0.01, 10.0]).to(device)
+
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
             unique_values = torch.unique(y)
             print(unique_values, count)
-            loss_per_class = cross_entropy_loss_per_class(x, y, num_classes=3)
+            loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
             lneg = loss_per_class[0]
             lpos0 = loss_per_class[1]
