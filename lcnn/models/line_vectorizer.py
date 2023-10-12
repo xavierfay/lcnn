@@ -279,7 +279,7 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, label = u[c], v[c], label[c]
-            xy = [xy[i, score[i] > 0.1] for i in range(n_type)]
+            xy = torch.cat([xy[i, score[i] > 0.1][None, :] for i in range(n_type)], dim=0)
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
