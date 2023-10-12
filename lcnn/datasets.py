@@ -81,7 +81,7 @@ class WireframeDataset(Dataset):
             #     ldir * M.use_slop,
             #     lpre[:, :, 2],
             # ]
-            feat = np.concatenate(feat, 1)
+            # feat = np.concatenate(feat, 1)
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
