@@ -159,7 +159,7 @@ class LineVectorizer(nn.Module):
 
                 return loss_per_class
 
-            class_weights = torch.tensor([0.01, 0.01, 10.0]).to(device)
+            class_weights = torch.tensor([0.01, 0.01, 10.0]).to(x.device)
 
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
