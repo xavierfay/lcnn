@@ -211,11 +211,14 @@ class LineVectorizer(nn.Module):
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
-            SCORE_THRESHOLD = 0.1  # Example threshold, adjust as needed.
-            mask = score > SCORE_THRESHOLD
+            SCORE_THRESHOLD = 0.1
+            mask = score > SCORE_THRESHOLD  # mask: [N_TYPE, K]
 
-            # Apply mask to xy
-            xy = xy[mask]
+            # Find indices where mask is True
+            true_indices = torch.nonzero(mask, as_tuple=True)
+
+            # Apply mask to xy using true_indices
+            xy = xy[true_indices]
 
             # Subsequent operations...
             xy_ = xy[..., None, :]
@@ -225,7 +228,7 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            match = match[mask]
+            match = match[true_indices]
 
             # Filter or modify match based on some conditions
             for t in range(n_type):
