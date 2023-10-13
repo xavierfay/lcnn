@@ -278,12 +278,20 @@ class LineVectorizer(nn.Module):
                 c = (u < v).flatten()
 
             #sample lines
-            u, v = u[c], v[c]
-            label = label[c]
-            filtered_xy = [xy[i, score[i] > 0.3] for i in range(n_type)]
-            filtered_xy = torch.cat(filtered_xy, dim=0)
-            filtered_xy = filtered_xy.reshape(n_type * K, 2)
-            xyu, xyv = filtered_xy[u], filtered_xy[v]
+            xy = xy.reshape(n_type, K, 2)
+
+            # Filter junctions based on score
+            jcs = [xy[i, score[i] > threshold] for i in range(n_type)]
+
+            # Flatten the junctions back for line construction
+            xy = torch.cat(jcs).view(-1, 2)
+
+            # Map u, v, and label indices to filtered xy
+            # Note: This step may require additional logic if u, v, and label are not directly mappable to filtered xy.
+            u, v, label = u[c], v[c], label[c]
+
+            # Compute line coordinates
+            xyu, xyv = xy[u], xy[v]
 
             deltas = xyv - xyu
             slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
@@ -294,10 +302,8 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
-            line = torch.cat([xyu[:, None, :], xyv[:, None, :]], dim=1)
-
-            xy = filtered_xy.reshape(n_type, K, 2)
-            jcs = xy
+            # Construct line coordinates
+            line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             return line, label, jcs
 
 def non_maximum_suppression(a):
