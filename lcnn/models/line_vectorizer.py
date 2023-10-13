@@ -292,6 +292,11 @@ class LineVectorizer(nn.Module):
             # Map u, v, and label indices to filtered xy
             u, v, label = u[c], v[c], label[c]
 
+            if u.max() >= xy.shape[0] or u.min() < 0:
+                print("Invalid 'u' detected:")
+                print("u:", u)
+                print("xy shape:", xy.shape)
+
             # Ensure 'u' and 'v' have valid indices for 'xy'
             assert u.max() < xy.shape[0] and u.min() >= 0, "'u' has invalid index!"
             assert v.max() < xy.shape[0] and v.min() >= 0, "'v' has invalid index!"
