@@ -281,7 +281,7 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type, K, 2)
 
             # Filter junctions based on score
-            jcs = [xy[i, score[i] > threshold] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.1] for i in range(n_type)]
 
             # Flatten the junctions back for line construction
             xy = torch.cat(jcs).view(-1, 2)
