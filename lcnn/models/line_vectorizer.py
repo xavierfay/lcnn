@@ -213,25 +213,29 @@ class LineVectorizer(nn.Module):
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             SCORE_THRESHOLD = 0.1  # Example threshold, adjust as needed.
             mask = score > SCORE_THRESHOLD
+
+            # Apply mask to xy
             xy = xy[mask]
 
+            # Subsequent operations...
             xy_ = xy[..., None, :]
             del x, y, index
 
-            #print("xy_", xy_.shape, xy_)
-
-            # dist: [N_TYPE, K, N]
+            # Compute distances and find matches
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # xy: [N_TYPE * K, 2]
-            # match: [N_TYPE, K]
-            # TODO: this flatten can help
+            # Filter or modify match based on some conditions
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
-            match = match[mask]
-            match = match.flatten()
+
+            # Ensure mask is applicable to match in its current state
+            # Flatten mask if it's not already 1D
+            flat_mask = mask.flatten()
+
+            # Apply the mask to match
+            match = match[flat_mask].flatten()
 
             # if mode == "testing":
             #     match = (match - 1).clamp(min=0)
