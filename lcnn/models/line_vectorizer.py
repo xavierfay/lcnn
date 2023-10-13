@@ -226,6 +226,8 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
+            match = match[mask]
+
             # Filter or modify match based on some conditions
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
