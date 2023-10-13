@@ -228,19 +228,12 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            match = match[true_indices]
+            match = match[true_indices.flatten()]
 
             # Filter or modify match based on some conditions
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
-
-            # Ensure mask is applicable to match in its current state
-            # Flatten mask if it's not already 1D
-            flat_mask = mask.flatten()
-
-            # Apply the mask to match
-            match = match[flat_mask].flatten()
 
             # if mode == "testing":
             #     match = (match - 1).clamp(min=0)
