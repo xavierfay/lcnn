@@ -277,7 +277,7 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            #sample lines
+            # Sample lines
             xy = xy.reshape(n_type, K, 2)
 
             # Filter junctions based on score
@@ -286,21 +286,39 @@ class LineVectorizer(nn.Module):
             # Flatten the junctions back for line construction
             xy = torch.cat(jcs).view(-1, 2)
 
+            # Ensure 'c' has valid indices for 'u', 'v', and 'label'
+            assert c.max() < len(u) and c.min() >= 0, "'c' has invalid index!"
+
             # Map u, v, and label indices to filtered xy
-            # Note: This step may require additional logic if u, v, and label are not directly mappable to filtered xy.
             u, v, label = u[c], v[c], label[c]
+
+            # Ensure 'u' and 'v' have valid indices for 'xy'
+            assert u.max() < xy.shape[0] and u.min() >= 0, "'u' has invalid index!"
+            assert v.max() < xy.shape[0] and v.min() >= 0, "'v' has invalid index!"
 
             # Compute line coordinates
             xyu, xyv = xy[u], xy[v]
 
             deltas = xyv - xyu
+            # Handle potential division by zero
             slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+
+            # Handling potential 'inf' or 'nan' values
+            assert not torch.any(torch.isnan(slopes)), "Slopes contain NaN values!"
+            assert not torch.any(torch.isinf(slopes)), "Slopes contain Inf values!"
+
             horizontal_mask = torch.abs(slopes) < 0.01
             vertical_mask = torch.abs(slopes) > 1000
             valid_lines_mask = horizontal_mask | vertical_mask
 
+            # Ensure 'valid_lines_mask' is a boolean tensor
+            assert valid_lines_mask.dtype == torch.bool, "'valid_lines_mask' is not a boolean tensor!"
+
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
+
+            # Check if tensors have non-zero length before concatenation
+            assert len(xyu) > 0 and len(xyv) > 0, "Tensors 'xyu' and 'xyv' have zero length!"
 
             # Construct line coordinates
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
