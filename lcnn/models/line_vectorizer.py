@@ -300,10 +300,10 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xy[u], xy[v]
 
             deltas = xyv - xyu
-            # Handle potential division by zero
-            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            epsilon = 1e-9  # Small value to avoid division by zero
+            slopes = deltas[:, 1] / (deltas[:, 0] + epsilon)
 
-            # Handling potential 'inf' or 'nan' values
+            # Additional checks for debugging
             assert not torch.any(torch.isnan(slopes)), "Slopes contain NaN values!"
             assert not torch.any(torch.isinf(slopes)), "Slopes contain Inf values!"
 
