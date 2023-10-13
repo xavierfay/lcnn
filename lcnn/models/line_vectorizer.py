@@ -211,6 +211,10 @@ class LineVectorizer(nn.Module):
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+            SCORE_THRESHOLD = 0.1  # Example threshold, adjust as needed.
+            mask = score > SCORE_THRESHOLD
+            xy = xy[mask]
+
             xy_ = xy[..., None, :]
             del x, y, index
 
@@ -226,6 +230,7 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
+            match = match[mask]
             match = match.flatten()
 
             # if mode == "testing":
@@ -277,56 +282,29 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            # Sample lines
-            xy = xy.reshape(n_type, K, 2)
-
-            # Filter junctions based on score
-            jcs = [xy[i, score[i] > 0.1] for i in range(n_type)]
-
-            # Flatten the junctions back for line construction
-            xy = torch.cat(jcs).view(-1, 2)
-
-            # Ensure 'c' has valid indices for 'u', 'v', and 'label'
-            assert c.max() < len(u) and c.min() >= 0, "'c' has invalid index!"
-
-            # Map u, v, and label indices to filtered xy
+            # sample lines
             u, v, label = u[c], v[c], label[c]
-
-            if u.max() >= xy.shape[0] or u.min() < 0:
-                print("Invalid 'u' detected:")
-                print("u:", u)
-                print("xy shape:", xy.shape)
-
-            # Ensure 'u' and 'v' have valid indices for 'xy'
-            assert u.max() < xy.shape[0] and u.min() >= 0, "'u' has invalid index!"
-            assert v.max() < xy.shape[0] and v.min() >= 0, "'v' has invalid index!"
-
-            # Compute line coordinates
+            xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
+            # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
-            epsilon = 1e-9  # Small value to avoid division by zero
-            slopes = deltas[:, 1] / (deltas[:, 0] + epsilon)
-
-            # Additional checks for debugging
-            assert not torch.any(torch.isnan(slopes)), "Slopes contain NaN values!"
-            assert not torch.any(torch.isinf(slopes)), "Slopes contain Inf values!"
-
+            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
             horizontal_mask = torch.abs(slopes) < 0.01
             vertical_mask = torch.abs(slopes) > 1000
             valid_lines_mask = horizontal_mask | vertical_mask
+            # print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
-            # Ensure 'valid_lines_mask' is a boolean tensor
-            assert valid_lines_mask.dtype == torch.bool, "'valid_lines_mask' is not a boolean tensor!"
 
+            # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
-            # Check if tensors have non-zero length before concatenation
-            assert len(xyu) > 0 and len(xyv) > 0, "Tensors 'xyu' and 'xyv' have zero length!"
-
-            # Construct line coordinates
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
+            xy = xy.reshape(n_type, K, 2)
+            # jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+
             return line, label, jcs
 
 def non_maximum_suppression(a):
