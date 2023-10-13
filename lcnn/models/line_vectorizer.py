@@ -216,6 +216,7 @@ class LineVectorizer(nn.Module):
 
             # Apply mask to xy
             xy = xy[mask]
+            junc = junc[mask]
 
             # Subsequent operations...
             xy_ = xy[..., None, :]
