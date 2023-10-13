@@ -278,60 +278,27 @@ class LineVectorizer(nn.Module):
                 c = (u < v).flatten()
 
             #sample lines
-            u, v, label = u[c], v[c], label[c]
-            filtered_xy = [xy[i, score[i] > 0.1] for i in range(n_type)]
-            xy = torch.cat(filtered_xy, dim=0)
-            xy = xy.reshape(n_type * K, 2)
-            xyu, xyv = xy[u], xy[v]
+            u, v = u[c], v[c]
+            label = label[c]
+            filtered_xy = [xy[i, score[i] > 0.3] for i in range(n_type)]
+            filtered_xy = torch.cat(filtered_xy, dim=0)
+            filtered_xy = filtered_xy.reshape(n_type * K, 2)
+            xyu, xyv = filtered_xy[u], filtered_xy[v]
 
-            # Reshape xy and generate jcs
-            # xy = xy.reshape(n_type * K, 2)
-            # xy = xy.reshape(n_type, K, 2)
-            # jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            #
-            # # Flatten jcs and extract xyu and xyv using u, v
-            # jcs_flat = torch.cat(jcs, dim=0)
-            # print("shape jcs, shape u,v", len(jcs_flat), len(u), len(v) )
-            # xyu, xyv = jcs_flat[u], jcs_flat[v]
-
-
-
-
-            # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
             slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
             horizontal_mask = torch.abs(slopes) < 0.01
             vertical_mask = torch.abs(slopes) > 1000
             valid_lines_mask = horizontal_mask | vertical_mask
-            #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
-            # Ensure that valid_lines_mask does not contain invalid indices
-            assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
-
-            # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
-            #print("label after filtering", label.shape)
+            line = torch.cat([xyu[:, None, :], xyv[:, None, :]], dim=1)
 
-            # u2v = xyu - xyv
-            # u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
-            # feat = torch.cat(
-            #     [
-            #         xyu / 256 * M.use_cood,
-            #         xyv / 256 * M.use_cood,
-            #         u2v * M.use_slop,
-            #         (u[:, None] > K).float(),
-            #         (v[:, None] > K).float(),
-            #     ],
-            #     1,
-            # )
-            line = torch.cat([xyu[:, None], xyv[:, None]], 1)
-            xy = xy.reshape(n_type, K, 2)
-            #jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            xy = filtered_xy.reshape(n_type, K, 2)
             jcs = xy
             return line, label, jcs
-
 
 def non_maximum_suppression(a):
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
