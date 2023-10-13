@@ -228,7 +228,11 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            match = match[true_indices.flatten()]
+            # Convert the indices into a 1D tensor
+            flattened_indices = true_indices[0] * mask.size(1) + true_indices[1]
+
+            # Apply mask to match using true_indices
+            match = match[flattened_indices]
 
             # Filter or modify match based on some conditions
             for t in range(n_type):
