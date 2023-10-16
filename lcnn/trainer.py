@@ -271,6 +271,7 @@ class Trainer(object):
 
         line_result = result["lmap"][i].cpu().numpy()
         line_target = target["lmap"][i].cpu().numpy()
+        line_target = np.squeeze(line_target, axis=0)
         imshow(line_target), plt.savefig(f"{prefix}_line_a.jpg"), plt.close()
         imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
 
