@@ -48,8 +48,6 @@ class MultitaskLearner(nn.Module):
         n_jtyp = int(torch.max(T["jmap"]).item())
         n_ltyp = int(torch.max(T["lmap"]).item())
 
-        print("number of classes", n_jtyp, n_ltyp)
-
         n_jtyp = 1
         n_ltyp = 1
 
