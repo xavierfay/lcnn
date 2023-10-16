@@ -52,23 +52,13 @@ class WireframeDataset(Dataset):
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
             }
+
             lpos = npz["lpos"].copy()
-
-            lpos0 = slice_permute(lpos[0], M.n_stc_posl)
-            lpos1 = slice_permute(lpos[1], M.n_stc_posl)
-
             lneg = npz["lneg"].copy()
-            lneg0 = slice_permute(lneg[0], M.n_stc_negl)
-            lneg1 = slice_permute(lneg[1], M.n_stc_negl)
+            l_label = npz["l_label"].copy()
 
-            lpre = np.concatenate([lpos0, lpos1,lneg0, lneg1], 0)
-            npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
-            labels_0 = torch.tensor([1, 0, 0]).float().repeat((nneg0+nneg1, 1))  # Class 0 for nneg all
-            labels_1 = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0
-            labels_2 = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1
-            lpre_label = torch.cat([labels_1, labels_2, labels_0], dim=0)
-
+            lpre = np.concatenate([lpos, lneg], 0)
 
             for i in range(len(lpre)):
                 if random.random() > 0.5:
@@ -84,33 +74,25 @@ class WireframeDataset(Dataset):
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
-                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"][0], npz["Lpos"][1]),
-                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"][0], npz["Lneg"][1]),
+                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
+                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
-                "lpre_label": lpre_label,
+                "lpre_label": l_label,
                 "lpre_feat": torch.from_numpy(feat),
             }
             # for key, value in meta.items():
             #     print(f"{key}: {value.shape}")
         return torch.from_numpy(image).float(), meta, target
 
-    def adjacency_matrix(self, n, link1, link2):
+    def adjacency_matrix(self, n, link):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
-        link1 = torch.from_numpy(link1)
-        link2 = torch.from_numpy(link2)
-
-        if len(link1) > 0:
-            mat[link1[:, 0], link1[:, 1]] = 1
-            mat[link1[:, 1], link1[:, 0]] = 1
-
-        if len(link2) > 0:
-            mat[link2[:, 0], link2[:, 1]] = 2
-            mat[link2[:, 1], link2[:, 0]] = 2
-
+        link = torch.from_numpy(link)
+        if len(link) > 0:
+            mat[link[:, 0], link[:, 1]] = 1
+            mat[link[:, 1], link[:, 0]] = 1
         return mat
 
 
-import numpy as np
 
 
 def slice_permute(lpos, n_stc_posl):
