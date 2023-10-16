@@ -234,6 +234,11 @@ class LineVectorizer(nn.Module):
             # Apply mask to match using true_indices
             match = match[flattened_indices]
 
+            print("t:", t)
+            print("match[t]:", match[t])
+            print("jtyp.size():", jtyp.size())
+            print("match.size():", match.size())
+
             # Filter or modify match based on some conditions
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
