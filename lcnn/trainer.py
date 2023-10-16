@@ -299,9 +299,9 @@ class Trainer(object):
                 for i, j in enumerate(juncs):
                     if i > 0 and (i == juncs[0]).all():
                         break
-                    if jtyp[i] == 0:
-                        plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
                     if jtyp[i] == 1:
+                        plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
+                    if jtyp[i] == 2:
                         plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
                     else:
                         # add plot with number from jtype
@@ -320,6 +320,8 @@ class Trainer(object):
         if "junts" in result:
             rjunts = result["junts"][i].cpu().numpy() * 4
 
+        print(rjunts, rjuncs)
+
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("lpre_label", lpre_label.shape)
@@ -334,7 +336,7 @@ class Trainer(object):
         #     lpre = lpre[vecl_target == i]
         #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
         draw_vecl(lpre, lpre_label, juncs, jtyp, f"{prefix}_vecl_a.jpg")
-        #draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
+        draw_vecl(vecl_result, score, rjuncs, 1, f"{prefix}_vecl_b.jpg")
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
@@ -363,7 +365,7 @@ def c(x):
 def imshow(im):
     plt.close()
     plt.tight_layout()
-    plt.imshow(im)
+    plt.imshow(im, cmap="gray")
     plt.colorbar(sm, fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
