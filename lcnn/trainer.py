@@ -277,7 +277,7 @@ class Trainer(object):
         imshow(line_target), plt.savefig(f"{prefix}_line_a.jpg"), plt.close()
         imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
 
-        def draw_vecl(lines, sline, juncs, junts, fn):
+        def draw_vecl(lines, sline, juncs, jtyp, fn):
             imshow(img)
 
             if len(lines) > 0 and not (lines[0] == 0).all():
@@ -299,19 +299,20 @@ class Trainer(object):
                 for i, j in enumerate(juncs):
                     if i > 0 and (i == juncs[0]).all():
                         break
-                    plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
+                    if jtyp[i] == 0:
+                        plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
+                    if jtyp[i] == 1:
+                        plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
+                    else:
+                        # add plot with number from jtype
+                        plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
+                        plt.text(j[1] + 10, j[0], str(jtyp[i]), color="black", fontsize=12, zorder=200)
 
-            if junts is not None and len(junts) > 0 and not (junts[0] == 0).all():
-                for i, j in enumerate(junts):
-                    if i > 0 and (i == junts[0]).all():
-                        break
-                    plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
+
             plt.savefig(fn), plt.close()
 
-        junc = meta[i]["junc"].cpu().numpy() * 4
+        juncs = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
-        juncs = junc[jtyp == 1]
-        junts = junc[jtyp == 2]
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
 
@@ -332,8 +333,8 @@ class Trainer(object):
         # for i in range(1,2):
         #     lpre = lpre[vecl_target == i]
         #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
-        draw_vecl(lpre, lpre_label, juncs, junts, f"{prefix}_vecl_a.jpg")
-        draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
+        draw_vecl(lpre, lpre_label, juncs, jtyp, f"{prefix}_vecl_a.jpg")
+        #draw_vecl(vecl_result, score, rjuncs, rjunts, f"{prefix}_vecl_b.jpg")
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
