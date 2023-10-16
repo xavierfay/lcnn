@@ -319,8 +319,9 @@ class Trainer(object):
         rjunts = None
         if "junts" in result:
             rjunts = result["junts"][i].cpu().numpy() * 4
+            rjuncs = rjuncs + rjunts
 
-        rjuncs = rjuncs+rjunts
+
         rtype = np.ones(len(rjuncs))
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
