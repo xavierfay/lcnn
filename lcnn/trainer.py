@@ -291,9 +291,11 @@ class Trainer(object):
                     # if line_type == 0:
                     #     plt.plot([a[1], b[1]], [a[0], b[0]], c="green", linewidth=4)
                     if line_type == 1:
-                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
-                    if line_type == 2:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
+                    if line_type == 2:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4, linestyle='--')
+                    if line_type == 3:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c="black", linewidth=4)
 
             if not (juncs[0] == 0).all():
                 for i, j in enumerate(juncs):
@@ -301,7 +303,7 @@ class Trainer(object):
                         break
                     if jtyp[i] == 1:
                         plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
-                    if jtyp[i] == 2:
+                    elif jtyp[i] == 2:
                         plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
                     else:
                         # add plot with number from jtype
