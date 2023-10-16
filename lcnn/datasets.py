@@ -57,6 +57,12 @@ class WireframeDataset(Dataset):
             lneg = npz["lneg"].copy()
             l_label = npz["l_label"].copy()
 
+            # one hot
+            num_classes = np.max(l_label) + 1
+            l_label = np.eye(num_classes)[l_label]
+
+
+
 
             lpre = np.concatenate([lpos, lneg], 0)
 
@@ -77,11 +83,14 @@ class WireframeDataset(Dataset):
                 "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
-                "lpre_label": l_label,
+                "lpre_label": torch.from_numpy(l_label),
                 "lpre_feat": torch.from_numpy(feat),
             }
-            # for key, value in meta.items():
-            #     print(f"{key}: {value.shape}")
+            for key, value in meta.items():
+                print(f"{key}: {value.shape}")
+            for key, value in target.items():
+                print(f"{key}: {value.shape}")
+
         return torch.from_numpy(image).float(), meta, target
 
     def adjacency_matrix(self, n, link):

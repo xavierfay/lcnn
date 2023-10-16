@@ -45,12 +45,16 @@ class MultitaskLearner(nn.Module):
         batch, channel, row, col = outputs[0].shape
 
         T = input_dict["target"].copy()
-        n_jtyp = T["jmap"].shape[1]
-        n_ltyp = T["lmap"].shape[1]
+        n_jtyp = int(torch.max(T["jmap"]).item())
+        n_ltyp = int(torch.max(T["lmap"]).item())
 
+        print("number of classes", n_jtyp, n_ltyp)
+
+        n_jtyp = 1
+        n_ltyp = 1
 
         # switch to CNHW
-        for task in ["jmap", "lmap"]:
+        for task in ["jmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             T[task] = T[task].permute(1, 2, 0, 3, 4)
@@ -61,12 +65,8 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row,col)
-
             lmap = output[offset[0] : offset[1]].reshape(n_ltyp, 2, batch, row,col)
             joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
-
-            # print("jmap in forward pass", jmap.shape)
-            # print("lmap in forward pass",lmap.shape)
 
             if stack == 0:
                 result["preds"] = {

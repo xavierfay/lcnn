@@ -29,7 +29,7 @@ class LineVectorizer(nn.Module):
                 Bottleneck1D(M.dim_loi, M.dim_loi),
             )
             self.fc2 = nn.Sequential(
-                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 3)
+                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 34)
             )
         else:
             self.pooling = nn.MaxPool1d(scale_factor, scale_factor)
@@ -38,7 +38,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, M.dim_fc),
                 nn.ReLU(inplace=True),
-                nn.Linear(M.dim_fc, 3),
+                nn.Linear(M.dim_fc, 34),
             )
         self.loss = nn.CrossEntropyLoss()
 
@@ -90,10 +90,9 @@ class LineVectorizer(nn.Module):
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
 
+
         x, y = torch.cat(xs), torch.cat(ys)
-        #f = torch.cat(fs)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
-        #x = torch.cat([x, f], 1)
         x = self.fc2(x)
 
         if input_dict["mode"] != "training":
@@ -132,29 +131,48 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
+
+            def cross_entropy_loss_per_class(x, y, num_classes=34):
+                # Ensure the logits are float, Convert labels to long
+
+                x = x.float()
+                y = y.long()
+
+                # Calculate the softmax along the second dimension
+                softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
+
+                # Initialize an empty tensor to store the per-class losses
+                loss_per_class = torch.zeros(num_classes).float().to(
+                    x.device)  # ensure the tensor is on the same device as x
+
+                # Loop over each class and calculate the loss
+                for c in range(num_classes):
+                    # Create a mask that selects only the samples of class c
+
+                    mask = (y == c).float()
+                    print(mask.shape, softmax.shape)
+                    loss_c = -torch.log(softmax[:, c:c+1] + 1e-8) * mask  # adding a small value to avoid log(0)
+                    loss_per_class[c] = loss_c.sum()
+
+                # Normalize by the total number of samples in the batch
+                loss_per_class /= x.shape[0]
+
+                return loss_per_class
+
             y = torch.cat(ys)
-            y = torch.argmax(y, dim=1)  # .long()
-            loss = self.loss(x, y)
-            #print(loss)
-            lpos0_mask = (y == 1).float()
-            lpos1_mask = (y == 2).float()
-            lneg_mask = (y == 0).float()
-            loss_lpos0, loss_lpos1, loss_lneg = loss * lpos0_mask, loss * lpos1_mask, loss * lneg_mask
+            y = torch.argmax(y, dim=1)
+            count = torch.bincount(y)
+            unique_values = torch.unique(y)
+            print(unique_values, count)
+            loss_per_class = cross_entropy_loss_per_class(x, y)
 
-            #print(f"Unique labels in batch: {y.unique()}")
-            #print(f"Loss components: {loss_lpos0.sum().item()}, {loss_lpos1.sum().item()}, {loss_lneg.sum().item()}")
-            def sum_batch(x):
-                xs = [x[idx[i] : idx[i + 1]].sum()[None] for i in range(n_batch)]
-                return torch.cat(xs)
+            lneg = loss_per_class[0]
+            lpos0 = loss_per_class[1]
+            lpos1 = loss_per_class[2]
 
-            lpos0 = sum_batch(loss_lpos0) / sum_batch(lpos0_mask).clamp(min=1)
-            lpos1 = sum_batch(loss_lpos1) / sum_batch(lpos1_mask).clamp(min=1)
-            lneg = sum_batch(loss_lneg) / sum_batch(lneg_mask).clamp(min=1)
-            #print(f"lpos0 after sum_batch: {lpos0}")
-
+            result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
-            result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
 
         if input_dict["mode"] == "training":
             del result["preds"]
@@ -174,6 +192,7 @@ class LineVectorizer(nn.Module):
             jtyp = meta["jtyp"]  # [N]
             Lpos = meta["Lpos"]  # [N+1, N+1]
             Lneg = meta["Lneg"]  # [N+1, N+1]
+            lpre_label = meta["lpre_label"]  # [N, 34]
 
             # print("junc:", junc, junc.shape)
             # print("jtype", jtyp, jtyp.shape)
@@ -251,7 +270,7 @@ class LineVectorizer(nn.Module):
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
-            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
+            label = torch.zeros(scalar_labels.shape[0], lpre_label.shape[1], device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1

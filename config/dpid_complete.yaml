@@ -16,7 +16,7 @@ model:
 
   # backbone multi-task parameters
   # jmap, lmap, joff
-  head_size: [[4], [4], [4]]
+  head_size: [[2], [2], [2]]
   loss_weight:
     jmap: 8.0
     lmap: 0.5
