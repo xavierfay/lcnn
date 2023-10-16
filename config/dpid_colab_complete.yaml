@@ -23,6 +23,7 @@ model:
     joff: 0.25
     lpos0: 1
     lpos1: 1
+    lpos2: 1
     lneg: 1
 
   # backbone parameters

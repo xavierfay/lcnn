@@ -29,7 +29,7 @@ class LineVectorizer(nn.Module):
                 Bottleneck1D(M.dim_loi, M.dim_loi),
             )
             self.fc2 = nn.Sequential(
-                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 34)
+                nn.ReLU(inplace=True), nn.Linear(M.dim_loi * M.n_pts1 + FEATURE_DIM, 4)
             )
         else:
             self.pooling = nn.MaxPool1d(scale_factor, scale_factor)
@@ -38,7 +38,7 @@ class LineVectorizer(nn.Module):
                 nn.ReLU(inplace=True),
                 nn.Linear(M.dim_fc, M.dim_fc),
                 nn.ReLU(inplace=True),
-                nn.Linear(M.dim_fc, 34),
+                nn.Linear(M.dim_fc, 4),
             )
         self.loss = nn.CrossEntropyLoss()
 
@@ -132,7 +132,7 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "testing":
 
-            def cross_entropy_loss_per_class(x, y, num_classes=34):
+            def cross_entropy_loss_per_class(x, y, num_classes=4):
                 # Ensure the logits are float, Convert labels to long
 
                 x = x.float()
@@ -169,10 +169,12 @@ class LineVectorizer(nn.Module):
             lneg = loss_per_class[0]
             lpos0 = loss_per_class[1]
             lpos1 = loss_per_class[2]
+            lpos2 = loss_per_class[3]
 
             result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
+            result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
 
         if input_dict["mode"] == "training":
             del result["preds"]
