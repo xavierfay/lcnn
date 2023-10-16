@@ -300,6 +300,7 @@ class Trainer(object):
                     if i > 0 and (i == juncs[0]).all():
                         break
                     plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
+
             if junts is not None and len(junts) > 0 and not (junts[0] == 0).all():
                 for i, j in enumerate(junts):
                     if i > 0 and (i == junts[0]).all():
@@ -313,6 +314,8 @@ class Trainer(object):
         junts = junc[jtyp == 2]
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
+
+        rjunts = None
         if "junts" in result:
             rjunts = result["junts"][i].cpu().numpy() * 4
 
