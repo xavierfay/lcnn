@@ -150,7 +150,7 @@ class LineVectorizer(nn.Module):
                     # Create a mask that selects only the samples of class c
 
                     mask = (y == c).float()
-                    print(mask.shape, softmax.shape)
+
                     loss_c = -torch.log(softmax[:, c:c+1] + 1e-8) * mask  # adding a small value to avoid log(0)
                     loss_per_class[c] = loss_c.sum()
 
@@ -163,7 +163,7 @@ class LineVectorizer(nn.Module):
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
             unique_values = torch.unique(y)
-            print(unique_values, count)
+
             loss_per_class = cross_entropy_loss_per_class(x, y)
 
             lneg = loss_per_class[0]

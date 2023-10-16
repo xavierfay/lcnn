@@ -86,10 +86,10 @@ class WireframeDataset(Dataset):
                 "lpre_label": torch.from_numpy(l_label),
                 "lpre_feat": torch.from_numpy(feat),
             }
-            for key, value in meta.items():
-                print(f"{key}: {value.shape}")
-            for key, value in target.items():
-                print(f"{key}: {value.shape}")
+            # for key, value in meta.items():
+            #     print(f"{key}: {value.shape}")
+            # for key, value in target.items():
+            #     print(f"{key}: {value.shape}")
 
         return torch.from_numpy(image).float(), meta, target
 
