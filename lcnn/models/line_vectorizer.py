@@ -254,6 +254,7 @@ class LineVectorizer(nn.Module):
             # u, v = u.flatten(), v.flatten()
             # up, vp = match[u], match[v]
 
+            # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
@@ -263,17 +264,23 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
+            #print("xy_", xy_.shape, xy_)
+
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
+            # xy: [N_TYPE * K, 2]
+            # match: [N_TYPE, K]
+            # TODO: this flatten can help
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            if mode == "testing":
-                match = (match - 1).clamp(min=0)
+            # if mode == "testing":
+            #     match = (match - 1).clamp(min=0)
+
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
@@ -282,9 +289,8 @@ class LineVectorizer(nn.Module):
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
-            # print("scalar labels", scalar_labels)
             # Initialize a tensor of zeros with shape [N, 3]
-            label = torch.zeros(scalar_labels.shape[0], 2, device=scalar_labels.device)
+            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
