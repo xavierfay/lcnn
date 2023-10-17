@@ -91,8 +91,12 @@ class MultitaskLearner(nn.Module):
                 for j in range(2)
             )
 
-            # for loss_name in L:
-            #     L[loss_name].mul_(loss_weight[loss_name])
+            weights = [0.5] + [10.0] * (n_jtyp - 1)
+            for idx, weight in enumerate(weights):
+                loss_weight[f'jmap_class_{idx}'] = weight
+
+            for loss_name in L:
+                L[loss_name] = L[loss_name] * loss_weight[loss_name]
             losses.append(L)
 
             # for key, value in L.items():
