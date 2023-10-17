@@ -75,7 +75,12 @@ class MultitaskLearner(nn.Module):
                     return result
 
             L = OrderedDict()
-            L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
+            #L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
+
+
+            jmap_losses_per_class = cross_entropy_loss_per_class(jmap, T["jmap"])
+            for idx, loss in enumerate(jmap_losses_per_class):
+                L[f"jmap_class_{idx}"] = loss
 
             #print(lmap.shape, T["lmap"].shape)
             L["lmap"] = cross_entropy_loss(lmap, T["lmap"])
@@ -86,12 +91,12 @@ class MultitaskLearner(nn.Module):
                 for j in range(2)
             )
 
-            for loss_name in L:
-                L[loss_name].mul_(loss_weight[loss_name])
+            # for loss_name in L:
+            #     L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            # for key, value in L.items():
-            #     print(f"{key} shape when in results forward: {value}")
+            for key, value in L.items():
+                print(f"{key} shape when in results forward: {value}")
 
         result["losses"] = losses
         return result
@@ -108,6 +113,19 @@ def cross_entropy_loss(logits, target):
     nlogp = F.log_softmax(logits, dim=1)
     return F.nll_loss(nlogp, target.long(), reduction='mean')
 
+
+def cross_entropy_loss_per_class(logits, target):
+    # Get the softmax along the class dimension
+    probs = F.softmax(logits, dim=1)
+
+    # Convert target to one-hot encoding with casting to int64
+    target_one_hot = torch.zeros_like(logits).scatter_(1, target.unsqueeze(1).long(), 1)
+
+    # Compute the loss for each class
+    losses = -target_one_hot * torch.log(probs + 1e-8)
+
+    # Return the mean loss for each class
+    return losses.mean(dim=(0, 2, 3))
 
 def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
     logp = torch.sigmoid(logits) + offset
