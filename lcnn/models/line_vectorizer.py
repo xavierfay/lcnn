@@ -196,8 +196,8 @@ class LineVectorizer(nn.Module):
             Lneg = meta["Lneg"]  # [N+1, N+1]
             lpre_label = meta["lpre_label"]  # [N, 3]
 
-            print("jmap:", jmap.shape)
-            print("joff:" , joff.shape)
+            # print("jmap:", jmap.shape)
+            # print("joff:" , joff.shape)
 
             # print("junc:", junc, junc.shape)
             # print("jtype", jtyp, jtyp.shape)
@@ -219,7 +219,7 @@ class LineVectorizer(nn.Module):
 
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
-            print("index", index.shape)
+            #print("index", index.shape)
             # Reshape joff to have the same number of dimensions as index
             joff_y_flat = joff[0].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]
             joff_x_flat = joff[1].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]

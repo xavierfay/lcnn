@@ -77,23 +77,21 @@ class MultitaskLearner(nn.Module):
             L = OrderedDict()
             L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
 
-            print(lmap.shape, T["lmap"].shape)
+            #print(lmap.shape, T["lmap"].shape)
             L["lmap"] = cross_entropy_loss(lmap, T["lmap"])
 
-            print(joff.shape, T["joff"].shape)
+            #print(joff.shape, T["joff"].shape)
             L["joff"] = sum(
                 sigmoid_l1_loss(joff[j], T["joff"][j], -0.5, T["jmap"])
                 for j in range(2)
             )
-            for key, value in L.items():
-                print(f"{key} shape when in results before the weights: {value}")
 
             for loss_name in L:
                 L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            for key, value in L.items():
-                print(f"{key} shape when in results forward: {value}")
+            # for key, value in L.items():
+            #     print(f"{key} shape when in results forward: {value}")
 
         result["losses"] = losses
         return result
@@ -104,9 +102,9 @@ def l2loss(input, target):
 
 
 def cross_entropy_loss(logits, target):
-    print(target.max())
-    print(logits.size(1))
-    print(target.min())
+    # print(target.max())
+    # print(logits.size(1))
+    # print(target.min())
     nlogp = F.log_softmax(logits, dim=1)
     return F.nll_loss(nlogp, target.long(), reduction='mean')
 
