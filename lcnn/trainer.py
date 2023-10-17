@@ -257,9 +257,15 @@ class Trainer(object):
 
         mask_result = result["jmap"][i].cpu().numpy()
         mask_target = target["jmap"][i].cpu().numpy()
+        print("mask result shape", mask_result.shape)
+        print("mask target shape", mask_target.shape)
 
-        imshow(mask_result), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         imshow(mask_target), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+
+        #imshow(mask_result), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        for ch, ia in enumerate(zip(mask_result)):
+            imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
+
         # for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
         #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
         #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
