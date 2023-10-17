@@ -273,9 +273,8 @@ class Trainer(object):
         lmap = result["lmap"].permute(1,0,2,3)
         lmap = lmap[i].cpu().numpy()
 
-        for j, results in enumerate(lmap[i]):
-            line_result = results
-            imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
+        for j, results in enumerate(lmap):
+            imshow(results), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         # for j, target in enumerate(target["lmap"][i]):
         #     line_target = target.cpu().numpy()
