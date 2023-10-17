@@ -281,6 +281,11 @@ class LineVectorizer(nn.Module):
             # Calculate x, y based on the filtered indices
             expanded_index = filtered_index.unsqueeze(-1)
 
+            print(filtered_joff[:, 0].unsqueeze(-1).shape)
+            print(expanded_index.shape)
+            print(expanded_index.min())
+            print(expanded_index.max())
+
             # Gather values from filtered_joff[:, 0] along the first dimension
             y_values = torch.gather(filtered_joff[:, 0].unsqueeze(-1), 0, expanded_index)
 
