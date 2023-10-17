@@ -270,9 +270,8 @@ class Trainer(object):
         #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
         #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
-        lmap = result["lmap"].permute(1,0,2,3)
-        lmap = lmap[i].cpu().numpy()
 
+        lmap = result["lmap"][i].cpu().numpy()
         for j, results in enumerate(lmap):
             imshow(results), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
