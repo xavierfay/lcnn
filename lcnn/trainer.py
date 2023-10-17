@@ -274,7 +274,7 @@ class Trainer(object):
         lmap = lmap[i].cpu().numpy()
 
         for j, results in enumerate(lmap[i]):
-            line_result = results.cpu().numpy()
+            line_result = results
             imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         # for j, target in enumerate(target["lmap"][i]):
