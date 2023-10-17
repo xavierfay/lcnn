@@ -204,50 +204,87 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-            # index: [N_TYPE, K]
+            # # index: [N_TYPE, K]
+            # score, index = torch.topk(jmap, k=K)
+            # y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            # x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            #
+            # # xy: [N_TYPE, K, 2]
+            # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+            # SCORE_THRESHOLD = 0.1
+            # mask = score > SCORE_THRESHOLD  # mask: [N_TYPE, K]
+            #
+            # # Find indices where mask is True
+            # true_indices = torch.nonzero(mask, as_tuple=True)
+            #
+            # # Apply mask to xy using true_indices
+            # xy = xy[true_indices]
+            #
+            # # Subsequent operations...
+            # xy_ = xy[..., None, :]
+            # del x, y, index
+            #
+            # # Compute distances and find matches
+            # dist = torch.sum((xy_ - junc) ** 2, -1)
+            # cost, match = torch.min(dist, -1)
+            #
+            # # Convert the indices into a 1D tensor
+            # flattened_indices = true_indices[0] * mask.size(1) + true_indices[1]
+            #
+            # # Apply mask to match using true_indices
+            # match = match[flattened_indices]
+            #
+            #
+            # # Filter or modify match based on some conditions
+            # for t in range(n_type):
+            #     match[t, jtyp[match[t]] != t] = N
+            #     print("t:", t)
+            #     print("match[t]:", match[t])
+            #     print("jtyp.size():", jtyp.size())
+            #     print("match.size():", match.size())
+            #
+            # match[cost > 1.5 * 1.5] = N
+            #
+            # # if mode == "testing":
+            # #     match = (match - 1).clamp(min=0)
+            #
+            #
+            # _ = torch.arange(n_type * K, device=device)
+            # u, v = torch.meshgrid(_, _)
+            # u, v = u.flatten(), v.flatten()
+            # up, vp = match[u], match[v]
+
+            threshold = 0.03  # Define your threshold value here
+
+            # Get the top-k scores and indices
             score, index = torch.topk(jmap, k=K)
-            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+
+            # Create a mask for scores that are higher than the threshold
+            mask = score > threshold
+
+            # Filter out indices and scores based on the mask
+            filtered_score = score[mask]
+            filtered_index = index[mask]
+
+            # Calculate x, y based on the filtered indices
+            y = (filtered_index // 128).float() + torch.gather(joff[:, 0], 1, filtered_index) + 0.5
+            x = (filtered_index % 128).float() + torch.gather(joff[:, 1], 1, filtered_index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
-            SCORE_THRESHOLD = 0.1
-            mask = score > SCORE_THRESHOLD  # mask: [N_TYPE, K]
-
-            # Find indices where mask is True
-            true_indices = torch.nonzero(mask, as_tuple=True)
-
-            # Apply mask to xy using true_indices
-            xy = xy[true_indices]
-
-            # Subsequent operations...
             xy_ = xy[..., None, :]
-            del x, y, index
+            del x, y, filtered_index
 
-            # Compute distances and find matches
+            # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # Convert the indices into a 1D tensor
-            flattened_indices = true_indices[0] * mask.size(1) + true_indices[1]
-
-            # Apply mask to match using true_indices
-            match = match[flattened_indices]
-
-
-            # Filter or modify match based on some conditions
+            # xy: [N_TYPE * K, 2]
+            # match: [N_TYPE, K]
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
-                print("t:", t)
-                print("match[t]:", match[t])
-                print("jtyp.size():", jtyp.size())
-                print("match.size():", match.size())
-
             match[cost > 1.5 * 1.5] = N
-
-            # if mode == "testing":
-            #     match = (match - 1).clamp(min=0)
-
+            match = match.flatten()
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
