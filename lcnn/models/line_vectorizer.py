@@ -256,19 +256,30 @@ class LineVectorizer(nn.Module):
 
             threshold = 0.03  # Define your threshold value here
 
-            # Get the top-k scores and indices
             score, index = torch.topk(jmap, k=K)
 
             # Create a mask for scores that are higher than the threshold
             mask = score > threshold
 
-            # Filter out indices and scores based on the mask
+            # Filter out indices, scores, joff, and junc based on the mask
             filtered_score = score[mask]
             filtered_index = index[mask]
+            # Expand the filtered_index to match the batch size and add an extra dimension at the end
+            # Adjust the shape of filtered_index
+            expanded_index = filtered_index.unsqueeze(0).unsqueeze(1).expand(2, 2, -1)
+
+            # Gather values from joff along the third dimension
+            filtered_joff = torch.gather(joff, 2, expanded_index)
+
+            # Adjust the shape of filtered_index for junc
+            expanded_index_for_junc = filtered_index.unsqueeze(0).unsqueeze(-1).expand(2, -1, junc.size(-1))
+
+            # Gather values from junc along the second dimension
+            filtered_junc = torch.gather(junc, 1, expanded_index_for_junc)
 
             # Calculate x, y based on the filtered indices
-            y = (filtered_index // 128).float() + torch.gather(joff[:, 0], 1, filtered_index) + 0.5
-            x = (filtered_index % 128).float() + torch.gather(joff[:, 1], 1, filtered_index) + 0.5
+            y = (filtered_index // 128).float() + torch.gather(filtered_joff[:, 0], 1, filtered_index) + 0.5
+            x = (filtered_index % 128).float() + torch.gather(filtered_joff[:, 1], 1, filtered_index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -276,7 +287,7 @@ class LineVectorizer(nn.Module):
             del x, y, filtered_index
 
             # dist: [N_TYPE, K, N]
-            dist = torch.sum((xy_ - junc) ** 2, -1)
+            dist = torch.sum((xy_ - filtered_junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
             # xy: [N_TYPE * K, 2]

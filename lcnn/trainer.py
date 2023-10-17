@@ -59,7 +59,7 @@ class Trainer(object):
         self.avg_metrics = None
         self.metrics = np.zeros(0)
 
-        wandb.init(project='line_reader', entity='xfung')
+        wandb.init(project='line_reader', entity='xfung', mode="disabled")
         config = wandb.config
         config.update(M, allow_val_change=True)
 
