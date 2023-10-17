@@ -294,11 +294,11 @@ class LineVectorizer(nn.Module):
 
 
             # Continue with your calculation
-            y = (filtered_index // 128).float() + y_values.squeeze() + 0.5
+            y = (filtered_index // 256).float() + y_values.squeeze() + 0.5
             x_values = torch.gather(filtered_joff[:, 1], 1, expanded_index_batched)
 
             # Continue with your calculation for x
-            x = (filtered_index % 128).float() + x_values.squeeze() + 0.5
+            x = (filtered_index % 256).float() + x_values.squeeze() + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
