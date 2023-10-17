@@ -96,8 +96,8 @@ class LineVectorizer(nn.Module):
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
             cond1 = s[:, 0] > 0.5
-            cond2 = s[:, 1] > 0.9
-            cond3 = s[:, 2] > 0.3
+            cond2 = s[:, 1] > 0.5
+            cond3 = s[:, 2] > 0.5
 
             # Combine the conditions using logical OR
             b = cond1 | cond2 | cond3
@@ -356,6 +356,7 @@ def non_maximum_suppression(a):
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
     mask = (a == ap).float().clamp(min=0.0)
     return a * mask
+
 
 
 class Bottleneck1D(nn.Module):
