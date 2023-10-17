@@ -18,12 +18,12 @@ model:
   # jmap, lmap, joff
   head_size: [[35], [4], [2]]
   loss_weight:
-    jmap: 8.0
+    jmap: 1.0
     lmap: 0.5
     joff: 0.25
-    lpos0: 1
-    lpos1: 1
-    lpos2: 1
+    lpos0: 2
+    lpos1: 10
+    lpos2: 10
     lneg: 1
 
   # backbone parameters
