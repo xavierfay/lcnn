@@ -75,7 +75,7 @@ class MultitaskLearner(nn.Module):
                     return result
 
             L = OrderedDict()
-            #L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
+            L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
 
 
             jmap_losses_per_class = cross_entropy_loss_per_class(jmap, T["jmap"])
@@ -95,8 +95,8 @@ class MultitaskLearner(nn.Module):
             #     L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            for key, value in L.items():
-                print(f"{key} shape when in results forward: {value}")
+            # for key, value in L.items():
+            #     print(f"{key} shape when in results forward: {value}")
 
         result["losses"] = losses
         return result
