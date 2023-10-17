@@ -272,20 +272,20 @@ class Trainer(object):
         #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
         #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
-        # for j, results in enumerate(result["lmap"][i]):
-        #     line_result = results.cpu().numpy()
-        #     imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
-        #
+        for j, results in enumerate(result["lmap"][i]):
+            line_result = results.cpu().numpy()
+            imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
+
         # for j, target in enumerate(target["lmap"][i]):
         #     line_target = target.cpu().numpy()
         #     imshow(line_target), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
-        line_result = result["lmap"][i].cpu().numpy()
-        line_result = line_result.reshape(4,256, 256)
+        # line_result = result["lmap"][i].cpu().numpy()
+        # line_result = line_result.reshape(4,256, 256)
         line_target = target["lmap"][i].cpu().numpy()
         line_target = line_target.reshape(256, 256)
 
-        imshow(line_target), plt.savefig(f"{prefix}_line_a.jpg"), plt.close()
+        imshow(line_target[1]), plt.savefig(f"{prefix}_line_a.jpg"), plt.close()
         imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
 
         def draw_vecl(lines, sline, juncs, jtyp, fn):
