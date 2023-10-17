@@ -269,7 +269,6 @@ class LineVectorizer(nn.Module):
             print(junc.shape)
             print(filtered_index.shape)
             expanded_index = filtered_index.unsqueeze(0).unsqueeze(1).expand(2, 2, -1)
-
             # Gather values from joff along the third dimension
             filtered_joff = torch.gather(joff, 2, expanded_index)
 
@@ -280,8 +279,17 @@ class LineVectorizer(nn.Module):
             filtered_junc = torch.gather(junc, 0, expanded_index_for_junc)
 
             # Calculate x, y based on the filtered indices
-            y = (filtered_index // 128).float() + torch.gather(filtered_joff[:, 0], 1, filtered_index) + 0.5
-            x = (filtered_index % 128).float() + torch.gather(filtered_joff[:, 1], 1, filtered_index) + 0.5
+            expanded_index = filtered_index.unsqueeze(-1)
+
+            # Gather values from filtered_joff[:, 0] along the first dimension
+            y_values = torch.gather(filtered_joff[:, 0].unsqueeze(-1), 0, expanded_index)
+
+            # Continue with your calculation
+            y = (filtered_index // 128).float() + y_values.squeeze() + 0.5
+            x_values = torch.gather(filtered_joff[:, 1].unsqueeze(-1), 0, expanded_index)
+
+            # Continue with your calculation for x
+            x = (filtered_index % 128).float() + x_values.squeeze() + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
