@@ -205,7 +205,7 @@ class LineVectorizer(nn.Module):
             # print("Lneg", Lneg, Lneg.shape)
 
             n_type = jmap.size(0)
-            print("n_type", n_type)
+            #print("n_type", n_type)
             jmap = non_maximum_suppression(jmap.view(n_type, -1))
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -389,7 +389,7 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print(score.shape, score)
+            #print(score.shape, score)
             return line, label, jcs
 
 
