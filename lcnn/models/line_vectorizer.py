@@ -98,7 +98,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.5).any(dim=-1)
+            b = (s > 0.1).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
@@ -327,8 +327,8 @@ class LineVectorizer(nn.Module):
             # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
             slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            horizontal_mask = torch.abs(slopes) < 0.05
-            vertical_mask = torch.abs(slopes) > 100
+            horizontal_mask = torch.abs(slopes) < 0.001
+            vertical_mask = torch.abs(slopes) > 10000
             valid_lines_mask = horizontal_mask | vertical_mask
             #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
@@ -356,7 +356,7 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.0003] for i in range(n_type)]
             #print(score.shape, score)
             return line, label, jcs
 
