@@ -131,31 +131,23 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
-
-            def cross_entropy_loss_per_class(x, y, num_classes=4):
+            def cross_entropy_loss_per_class_vectorized(x, y, num_classes=4):
                 # Ensure the logits are float, Convert labels to long
-
                 x = x.float()
                 y = y.long()
 
                 # Calculate the softmax along the second dimension
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
 
-                # Initialize an empty tensor to store the per-class losses
-                loss_per_class = torch.zeros(num_classes).float().to(
-                    x.device)  # ensure the tensor is on the same device as x
+                # One-hot encode the labels
+                y_one_hot = torch.zeros_like(softmax)
+                y_one_hot.scatter_(1, y.unsqueeze(-1), 1)
 
-                # Loop over each class and calculate the loss
-                for c in range(num_classes):
-                    # Create a mask that selects only the samples of class c
+                # Compute the negative log likelihood for each class
+                loss = -torch.log(softmax + 1e-8) * y_one_hot
 
-                    mask = (y == c).float()
-
-                    loss_c = -torch.log(softmax[:, c:c+1] + 1e-8) * mask  # adding a small value to avoid log(0)
-                    loss_per_class[c] = loss_c.sum()
-
-                # Normalize by the total number of samples in the batch
-                loss_per_class /= x.shape[0]
+                # Sum the loss for each class and normalize by the number of samples
+                loss_per_class = loss.sum(dim=0) / x.shape[0]
 
                 return loss_per_class
 
@@ -231,28 +223,6 @@ class LineVectorizer(nn.Module):
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
-
-
-
-             # Compute batch indices for gather operation
-            # batch_size = jmap.size(0)
-            # batch_indices = torch.arange(batch_size)[:, None].expand_as(index).to(index.device)
-            #
-            # print("joff shape:", joff.shape)
-            # print("index shape:", index.shape)
-            # print("batch_indices shape:", batch_indices.shape)
-            # print("Max index value:", torch.max(index).item())
-            # print("jmap width:", jmap.size(-1))
-            #
-            # # Extract y and x coordinates
-            # y = (index // jmap.size(-1)).float() + joff[:, index.view(-1)].reshape(batch_size, K) + 0.5
-            # x = (index % jmap.size(-1)).float() + joff[:, index.view(-1)].reshape(batch_size, K) + 0.5
-            #
-            # # xy: [Batch, K, 2]
-            # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
-            # xy_ = xy[..., None, :]
-            # del x, y, index
-
 
             #print("xy_", xy_.shape, xy_)
 
