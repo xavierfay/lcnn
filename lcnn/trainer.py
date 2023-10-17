@@ -270,11 +270,12 @@ class Trainer(object):
         #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
         #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
-        for j in range(result["lmap"].shape[0]):  # Iterating over the first dimension
-            line_result = result["lmap"][j, i].cpu().numpy()
-            plt.imshow(line_result)
-            plt.savefig(f"{prefix}_line_{j}_{i}.jpg")
-            plt.close()
+        lmap = result["lmap"].permute(1,0,2,3)
+        lmap = lmap[i].cpu().numpy()
+
+        for j, results in enumerate(lmap[i]):
+            line_result = results.cpu().numpy()
+            imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         # for j, target in enumerate(target["lmap"][i]):
         #     line_target = target.cpu().numpy()
