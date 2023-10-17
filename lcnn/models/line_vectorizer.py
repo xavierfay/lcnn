@@ -274,10 +274,10 @@ class LineVectorizer(nn.Module):
             filtered_joff = torch.gather(joff, 2, expanded_index)
 
             # Adjust the shape of filtered_index for junc
-            expanded_index_for_junc = filtered_index.unsqueeze(0).unsqueeze(-1).expand(2, -1, junc.size(-1))
+            expanded_index_for_junc = filtered_index.unsqueeze(-1)
 
-            # Gather values from junc along the second dimension
-            filtered_junc = torch.gather(junc, 1, expanded_index_for_junc)
+            # Gather values from junc along the first dimension
+            filtered_junc = torch.gather(junc, 0, expanded_index_for_junc)
 
             # Calculate x, y based on the filtered indices
             y = (filtered_index // 128).float() + torch.gather(filtered_joff[:, 0], 1, filtered_index) + 0.5
