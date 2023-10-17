@@ -255,8 +255,9 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu().numpy()
-        mask_result = torch.argmax(mask_result, dim=0)
+        mask_result = result["jmap"][i].cpu()
+        mask_result_transformed = torch.argmax(mask_result, dim=0)
+        mask_result = mask_result_transformed.numpy()
         print("mask result shape", mask_result.shape)
 
         mask_target = target["jmap"][i].cpu().numpy()
