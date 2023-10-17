@@ -254,47 +254,40 @@ class LineVectorizer(nn.Module):
             # u, v = u.flatten(), v.flatten()
             # up, vp = match[u], match[v]
 
-            threshold = 0.03
-
-            # Get top K scores and their indices
             score, index = torch.topk(jmap, k=K)
-
-            # Create a mask for scores that are higher than the threshold
-            mask = score > threshold
-
-            # Filter out indices and scores based on the mask
-            filtered_score = score[mask]
-            filtered_index = index[mask]
-
-            # Gather values from joff and junc
-            filtered_joff = torch.gather(joff, 2, filtered_index.unsqueeze(0).unsqueeze(1).expand(2, 2, -1))
-            filtered_junc = torch.gather(junc, 0, filtered_index.unsqueeze(-1))
-
-            # Calculate x, y based on the filtered indices
-            y_values = torch.gather(filtered_joff[:, 0], 1, filtered_index.unsqueeze(0).expand(2, -1))
-            x_values = torch.gather(filtered_joff[:, 1], 1, filtered_index.unsqueeze(0).expand(2, -1))
-
-            y = (filtered_index // 128).float() + y_values.squeeze() + 0.5
-            x = (filtered_index % 128).float() + x_values.squeeze() + 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
+            del x, y, index
 
             # dist: [N_TYPE, K, N]
-            dist = torch.sum((xy_ - filtered_junc) ** 2, -1)
+            dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # Filtering matches based on conditions
-            match[(jtyp[match] != torch.arange(n_type).unsqueeze(1)).any(dim=0)] = N
+            for t in range(n_type):
+                match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            # Compute scalar_labels and the label tensor
-            u, v = torch.meshgrid(torch.arange(n_type * K, device=device), repeat=2)
-            up, vp = match[u.flatten()], match[v.flatten()]
-            scalar_labels = Lpos[up, vp].long()
-            label = torch.zeros_like(scalar_labels, dtype=torch.float).scatter_(1, scalar_labels.unsqueeze(-1), 1)
+            if mode == "testing":
+                match = (match - 1).clamp(min=0)
+
+            _ = torch.arange(n_type * K, device=device)
+            u, v = torch.meshgrid(_, _)
+            u, v = u.flatten(), v.flatten()
+            up, vp = match[u], match[v]
+
+            scalar_labels = Lpos[up, vp]
+            scalar_labels = scalar_labels.long()
+            # print("scalar labels", scalar_labels)
+            # Initialize a tensor of zeros with shape [N, 3]
+            label = torch.zeros(scalar_labels.shape[0], 2, device=scalar_labels.device)
+
+            # Assign a "1" in the respective column according to the scalar label
+            label[torch.arange(label.shape[0]), scalar_labels] = 1
 
             if mode == "training":
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
