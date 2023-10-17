@@ -194,17 +194,19 @@ class LineVectorizer(nn.Module):
             jtyp = meta["jtyp"]  # [N]
             Lpos = meta["Lpos"]  # [N+1, N+1]
             Lneg = meta["Lneg"]  # [N+1, N+1]
-            lpre_label = meta["lpre_label"]  # [N, 34]
+            lpre_label = meta["lpre_label"]  # [N, 3]
+
+            print("jmap:", jmap.shape)
+            print("joff:" , joff.shape)
 
             # print("junc:", junc, junc.shape)
             # print("jtype", jtyp, jtyp.shape)
             # print("Lpos:", Lpos, Lpos.shape)
             # print("Lneg", Lneg, Lneg.shape)
 
-
-            n_type = jmap.shape[0]
-            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
-            joff = joff.reshape(n_type, 2, -1)
+            n_type = jmap.size(0)
+            print("n_type", n_type)
+            jmap = non_maximum_suppression(jmap.view(n_type, -1))
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
             if mode != "training":
@@ -217,13 +219,40 @@ class LineVectorizer(nn.Module):
 
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
-            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            print("index", index.shape)
+            # Reshape joff to have the same number of dimensions as index
+            joff_y_flat = joff[0].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]
+            joff_x_flat = joff[1].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]
+
+            y = (index // 256).float() + torch.gather(joff_y_flat, 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff_x_flat, 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
+
+
+
+             # Compute batch indices for gather operation
+            # batch_size = jmap.size(0)
+            # batch_indices = torch.arange(batch_size)[:, None].expand_as(index).to(index.device)
+            #
+            # print("joff shape:", joff.shape)
+            # print("index shape:", index.shape)
+            # print("batch_indices shape:", batch_indices.shape)
+            # print("Max index value:", torch.max(index).item())
+            # print("jmap width:", jmap.size(-1))
+            #
+            # # Extract y and x coordinates
+            # y = (index // jmap.size(-1)).float() + joff[:, index.view(-1)].reshape(batch_size, K) + 0.5
+            # x = (index % jmap.size(-1)).float() + joff[:, index.view(-1)].reshape(batch_size, K) + 0.5
+            #
+            # # xy: [Batch, K, 2]
+            # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+            # xy_ = xy[..., None, :]
+            # del x, y, index
+
 
             #print("xy_", xy_.shape, xy_)
 
@@ -365,9 +394,11 @@ class LineVectorizer(nn.Module):
 
 
 def non_maximum_suppression(a):
+    a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
-    mask = (a == ap).float().clamp(min=0.0)
-    return a * mask
+    keep = (a == ap).float()
+    a = a.view(a.shape[0], -1)  # Flatten it back after processing
+    return a * keep.view(keep.shape[0], -1)
 
 
 class Bottleneck1D(nn.Module):

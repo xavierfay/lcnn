@@ -11,18 +11,19 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 4
+  batch_size: 3
   batch_size_eval: 2
 
   # backbone multi-task parameters
   # jmap, lmap, joff
-  head_size: [[2], [2], [2]]
+  head_size: [[35], [4], [2]]
   loss_weight:
     jmap: 8.0
     lmap: 0.5
     joff: 0.25
     lpos0: 1
     lpos1: 1
+    lpos2: 1
     lneg: 1
 
   # backbone parameters

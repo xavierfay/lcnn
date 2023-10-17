@@ -45,55 +45,55 @@ class MultitaskLearner(nn.Module):
         batch, channel, row, col = outputs[0].shape
 
         T = input_dict["target"].copy()
-        n_jtyp = int(torch.max(T["jmap"]).item())
-        n_ltyp = int(torch.max(T["lmap"]).item())
+        n_jtyp = int(torch.max(T["jmap"]).item())+1
+        n_ltyp = int(torch.max(T["lmap"]).item())+1
 
-        n_jtyp = 1
-        n_ltyp = 1
 
         # switch to CNHW
-        for task in ["jmap"]:
-            T[task] = T[task].permute(1, 0, 2, 3)
+        # for task in ["jmap"]:
+        #     T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
-            T[task] = T[task].permute(1, 2, 0, 3, 4)
+            T[task] = T[task].permute(1, 0, 2, 3)
 
         offset = self.head_off
         loss_weight = M.loss_weight
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-            jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row,col)
-            lmap = output[offset[0] : offset[1]].reshape(n_ltyp, 2, batch, row,col)
-            joff = output[offset[1] : offset[2]].reshape(n_jtyp, 2, batch, row, col)
+            # jmap now predicts class scores for each pixel
+            jmap = output[0: offset[0]].reshape(batch, n_jtyp, row, col)
+            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, row, col)
+            joff = output[offset[1]: offset[2]].reshape(2, batch, row, col)
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
+                    "jmap": jmap.softmax(1),
+                    "lmap": lmap.softmax(1),
+                    "joff": joff.permute(1, 0, 2, 3).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
                     return result
 
             L = OrderedDict()
-            L["jmap"] = sum(
-                cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
-            )
-            L["lmap"] = sum(
-                cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
-            )
+            L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
 
+            print(lmap.shape, T["lmap"].shape)
+            L["lmap"] = cross_entropy_loss(lmap, T["lmap"])
+
+            print(joff.shape, T["joff"].shape)
             L["joff"] = sum(
-                sigmoid_l1_loss(joff[i, j], T["joff"][i, j], -0.5, T["jmap"][i])
-                for i in range(n_jtyp)
+                sigmoid_l1_loss(joff[j], T["joff"][j], -0.5, T["jmap"])
                 for j in range(2)
             )
+            for key, value in L.items():
+                print(f"{key} shape when in results before the weights: {value}")
+
             for loss_name in L:
                 L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            # for key, value in T.items():
-            #     print(f"{key} shape when in results forward: {value.shape}")
+            for key, value in L.items():
+                print(f"{key} shape when in results forward: {value}")
 
         result["losses"] = losses
         return result
@@ -103,9 +103,12 @@ def l2loss(input, target):
     return ((target - input) ** 2).mean(2).mean(1)
 
 
-def cross_entropy_loss(logits, positive):
-    nlogp = -F.log_softmax(logits, dim=0)
-    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
+def cross_entropy_loss(logits, target):
+    print(target.max())
+    print(logits.size(1))
+    print(target.min())
+    nlogp = F.log_softmax(logits, dim=1)
+    return F.nll_loss(nlogp, target.long(), reduction='mean')
 
 
 def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):

@@ -50,8 +50,12 @@ class WireframeDataset(Dataset):
         with np.load(self.filelist[idx]) as npz:
             target = {
                 name: torch.from_numpy(npz[name]).float()
-                for name in ["jmap", "joff", "lmap"]
+                for name in ["lmap"]
             }
+            target["jmap"] = torch.from_numpy(npz["jmap"]).float().squeeze(0)
+            tensor = torch.from_numpy(npz["joff"])
+            target["joff"] = tensor.sum(dim=0)
+
 
             lpos = npz["lpos"].copy()
             lneg = npz["lneg"].copy()
