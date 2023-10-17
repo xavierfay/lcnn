@@ -280,10 +280,11 @@ class LineVectorizer(nn.Module):
 
             # Calculate x, y based on the filtered indices
             # Adjust the shape of filtered_index for the batch size
-            expanded_index_batched = filtered_index.unsqueeze(0).expand(2, -1, 1)
+            # Adjust the shape of filtered_index to match the batch size
+            expanded_index_batched = filtered_index.unsqueeze(0).expand(2, -1)
 
-            # Now, gather values from filtered_joff[:, 0] along the second dimension
-            y_values = torch.gather(filtered_joff[:, 0].unsqueeze(-1), 1, expanded_index_batched)
+            # Gather values from filtered_joff[:, 0] using the batched expanded_index
+            y_values = torch.gather(filtered_joff[:, 0], 1, expanded_index_batched)
 
             print(filtered_joff[:, 0].unsqueeze(-1).shape)
             print(expanded_index.shape)
@@ -294,7 +295,7 @@ class LineVectorizer(nn.Module):
 
             # Continue with your calculation
             y = (filtered_index // 128).float() + y_values.squeeze() + 0.5
-            x_values = torch.gather(filtered_joff[:, 1].unsqueeze(-1), 0, expanded_index_batched)
+            x_values = torch.gather(filtered_joff[:, 1], 1, expanded_index_batched)
 
             # Continue with your calculation for x
             x = (filtered_index % 128).float() + x_values.squeeze() + 0.5
