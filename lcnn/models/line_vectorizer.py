@@ -266,6 +266,8 @@ class LineVectorizer(nn.Module):
             filtered_index = index[mask]
             # Expand the filtered_index to match the batch size and add an extra dimension at the end
             # Adjust the shape of filtered_index
+            print(junc.shape)
+            print(filtered_index.shape)
             expanded_index = filtered_index.unsqueeze(0).unsqueeze(1).expand(2, 2, -1)
 
             # Gather values from joff along the third dimension
