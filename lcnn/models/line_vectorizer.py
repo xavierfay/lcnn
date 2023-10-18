@@ -96,7 +96,7 @@ class LineVectorizer(nn.Module):
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
             cond1 = s[:, 0] > 0.5
-            cond2 = s[:, 1] > 0.5
+            cond2 = s[:, 1] > 0.8
             cond3 = s[:, 2] > 0.5
 
             # Combine the conditions using logical OR

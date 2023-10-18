@@ -34,13 +34,13 @@ model:
   # sampler parameters
   ## static sampler
   n_stc_posl: 300
-  n_stc_negl: 40
+  n_stc_negl: 100
 
   ## dynamic sampler
   n_dyn_junc: 300
   n_dyn_posl1: 300
   n_dyn_posl0: 300
-  n_dyn_negl: 80
+  n_dyn_negl: 800
   n_dyn_othr: 600
 
   # LOIPool layer parameters
@@ -61,7 +61,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.05
 
 optim:
   name: Adam
