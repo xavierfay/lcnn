@@ -46,9 +46,8 @@ class LineVectorizer(nn.Module):
         result = self.backbone(input_dict)
         h = result["preds"]
         losses = result["losses"]
-        lmap_losses = [l['lmap'] for l in losses]
-        lmap_losses = torch.stack(lmap_losses, dim=1)
-        print(lmap_losses)
+        lmap_losses = torch.stack([l['lmap'] for l in losses], dim=1)
+
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
 
@@ -291,7 +290,7 @@ class LineVectorizer(nn.Module):
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
-            print("lmaploss",lmap_loss.shape)
+
             if torch.mean(lmap_loss) < 0.05:
             # Sample from lmap and decide whether to keep the line
                 lines_to_keep = []
@@ -306,7 +305,7 @@ class LineVectorizer(nn.Module):
                         sampled_values = lmap[1][y_coords.long(), x_coords.long()]
                     else:
                         continue
-                    if sampled_values.mean() > 0.014/lmap_loss:
+                    if sampled_values.mean() > 0.014/torch.mean(lmap_loss):
                         lines_to_keep.append([start.tolist(), end.tolist()])
                         labels_to_keep.append(label[i])
 
@@ -319,8 +318,6 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-
-            print("line", line.shape)
 
             return line, label, jcs
 
