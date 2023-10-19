@@ -288,7 +288,7 @@ class LineVectorizer(nn.Module):
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
-
+            print("lmaploss",lmap_loss.shape)
             if lmap_loss < 0.05:
             # Sample from lmap and decide whether to keep the line
                 lines_to_keep = []
