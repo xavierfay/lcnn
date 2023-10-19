@@ -67,7 +67,7 @@ class LineVectorizer(nn.Module):
                 jcs.append(jc)
                 ps.append(p)
 
-            print(p.shape)
+
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
@@ -309,8 +309,13 @@ class LineVectorizer(nn.Module):
                         lines_to_keep.append([start.tolist(), end.tolist()])
                         labels_to_keep.append(label[i])
 
-                line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
-                label = torch.stack(labels_to_keep, dim=0)
+                if not lines_to_keep:
+                    # Return an empty tensor for line and label (or any other default value you prefer)
+                    line = torch.empty((0, 2, 2), device=device)
+                    label = torch.empty((0, 3), device=device)  # Assuming label has 3 classes
+                else:
+                    line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
+                    label = torch.stack(labels_to_keep, dim=0)
             else:
                 line = torch.cat([xyu[:, None], xyv[:, None]], 1)
 
