@@ -299,10 +299,11 @@ class LineVectorizer(nn.Module):
                     sampled_values = lmap[0][y_coords.long(), x_coords.long()]
                 elif label[i, 2] == 1:  # label = 2
                     sampled_values = lmap[1][y_coords.long(), x_coords.long()]
+                    print("sampeld values", sampled_values)
                 else:
                     continue
 
-                if sampled_values.mean() > 0.8:
+                if sampled_values.mean() > 0.2:
                     lines_to_keep.append([start, end])
                     labels_to_keep.append(label[i])
 
@@ -313,7 +314,8 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print(len(jcs[1]))
+
+            print("line", line)
 
             return line, label, jcs
 
