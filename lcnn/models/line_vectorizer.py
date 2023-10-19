@@ -47,6 +47,7 @@ class LineVectorizer(nn.Module):
         h = result["preds"]
         losses = result["losses"]
         lmap_losses = [l['lmap'] for l in losses]
+        lmap_losses = torch.stack(lmap_losses, dim=1)
         print(lmap_losses)
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
