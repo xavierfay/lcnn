@@ -30,10 +30,14 @@ import lcnn.metric
 
 GT = "data/Twoclass/valid/*.npz"
 
-
+def sorting_key(filename):
+    """Key function to sort filenames based on the number before the underscore."""
+    # Extract the number before the underscore and return it as an integer
+    base_name = os.path.basename(filename)
+    return int(base_name.split('_')[0])
 def line_score(path, threshold=5):
     preds = sorted(glob.glob(path))
-    gts = sorted(glob.glob(GT))
+    gts = sorted(glob.glob(GT), key=sorting_key)
 
     n_gt = 0
     lcnn_tp, lcnn_fp, lcnn_scores = [], [], []
@@ -41,9 +45,14 @@ def line_score(path, threshold=5):
         print(pred_name, gt_name)
         with np.load(pred_name) as fpred:
             lcnn_line = fpred["lines"][:, :, :2]
+            lcnn_line = lcnn_line.swapaxes(1, 2)
+            print(lcnn_line)
+
             lcnn_score = fpred["score"]
         with np.load(gt_name) as fgt:
             gt_line = fgt["lpos"][:, :, :2]
+            print('gt_line',gt_line)
+            break
         n_gt += len(gt_line)
 
         for i in range(len(lcnn_line)):

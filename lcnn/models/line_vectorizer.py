@@ -51,7 +51,7 @@ class LineVectorizer(nn.Module):
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
             p, label, jc = self.sample_lines(
-                meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
+                meta, h["jmap"][i], h["joff"][i],h["lmap"][i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
             ys.append(label)
@@ -184,7 +184,7 @@ class LineVectorizer(nn.Module):
 
         return result
 
-    def sample_lines(self, meta, jmap, joff, mode):
+    def sample_lines(self, meta, jmap, joff, lmap, mode):
         with torch.no_grad():
             junc = meta["junc"]  # [N, 2]
             jtyp = meta["jtyp"]  # [N]
@@ -204,56 +204,6 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-            # # index: [N_TYPE, K]
-            # score, index = torch.topk(jmap, k=K)
-            # y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            # x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
-            #
-            # # xy: [N_TYPE, K, 2]
-            # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
-            # SCORE_THRESHOLD = 0.1
-            # mask = score > SCORE_THRESHOLD  # mask: [N_TYPE, K]
-            #
-            # # Find indices where mask is True
-            # true_indices = torch.nonzero(mask, as_tuple=True)
-            #
-            # # Apply mask to xy using true_indices
-            # xy = xy[true_indices]
-            #
-            # # Subsequent operations...
-            # xy_ = xy[..., None, :]
-            # del x, y, index
-            #
-            # # Compute distances and find matches
-            # dist = torch.sum((xy_ - junc) ** 2, -1)
-            # cost, match = torch.min(dist, -1)
-            #
-            # # Convert the indices into a 1D tensor
-            # flattened_indices = true_indices[0] * mask.size(1) + true_indices[1]
-            #
-            # # Apply mask to match using true_indices
-            # match = match[flattened_indices]
-            #
-            #
-            # # Filter or modify match based on some conditions
-            # for t in range(n_type):
-            #     match[t, jtyp[match[t]] != t] = N
-            #     print("t:", t)
-            #     print("match[t]:", match[t])
-            #     print("jtyp.size():", jtyp.size())
-            #     print("match.size():", match.size())
-            #
-            # match[cost > 1.5 * 1.5] = N
-            #
-            # # if mode == "testing":
-            # #     match = (match - 1).clamp(min=0)
-            #
-            #
-            # _ = torch.arange(n_type * K, device=device)
-            # u, v = torch.meshgrid(_, _)
-            # u, v = u.flatten(), v.flatten()
-            # up, vp = match[u], match[v]
-
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
@@ -264,23 +214,16 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
-            #print("xy_", xy_.shape, xy_)
-
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # xy: [N_TYPE * K, 2]
             # match: [N_TYPE, K]
             # TODO: this flatten can help
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
-
-            # if mode == "testing":
-            #     match = (match - 1).clamp(min=0)
-
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
@@ -345,11 +288,31 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
-            line = torch.cat([xyu[:, None], xyv[:, None]], 1)
+            lines_to_keep = []
+            labels_to_keep = []
+            for i, (start, end) in enumerate(zip(xyu, xyv)):
+                x_coords = torch.linspace(start[0], end[0], steps=10)
+                y_coords = torch.linspace(start[1], end[1], steps=10)
+
+                if label[i, 1] == 1:  # label = 1
+                    sampled_values = lmap[0][y_coords.long(), x_coords.long()]
+                elif label[i, 2] == 1:  # label = 2
+                    sampled_values = lmap[1][y_coords.long(), x_coords.long()]
+                else:
+                    continue
+
+                if sampled_values.mean() > 0.8:
+                    lines_to_keep.append([start, end])
+                    labels_to_keep.append(label[i])
+
+            line = torch.tensor(lines_to_keep)
+            label = torch.tensor(labels_to_keep)
+
+            #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            print(len(jcs))
+            print(len(jcs[1]))
 
             return line, label, jcs
 
