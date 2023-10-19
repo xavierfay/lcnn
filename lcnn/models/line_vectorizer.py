@@ -99,19 +99,19 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            cond1 = s[:, 0] > 0.5
-            cond2 = s[:, 1] > 0.8
-            cond3 = s[:, 2] > 0.5
+            cond1 = s[:, 0] < 0.34
+            cond2 = s[:, 1] > 0.34
+            cond3 = s[:, 2] > 0.34
 
             # Combine the conditions using logical OR
-            b = cond1 | cond2 | cond3
-            #b = (s > 0.3).any(dim=-1)
+            b = (cond1 & cond2) | cond3
+            # b = (s > 0.3).any(dim=-1)
             lines = []
             score = []
             for i in range(n_batch):
-                p0 = p[idx[i] : idx[i + 1]]
-                s0 = s[idx[i] : idx[i + 1]]
-                mask = b[idx[i] : idx[i + 1]]
+                p0 = p[idx[i]: idx[i + 1]]
+                s0 = s[idx[i]: idx[i + 1]]
+                mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
                 if len(p0) == 0:
@@ -290,32 +290,32 @@ class LineVectorizer(nn.Module):
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
+            if M.use_lmap:
+                if torch.mean(lmap_loss) < 0.05:
+                # Sample from lmap and decide whether to keep the line
+                    lines_to_keep = []
+                    labels_to_keep = []
+                    for i, (start, end) in enumerate(zip(xyu, xyv)):
+                        x_coords = torch.linspace(start[0], end[0], steps=10, device=device)
+                        y_coords = torch.linspace(start[1], end[1], steps=10, device=device)
 
-            if torch.mean(lmap_loss) < 0.05:
-            # Sample from lmap and decide whether to keep the line
-                lines_to_keep = []
-                labels_to_keep = []
-                for i, (start, end) in enumerate(zip(xyu, xyv)):
-                    x_coords = torch.linspace(start[0], end[0], steps=10, device=device)
-                    y_coords = torch.linspace(start[1], end[1], steps=10, device=device)
+                        if label[i, 1] == 1:  # label = 1
+                            sampled_values = lmap[0][y_coords.long(), x_coords.long()]
+                        elif label[i, 2] == 1:  # label = 2
+                            sampled_values = lmap[1][y_coords.long(), x_coords.long()]
+                        else:
+                            continue
+                        if sampled_values.mean() > 0.014/torch.mean(lmap_loss):
+                            lines_to_keep.append([start.tolist(), end.tolist()])
+                            labels_to_keep.append(label[i])
 
-                    if label[i, 1] == 1:  # label = 1
-                        sampled_values = lmap[0][y_coords.long(), x_coords.long()]
-                    elif label[i, 2] == 1:  # label = 2
-                        sampled_values = lmap[1][y_coords.long(), x_coords.long()]
+                    if not lines_to_keep:
+                        # Return an empty tensor for line and label (or any other default value you prefer)
+                        line = torch.empty((0, 2, 2), device=device)
+                        label = torch.empty((0, 3), device=device)  # Assuming label has 3 classes
                     else:
-                        continue
-                    if sampled_values.mean() > 0.014/torch.mean(lmap_loss):
-                        lines_to_keep.append([start.tolist(), end.tolist()])
-                        labels_to_keep.append(label[i])
-
-                if not lines_to_keep:
-                    # Return an empty tensor for line and label (or any other default value you prefer)
-                    line = torch.empty((0, 2, 2), device=device)
-                    label = torch.empty((0, 3), device=device)  # Assuming label has 3 classes
-                else:
-                    line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
-                    label = torch.stack(labels_to_keep, dim=0)
+                        line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
+                        label = torch.stack(labels_to_keep, dim=0)
             else:
                 line = torch.cat([xyu[:, None], xyv[:, None]], 1)
 

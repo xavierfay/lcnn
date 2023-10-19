@@ -44,12 +44,12 @@ model:
   n_dyn_othr: 600
 
   # LOIPool layer parameters
-  n_pts0: 32
-  n_pts1: 8
+  n_pts0: 64
+  n_pts1: 16
 
   # line verification network parameters
   dim_loi: 256
-  dim_fc: 1024
+  dim_fc: 2048
 
   # maximum junction and line outputs
   n_out_junc: 500
@@ -59,6 +59,7 @@ model:
   use_cood: 0
   use_slop: 0
   use_conv: 0
+  use_lmap: 0
 
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.1
