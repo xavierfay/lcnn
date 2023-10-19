@@ -56,8 +56,7 @@ class LineVectorizer(nn.Module):
             # print("p.shape:", p.shape)
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
-                p = p.to('cuda:0')
-                meta["lpre"] = meta["lpre"].to('cuda:0')
+
                 p = torch.cat([p, meta["lpre"]])
                 ys.append(meta["lpre_label"])
                 del jc
@@ -307,8 +306,8 @@ class LineVectorizer(nn.Module):
                     lines_to_keep.append([start, end])
                     labels_to_keep.append(label[i])
 
-            line = torch.tensor(lines_to_keep)
-            label = torch.tensor(labels_to_keep)
+            line = torch.tensor(lines_to_keep, device=device)
+            label = torch.tensor(labels_to_keep, device=device)
 
             #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
