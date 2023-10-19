@@ -45,8 +45,8 @@ class LineVectorizer(nn.Module):
     def forward(self, input_dict):
         result = self.backbone(input_dict)
         h = result["preds"]
-        l = result["losses"]
-        lmap_losses = [l['lmap'] for l in data]
+        losses = result["losses"]
+        lmap_losses = [l['lmap'] for l in losses]
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
 
