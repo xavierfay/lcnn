@@ -56,6 +56,8 @@ class LineVectorizer(nn.Module):
             # print("p.shape:", p.shape)
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
+                p = p.to('cuda:0')
+                meta["lpre"] = meta["lpre"].to('cuda:0')
                 p = torch.cat([p, meta["lpre"]])
                 ys.append(meta["lpre_label"])
                 del jc
