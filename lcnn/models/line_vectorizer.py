@@ -45,13 +45,14 @@ class LineVectorizer(nn.Module):
     def forward(self, input_dict):
         result = self.backbone(input_dict)
         h = result["preds"]
+        l = result["losses"]
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
 
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
             p, label, jc = self.sample_lines(
-                meta, h["jmap"][i], h["joff"][i],h["lmap"][i], input_dict["mode"]
+                meta, h["jmap"][i], h["joff"][i],h["lmap"][i], l[i]["lmap"], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
             ys.append(label)
@@ -185,7 +186,7 @@ class LineVectorizer(nn.Module):
 
         return result
 
-    def sample_lines(self, meta, jmap, joff, lmap, mode):
+    def sample_lines(self, meta, jmap, joff, lmap, lmap_loss, mode):
         with torch.no_grad():
             junc = meta["junc"]  # [N, 2]
             jtyp = meta["jtyp"]  # [N]
@@ -288,33 +289,35 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
+            if lmap_loss < 0.05:
             # Sample from lmap and decide whether to keep the line
-            lines_to_keep = []
-            labels_to_keep = []
-            for i, (start, end) in enumerate(zip(xyu, xyv)):
-                x_coords = torch.linspace(start[0], end[0], steps=10, device=device)
-                y_coords = torch.linspace(start[1], end[1], steps=10, device=device)
+                lines_to_keep = []
+                labels_to_keep = []
+                for i, (start, end) in enumerate(zip(xyu, xyv)):
+                    x_coords = torch.linspace(start[0], end[0], steps=10, device=device)
+                    y_coords = torch.linspace(start[1], end[1], steps=10, device=device)
 
-                if label[i, 1] == 1:  # label = 1
-                    sampled_values = lmap[0][y_coords.long(), x_coords.long()]
-                elif label[i, 2] == 1:  # label = 2
-                    sampled_values = lmap[1][y_coords.long(), x_coords.long()]
-                else:
-                    continue
-                print("sampled_values", sampled_values)
-                if sampled_values.mean() > 0.2:
-                    lines_to_keep.append([start.tolist(), end.tolist()])
-                    labels_to_keep.append(label[i])
+                    if label[i, 1] == 1:  # label = 1
+                        sampled_values = lmap[0][y_coords.long(), x_coords.long()]
+                    elif label[i, 2] == 1:  # label = 2
+                        sampled_values = lmap[1][y_coords.long(), x_coords.long()]
+                    else:
+                        continue
+                    if sampled_values.mean() > 0.014/lmap_loss:
+                        lines_to_keep.append([start.tolist(), end.tolist()])
+                        labels_to_keep.append(label[i])
 
-            line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
-            label = torch.stack(labels_to_keep, dim=0)
+                line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
+                label = torch.stack(labels_to_keep, dim=0)
+            else:
+                line = torch.cat([xyu[:, None], xyv[:, None]], 1)
 
             #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
 
-            print("line", line)
+            print("line", line.shape)
 
             return line, label, jcs
 
