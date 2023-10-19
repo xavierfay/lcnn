@@ -46,13 +46,14 @@ class LineVectorizer(nn.Module):
         result = self.backbone(input_dict)
         h = result["preds"]
         l = result["losses"]
+        lmap_losses = [l['lmap'] for l in data]
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
 
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
             p, label, jc = self.sample_lines(
-                meta, h["jmap"][i], h["joff"][i],h["lmap"][i], l[i]["lmap"], input_dict["mode"]
+                meta, h["jmap"][i], h["joff"][i],h["lmap"][i], lmap_losses[i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
             ys.append(label)
