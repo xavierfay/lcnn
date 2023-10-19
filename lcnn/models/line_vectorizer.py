@@ -284,31 +284,30 @@ class LineVectorizer(nn.Module):
             valid_lines_mask = horizontal_mask | vertical_mask
             # print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
 
-
             # Filter xyu, xyv, and label using the valid_lines_mask
             xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             label = label[valid_lines_mask]
 
+            # Sample from lmap and decide whether to keep the line
             lines_to_keep = []
             labels_to_keep = []
             for i, (start, end) in enumerate(zip(xyu, xyv)):
-                x_coords = torch.linspace(start[0], end[0], steps=10)
-                y_coords = torch.linspace(start[1], end[1], steps=10)
+                x_coords = torch.linspace(start[0], end[0], steps=10, device=device)
+                y_coords = torch.linspace(start[1], end[1], steps=10, device=device)
 
                 if label[i, 1] == 1:  # label = 1
                     sampled_values = lmap[0][y_coords.long(), x_coords.long()]
                 elif label[i, 2] == 1:  # label = 2
                     sampled_values = lmap[1][y_coords.long(), x_coords.long()]
-                    print("sampeld values", sampled_values)
                 else:
                     continue
-
+                print("sampled_values", sampled_values)
                 if sampled_values.mean() > 0.2:
-                    lines_to_keep.append([start, end])
+                    lines_to_keep.append([start.tolist(), end.tolist()])
                     labels_to_keep.append(label[i])
 
-            line = torch.tensor(lines_to_keep, device=device)
-            label = torch.tensor(labels_to_keep, device=device)
+            line = torch.stack([torch.tensor(l, device=device) for l in lines_to_keep], dim=0)
+            label = torch.stack(labels_to_keep, dim=0)
 
             #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
