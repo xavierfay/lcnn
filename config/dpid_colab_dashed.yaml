@@ -34,13 +34,13 @@ model:
   # sampler parameters
   ## static sampler
   n_stc_posl: 300
-  n_stc_negl: 40
+  n_stc_negl: 300
 
   ## dynamic sampler
   n_dyn_junc: 300
   n_dyn_posl1: 300
   n_dyn_posl0: 300
-  n_dyn_negl: 80
+  n_dyn_negl: 800
   n_dyn_othr: 600
 
   # LOIPool layer parameters
@@ -53,7 +53,7 @@ model:
 
   # maximum junction and line outputs
   n_out_junc: 250
-  n_out_line: 2500
+  n_out_line: 1000
 
   # additional ablation study parameters
   use_cood: 0
@@ -61,7 +61,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.1
 
 optim:
   name: Adam

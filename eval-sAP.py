@@ -28,7 +28,7 @@ from docopt import docopt
 import lcnn.utils
 import lcnn.metric
 
-GT = "data/wireframe/valid/*.npz"
+GT = "data/Twoclass/valid/*.npz"
 
 
 def line_score(path, threshold=5):
@@ -38,6 +38,7 @@ def line_score(path, threshold=5):
     n_gt = 0
     lcnn_tp, lcnn_fp, lcnn_scores = [], [], []
     for pred_name, gt_name in zip(preds, gts):
+        print(pred_name, gt_name)
         with np.load(pred_name) as fpred:
             lcnn_line = fpred["lines"][:, :, :2]
             lcnn_score = fpred["score"]
@@ -55,8 +56,8 @@ def line_score(path, threshold=5):
         lcnn_tp.append(tp)
         lcnn_fp.append(fp)
         lcnn_scores.append(lcnn_score)
-    print(lcnn_tp)
-    if len(lcnn_tp) > 0:  # Check if lcnn_tp is not empty
+
+    if len(lcnn_tp) > 0:
         lcnn_tp = np.concatenate(lcnn_tp)
         lcnn_fp = np.concatenate(lcnn_fp)
         lcnn_scores = np.concatenate(lcnn_scores)
@@ -64,21 +65,18 @@ def line_score(path, threshold=5):
         lcnn_tp = np.cumsum(lcnn_tp[lcnn_index]) / n_gt
         lcnn_fp = np.cumsum(lcnn_fp[lcnn_index]) / n_gt
     else:
-        print("check")
-        # Handle the case when lcnn_tp is empty, maybe return some default value or raise a custom error
         lcnn_tp = np.array([])
-
-
+        lcnn_fp = np.array([])
 
     return lcnn.metric.ap(lcnn_tp, lcnn_fp)
 
 def work(path):
     print(f"Working on {path}")
-    return [100 * line_score(f"{path}/*.npz", t) for t in [1, 10, 15]]
-
+    return [100 * line_score(f"{path}/*.npz", t) for t in [5, 10, 15]]
 
 if __name__ == "__main__":
     args = docopt(__doc__)
+
 
 
     dirs = sorted(sum([glob.glob(p) for p in args["<path>"]], []))
