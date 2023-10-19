@@ -64,7 +64,7 @@ class LineVectorizer(nn.Module):
                 jcs.append(jc)
                 ps.append(p)
 
-
+            print(p.shape)
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
