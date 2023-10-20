@@ -69,7 +69,10 @@ class LineVectorizer(nn.Module):
                 # print("p.shape after sampling:", p.shape)
                 # print("ps length after sampling:", len(ps), ps)
 
-
+            # add random offset:
+            offset_magnitude = 0.5 / M.n_pts0
+            offset = torch.randn(p.shape) * offset_magnitude
+            p = p + offset
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
@@ -101,7 +104,7 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             # print("P before the filtering process:", p.shape, p)
-            s = torch.softmax(x, -1)
+            s = torch.softmax(x, dim=-1)
             cond1 = s[:, 0] < 0.34
             cond2 = s[:, 1] > 0.34
             cond3 = s[:, 2] > 0.34
@@ -223,7 +226,7 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-
+            print("K", K)
             print("jmap shape",jmap.shape)
 
 
@@ -233,7 +236,8 @@ class LineVectorizer(nn.Module):
 
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
-            if mode == "testing":
+
+            if mode != "training":
                 output = [(s, idx) for score_row, index_row in zip(score, index) for s, idx in zip(score_row, index_row)]
                 formatted_output = [f"score: {s.item()}, index: {idx.item()}" for s, idx in output]
                 formatted_output_string = "\n".join(formatted_output)

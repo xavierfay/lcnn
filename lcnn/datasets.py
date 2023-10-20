@@ -65,10 +65,10 @@ class WireframeDataset(Dataset):
             npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
 
 
-            labels_1 = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0 dashed
-            labels_2 = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1 continous
-            labels_0 = torch.tensor([1, 0, 0]).float().repeat((nneg0 + nneg1, 1))  # Class 0 for nneg all
-            lpre_label = torch.cat([labels_1, labels_2, labels_0], dim=0)
+            labels_dashed = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0 dashed
+            labels_cont = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1 continous
+            labels_neg = torch.tensor([1, 0, 0]).float().repeat((nneg0 + nneg1, 1))  # Class 0 for nneg all
+            lpre_label = torch.cat([labels_dashed, labels_cont, labels_neg], dim=0)
 
 
             for i in range(len(lpre)):
