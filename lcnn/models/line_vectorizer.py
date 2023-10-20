@@ -126,7 +126,7 @@ class LineVectorizer(nn.Module):
 
 
                 for j in range(len(jcs[i])):
-                    print("Shape of jcs before append:", len(jcs[i][j]))
+                    #print("Shape of jcs before append:", len(jcs[i][j]))
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jcs[i][j] = jcs[i][j][
@@ -146,14 +146,14 @@ class LineVectorizer(nn.Module):
             reshaped_lines = lines_tensor.view(-1, 2)
             # Convert tensor rows to tuples and find unique rows using set
             unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_lines)
-            print("Shape of line after append:", len(unique_rows))
+            #print("Shape of line after append:", len(unique_rows))
 
             flattened_jcs = torch.cat([item.flatten() for sublist in jcs for item in sublist]).cpu().numpy()
             # Convert numpy array to set to get unique values
             unique_values = set(flattened_jcs)
 
             # Print the unique values
-            print("shape of jcs after append:", len(unique_values))
+            #print("shape of jcs after append:", len(unique_values))
 
 
 
@@ -235,8 +235,8 @@ class LineVectorizer(nn.Module):
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(jmap, k=K)
             print("score.shape:", score.shape, "index shape", index.shape)
-            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) #+ 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) #+ 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -349,17 +349,18 @@ class LineVectorizer(nn.Module):
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.003] for i in range(n_type)]
 
-            reshaped_line = line.view(-1, 2)
 
-            # Convert tensor rows to tuples and find unique rows using set
-            unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
-            print("unique points in lines after sample:", len(unique_rows))
 
             if mode != "training":
-                print(line)
+                reshaped_line = line.view(-1, 2)
 
-            for i, jc in enumerate(jcs):
-                print(f"Shape of jcs[{i}] after sample:", jc.shape)
+                # Convert tensor rows to tuples and find unique rows using set
+                unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
+                print("unique points in lines after sample:", len(unique_rows))
+                print(line)
+                for i, jc in enumerate(jcs):
+                    print(f"Shape of jcs[{i}] after sample:", jc.shape)
+                    print(jc)
 
             return line, label, jcs
 
