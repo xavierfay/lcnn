@@ -124,8 +124,9 @@ class LineVectorizer(nn.Module):
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
 
-                print("Shape of jcs before append:", len(jcs[i]))
+
                 for j in range(len(jcs[i])):
+                    print("Shape of jcs before append:", len(jcs[i][j]))
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jcs[i][j] = jcs[i][j][
@@ -225,8 +226,16 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-            # index: [N_TYPE, K]
-            score, index = torch.topk(jmap, k=K)
+            threshold = M.eval_junc_thres  # Change this to your desired threshold
+
+            # Create a mask for values above the threshold
+            mask = jmap > threshold
+
+            # Filter jmap using the mask
+            filtered_jmap = jmap[mask]
+
+            # Now get top-K scores and their indices from the filtered jmap
+            score, index = torch.topk(filtered_jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
