@@ -132,6 +132,11 @@ class LineVectorizer(nn.Module):
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
             result["preds"]["juncs"] = torch.cat([jcs[i][0] for i in range(n_batch)])
+
+            print("Shape of line after append:",  result["preds"]["lines"].shape)
+            for i, jc in enumerate(jcs):
+                print(f"Shape of jcs[{i}] after append:", result["preds"]["juncs"].shape)
+
             if len(jcs[i]) > 1:
                 result["preds"]["junts"] = torch.cat(
                     [jcs[i][1] for i in range(n_batch)]
@@ -320,7 +325,11 @@ class LineVectorizer(nn.Module):
             #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.2] for i in range(n_type)]
+
+            print("Shape of line after sample:", line.shape)
+            for i, jc in enumerate(jcs):
+                print(f"Shape of jcs[{i}] after sample:", jc.shape)
 
             return line, label, jcs
 
