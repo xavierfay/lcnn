@@ -214,7 +214,7 @@ class LineVectorizer(nn.Module):
             N = len(junc)
             if mode != "training":
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
-                mask = (jmap > M.eval_junc_thres).float()
+                mask = (jmap > M.eval_junc_thres).float().item()
                 jmap = jmap * mask
             else:
                 K = min(int(N * 2 + 2), max_K)
@@ -229,9 +229,14 @@ class LineVectorizer(nn.Module):
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(jmap, k=K)
             output = [(s, idx) for score_row, index_row in zip(score, index) for s, idx in zip(score_row, index_row)]
-            print(output)
+            formatted_output = [f"score: {s.item()}, index: {idx.item()}" for s, idx in output]
+            formatted_output_string = "\n".join(formatted_output)
+            print(formatted_output_string)
+
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+
+            print("x,y", x,y)
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
