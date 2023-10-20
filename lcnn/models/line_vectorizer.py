@@ -355,7 +355,7 @@ class LineVectorizer(nn.Module):
             unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
             print("unique points in lines after sample:", len(unique_rows))
 
-            print(line.values)
+            print(line)
 
             for i, jc in enumerate(jcs):
                 print(f"Shape of jcs[{i}] after sample:", jc.shape)
