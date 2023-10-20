@@ -135,7 +135,7 @@ class LineVectorizer(nn.Module):
 
             reshaped_line = result["preds"]["lines"].view(-1, 2)
             # Convert tensor rows to tuples and find unique rows using set
-            unique_rows = set(tuple(row.numpy()) for row in reshaped_line)
+            unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
             print("Shape of line after sample:", len(unique_rows))
             for i, jc in enumerate(jcs):
                 print(f"Shape of jcs[{i}] after append:", result["preds"]["juncs"].shape)
@@ -333,7 +333,7 @@ class LineVectorizer(nn.Module):
             reshaped_line = line.view(-1, 2)
 
             # Convert tensor rows to tuples and find unique rows using set
-            unique_rows = set(tuple(row.numpy()) for row in reshaped_line)
+            unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
             print("Shape of line after sample:", len(unique_rows))
 
             for i, jc in enumerate(jcs):
