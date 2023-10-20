@@ -228,6 +228,8 @@ class LineVectorizer(nn.Module):
 
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(jmap, k=K)
+            output = [(s.item(), idx.item()) for s, idx in zip(score, index)]
+            print(output)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
@@ -235,6 +237,7 @@ class LineVectorizer(nn.Module):
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
+
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
