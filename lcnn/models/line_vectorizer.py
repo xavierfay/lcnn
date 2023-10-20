@@ -304,7 +304,7 @@ class LineVectorizer(nn.Module):
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
-            print("after",u.shape, v.shape, label.shape, xy.shape)
+            print("after",u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
 
             # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
