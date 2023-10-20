@@ -56,7 +56,7 @@ class LineVectorizer(nn.Module):
             p, label, jc = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i],h["lmap"][i], lmap_losses[i], input_dict["mode"]
             )
-            # print("p.shape:", p.shape)
+
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
 
@@ -66,6 +66,8 @@ class LineVectorizer(nn.Module):
             else:
                 jcs.append(jc)
                 ps.append(p)
+                print("p.shape after sampling:", p.shape)
+                print("ps length after sampling:", len(ps))
 
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
@@ -114,6 +116,7 @@ class LineVectorizer(nn.Module):
                 mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
+                print("p0.shape", p0.shape)
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
                     score.append(torch.zeros([1, M.n_out_line, 3], device=p.device))
@@ -143,7 +146,7 @@ class LineVectorizer(nn.Module):
 
             lines_tensor = torch.cat(lines, dim=0)
             lines_tensor = torch.sort(lines_tensor, dim=2)[0]   # Sort the lines along the second dimension
-            print(lines_tensor)
+            print("line tensor results", lines_tensor.shape, lines)
 
         if input_dict["mode"] != "testing":
             def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3):
@@ -286,12 +289,12 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            for i in range(n_type):
-                mask = score[i] > 0.003
-                filtered_xy = xy[i][mask]
-                filtered_scores = score[i][mask]
-                for coord, sc in zip(filtered_xy, filtered_scores):
-                    print(f"XY: {coord}, Score: {sc}")
+            # for i in range(n_type):
+            #     mask = score[i] > 0.003
+            #     filtered_xy = xy[i][mask]
+            #     filtered_scores = score[i][mask]
+            #     for coord, sc in zip(filtered_xy, filtered_scores):
+            #         print(f"XY: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
             u, v, label = u[c], v[c], label[c]
@@ -359,14 +362,14 @@ class LineVectorizer(nn.Module):
                 for i in range(n_type):
                     mask = score[i] > 0.003
                     filtered_xy = xy[i][mask]
-                    filtered_xy = torch.sort(filtered_xy, descending=False, dim=1)
-                    print(f"XY after: {filtered_xy}")
+                    filtered_xy = torch.sort(filtered_xy, descending=False, dim=2)
+                    print(f"XY after: {filtered_xy.shape}{filtered_xy}")
 
 
 
                 for i, jc in enumerate(jcs):
                     print(f"Shape of jcs[{i}] after sample:", jc.shape)
-                    print(jc)
+                    #print(jc)
 
             return line, label, jcs
 
