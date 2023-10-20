@@ -140,13 +140,14 @@ class LineVectorizer(nn.Module):
                     [jcs[i][1] for i in range(n_batch)]
                 )
 
-
+            lines_tensor = torch.cat(lines, dim=0)
+            # Reshape the tensor to [-1, 2]
+            reshaped_lines = lines_tensor.view(-1, 2)
             # Convert tensor rows to tuples and find unique rows using set
-            unique_rows = set(tuple(row.cpu().numpy().flatten()) for row in lines)
+            unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_lines)
             print("Shape of line after append:", len(unique_rows))
 
             flattened_jcs = torch.cat([item.flatten() for sublist in jcs for item in sublist]).cpu().numpy()
-
             # Convert numpy array to set to get unique values
             unique_values = set(flattened_jcs)
 
