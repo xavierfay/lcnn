@@ -142,20 +142,8 @@ class LineVectorizer(nn.Module):
                 )
 
             lines_tensor = torch.cat(lines, dim=0)
-            # Reshape the tensor to [-1, 2]
-            reshaped_lines = lines_tensor.view(-1, 2)
-            # Convert tensor rows to tuples and find unique rows using set
-            unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_lines)
-            #print("Shape of line after append:", len(unique_rows))
-
-            flattened_jcs = torch.cat([item.flatten() for sublist in jcs for item in sublist]).cpu().numpy()
-            # Convert numpy array to set to get unique values
-            unique_values = set(flattened_jcs)
-
-            # Print the unique values
-            #print("shape of jcs after append:", len(unique_values))
-
-
+            lines_tensor = torch.sort(lines_tensor, dim=2)[0]   # Sort the lines along the second dimension
+            print(lines_tensor)
 
         if input_dict["mode"] != "testing":
             def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3):
@@ -234,7 +222,6 @@ class LineVectorizer(nn.Module):
 
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(jmap, k=K)
-            print("score.shape:", score.shape, "index shape", index.shape)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
@@ -300,18 +287,19 @@ class LineVectorizer(nn.Module):
                 c = (u < v).flatten()
 
             # sample lines
-            print("before:",u.shape, v.shape, label.shape, xy.shape)
+            #print("before:",u.shape, v.shape, label.shape, xy.shape)
+            u, v, label = u[c], v[c], label[c]
+            xy = xy.reshape(n_type * K, 2)
+            xyu, xyv = xy[u], xy[v]
+
             for i in range(n_type):
                 mask = score[i] > 0.003
                 filtered_xy = xy[i][mask]
                 filtered_scores = score[i][mask]
 
                 for coord, sc in zip(filtered_xy, filtered_scores):
-                    print(f"XY before: {coord}, Score: {sc}")
-            u, v, label = u[c], v[c], label[c]
-            xy = xy.reshape(n_type * K, 2)
-            xyu, xyv = xy[u], xy[v]
-            print("after",u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
+                    print(f"XY: {coord}, Score: {sc}")
+            #print("after",u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
 
             # Compute slopes and create masks for valid lines (horizontal/vertical)
             deltas = xyv - xyu
@@ -362,6 +350,7 @@ class LineVectorizer(nn.Module):
 
             if mode != "training":
                 reshaped_line = line.view(-1, 2)
+                print("shape of the lines", lines.shape)
 
                 # Convert tensor rows to tuples and find unique rows using set
                 unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
@@ -370,10 +359,10 @@ class LineVectorizer(nn.Module):
                 for i in range(n_type):
                     mask = score[i] > 0.003
                     filtered_xy = xy[i][mask]
-                    filtered_scores = score[i][mask]
+                    filtered_xy = torch.sort(filtered_xy, descending=False, dim=1)
+                    print(f"XY after: {filtered_xy}")
 
-                    for coord, sc in zip(filtered_xy, filtered_scores):
-                        print(f"XY after: {coord}, Score: {sc}")
+
 
                 for i, jc in enumerate(jcs):
                     print(f"Shape of jcs[{i}] after sample:", jc.shape)
