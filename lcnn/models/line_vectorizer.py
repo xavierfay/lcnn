@@ -350,7 +350,7 @@ class LineVectorizer(nn.Module):
 
             if mode != "training":
                 reshaped_line = line.view(-1, 2)
-                print("shape of the lines", lines.shape)
+                print("shape of the lines", line.shape)
 
                 # Convert tensor rows to tuples and find unique rows using set
                 unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
