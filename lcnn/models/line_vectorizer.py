@@ -67,7 +67,7 @@ class LineVectorizer(nn.Module):
                 jcs.append(jc)
                 ps.append(p)
                 print("p.shape after sampling:", p.shape)
-                print("ps length after sampling:", len(ps))
+                print("ps length after sampling:", len(ps), ps)
 
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
@@ -100,6 +100,7 @@ class LineVectorizer(nn.Module):
 
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
+            print("P before the filtering process:", p.shape, p)
             s = torch.softmax(x, -1)
             cond1 = s[:, 0] < 0.34
             cond2 = s[:, 1] > 0.34
@@ -116,7 +117,8 @@ class LineVectorizer(nn.Module):
                 mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
-                print("p0.shape", p0.shape)
+                print("p0.shape", p0.shape, p0)
+
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
                     score.append(torch.zeros([1, M.n_out_line, 3], device=p.device))
@@ -124,6 +126,7 @@ class LineVectorizer(nn.Module):
                     max_score_indices = torch.argmax(s0, dim=1)
                     arg = torch.argsort(max_score_indices, descending=True)
                     p0, s0 = p0[arg], s0[arg]
+                    print("P after sorted and ready to be appended",p0)
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
 
