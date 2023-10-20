@@ -307,17 +307,17 @@ class LineVectorizer(nn.Module):
 
             #print("after",u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
 
-            # Compute slopes and create masks for valid lines (horizontal/vertical)
-            deltas = xyv - xyu
-            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            horizontal_mask = torch.abs(slopes) < 0.01
-            vertical_mask = torch.abs(slopes) > 1000
-            valid_lines_mask = horizontal_mask | vertical_mask
-            # print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
-
-            # Filter xyu, xyv, and label using the valid_lines_mask
-            xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
-            label = label[valid_lines_mask]
+            # # Compute slopes and create masks for valid lines (horizontal/vertical)
+            # deltas = xyv - xyu
+            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            # horizontal_mask = torch.abs(slopes) < 0.01
+            # vertical_mask = torch.abs(slopes) > 1000
+            # valid_lines_mask = horizontal_mask | vertical_mask
+            # # print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
+            #
+            # # Filter xyu, xyv, and label using the valid_lines_mask
+            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
+            # label = label[valid_lines_mask]
             if M.use_lmap:
                 if torch.mean(lmap_loss) < 0.05:
                 # Sample from lmap and decide whether to keep the line
