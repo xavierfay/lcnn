@@ -235,8 +235,8 @@ class LineVectorizer(nn.Module):
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(jmap, k=K)
             print("score.shape:", score.shape, "index shape", index.shape)
-            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) #+ 0.5
-            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) #+ 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -251,7 +251,7 @@ class LineVectorizer(nn.Module):
             # TODO: this flatten can help
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
-            match[cost > 1.5 * 1.5] = N
+            match[cost > 3 * 3] = N
             match = match.flatten()
 
             _ = torch.arange(n_type * K, device=device)
