@@ -71,7 +71,7 @@ class LineVectorizer(nn.Module):
 
             # add random offset:
             offset_magnitude = 0.5 / M.n_pts0
-            offset = torch.randn(p.shape) * offset_magnitude
+            offset = torch.randn(p.shape, device=p.device) * offset_magnitude
             p = p + offset
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
