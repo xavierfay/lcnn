@@ -301,6 +301,13 @@ class LineVectorizer(nn.Module):
 
             # sample lines
             print("before:",u.shape, v.shape, label.shape, xy.shape)
+            for i in range(n_type):
+                mask = score[i] > 0.003
+                filtered_xy = xy[i][mask]
+                filtered_scores = score[i][mask]
+
+                for coord, sc in zip(filtered_xy, filtered_scores):
+                    print(f"XY before: {coord}, Score: {sc}")
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
@@ -359,7 +366,15 @@ class LineVectorizer(nn.Module):
                 # Convert tensor rows to tuples and find unique rows using set
                 unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
                 print("unique points in lines after sample:", len(unique_rows))
-                print(line)
+                #print(line)
+                for i in range(n_type):
+                    mask = score[i] > 0.003
+                    filtered_xy = xy[i][mask]
+                    filtered_scores = score[i][mask]
+
+                    for coord, sc in zip(filtered_xy, filtered_scores):
+                        print(f"XY after: {coord}, Score: {sc}")
+
                 for i, jc in enumerate(jcs):
                     print(f"Shape of jcs[{i}] after sample:", jc.shape)
                     print(jc)
