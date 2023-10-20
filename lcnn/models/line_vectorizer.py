@@ -220,19 +220,17 @@ class LineVectorizer(nn.Module):
             N = len(junc)
             if mode != "training":
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
+                mask = jmap > M.eval_junc_thres
+                filtered_jmap = jmap[mask]
             else:
                 K = min(int(N * 2 + 2), max_K)
             if K < 2:
                 K = 2
             device = jmap.device
 
-            threshold = M.eval_junc_thres  # Change this to your desired threshold
 
-            # Create a mask for values above the threshold
-            mask = jmap > threshold
 
-            # Filter jmap using the mask
-            filtered_jmap = jmap[mask]
+
 
             # Now get top-K scores and their indices from the filtered jmap
             score, index = torch.topk(filtered_jmap, k=K)
