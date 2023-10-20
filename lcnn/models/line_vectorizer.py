@@ -214,8 +214,8 @@ class LineVectorizer(nn.Module):
             N = len(junc)
             if mode != "training":
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
-                mask = (jmap > M.eval_junc_thres).float().item()
-                jmap = jmap * mask
+                mask = jmap > M.eval_junc_thres
+                jmap = jmap[mask]
             else:
                 K = min(int(N * 2 + 2), max_K)
             if K < 2:
