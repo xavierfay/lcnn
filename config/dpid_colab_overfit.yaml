@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 3
+  batch_size: 2
   batch_size_eval: 2
 
   # backbone multi-task parameters
@@ -34,13 +34,13 @@ model:
   # sampler parameters
   ## static sampler
   n_stc_posl: 300
-  n_stc_negl: 100
+  n_stc_negl: 40
 
   ## dynamic sampler
   n_dyn_junc: 600
   n_dyn_posl1: 300
   n_dyn_posl0: 300
-  n_dyn_negl: 800
+  n_dyn_negl: 80
   n_dyn_othr: 600
 
   # LOIPool layer parameters
