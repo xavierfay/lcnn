@@ -286,19 +286,19 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
+            for i in range(n_type):
+                mask = score[i] > 0.003
+                filtered_xy = xy[i][mask]
+                filtered_scores = score[i][mask]
+                for coord, sc in zip(filtered_xy, filtered_scores):
+                    print(f"XY: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
             u, v, label = u[c], v[c], label[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
-            for i in range(n_type):
-                mask = score[i] > 0.003
-                filtered_xy = xy[i][mask]
-                filtered_scores = score[i][mask]
 
-                for coord, sc in zip(filtered_xy, filtered_scores):
-                    print(f"XY: {coord}, Score: {sc}")
             #print("after",u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
 
             # Compute slopes and create masks for valid lines (horizontal/vertical)
