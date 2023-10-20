@@ -215,7 +215,7 @@ class LineVectorizer(nn.Module):
             if mode != "training":
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
                 mask = jmap > M.eval_junc_thres
-                filtered_jmap = jmap[mask]
+                filtered_jmap = jmap * mask
                 print(filtered_jmap.shape)
             else:
                 K = min(int(N * 2 + 2), max_K)
@@ -254,7 +254,7 @@ class LineVectorizer(nn.Module):
             # TODO: this flatten can help
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
-            match[cost > 3 * 3] = N
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             _ = torch.arange(n_type * K, device=device)
@@ -304,7 +304,9 @@ class LineVectorizer(nn.Module):
 
             if mode != "training":
                 for i in range(n_type):
+                    print("xy shape", xy[i].shape)
                     for coord, sc in zip(xy[i], score[i]):
+
                         print(f"XY before filter: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
