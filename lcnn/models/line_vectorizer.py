@@ -362,7 +362,7 @@ class LineVectorizer(nn.Module):
                 for i in range(n_type):
                     mask = score[i] > 0.003
                     filtered_xy = xy[i][mask]
-                    filtered_xy = torch.sort(filtered_xy, descending=False, dim=2)
+                    filtered_xy = torch.sort(filtered_xy, dim=-1)
                     print(f"XY after: {filtered_xy.shape}{filtered_xy}")
 
 
