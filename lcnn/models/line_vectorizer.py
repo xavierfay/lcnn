@@ -292,9 +292,10 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            for i in range(n_type):
-                for coord, sc in zip(xy[i], score[i]):
-                    print(f"XY before filter: {coord}, Score: {sc}")
+            if mode != "training":
+                for i in range(n_type):
+                    for coord, sc in zip(xy[i], score[i]):
+                        print(f"XY before filter: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
             u, v, label = u[c], v[c], label[c]
@@ -302,7 +303,7 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xy[u], xy[v]
 
 
-            print("after", u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
+            # print("after", u.shape, v.shape, label.shape, xy.shape, xyu.shape, xyv.shape)
 
             # # Compute slopes and create masks for valid lines (horizontal/vertical)
             # deltas = xyv - xyu
