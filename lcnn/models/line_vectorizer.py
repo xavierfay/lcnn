@@ -133,7 +133,10 @@ class LineVectorizer(nn.Module):
             result["preds"]["score"] = torch.cat(score)
             result["preds"]["juncs"] = torch.cat([jcs[i][0] for i in range(n_batch)])
 
-            print("Shape of line after append:",  result["preds"]["lines"].shape)
+            reshaped_line = result["preds"]["lines"].view(-1, 2)
+            # Convert tensor rows to tuples and find unique rows using set
+            unique_rows = set(tuple(row.numpy()) for row in reshaped_line)
+            print("Shape of line after sample:", len(unique_rows))
             for i, jc in enumerate(jcs):
                 print(f"Shape of jcs[{i}] after append:", result["preds"]["juncs"].shape)
 
@@ -325,9 +328,14 @@ class LineVectorizer(nn.Module):
             #line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             # jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.2] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
 
-            print("Shape of line after sample:", line.shape)
+            reshaped_line = line.view(-1, 2)
+
+            # Convert tensor rows to tuples and find unique rows using set
+            unique_rows = set(tuple(row.numpy()) for row in reshaped_line)
+            print("Shape of line after sample:", len(unique_rows))
+
             for i, jc in enumerate(jcs):
                 print(f"Shape of jcs[{i}] after sample:", jc.shape)
 
