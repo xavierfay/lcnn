@@ -123,6 +123,8 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
+
+                print("Shape of jcs before append:", len(jcs[i]))
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
