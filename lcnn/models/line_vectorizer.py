@@ -233,12 +233,12 @@ class LineVectorizer(nn.Module):
 
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
-            if mode == "training":
+            if mode == "testing":
                 output = [(s, idx) for score_row, index_row in zip(score, index) for s, idx in zip(score_row, index_row)]
                 formatted_output = [f"score: {s.item()}, index: {idx.item()}" for s, idx in output]
                 formatted_output_string = "\n".join(formatted_output)
-                print(formatted_output_string)
-                print("x,y", x,y)
+                #print(formatted_output_string)
+                print("x,y", x.shape, y.shape)
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
