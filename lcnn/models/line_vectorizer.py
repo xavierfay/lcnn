@@ -291,7 +291,7 @@ class LineVectorizer(nn.Module):
 
                 print(Lpos)
                 unique_Lpos = torch.unique(Lpos)
-                count_Lpos = torch.bincount(Lpos.flatten())
+                count_Lpos = torch.bincount(Lpos.flatten().long())
                 for value, freq in zip(unique_Lpos, count_Lpos):
                     print(f"Value: {value}, Count: {freq}")
 
