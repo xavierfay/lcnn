@@ -307,6 +307,12 @@ class Trainer(object):
                     if i > 0 and (i == junts[0]).all():
                         break
                     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
+
+            # Display a dummy colorbar for the line colors
+            dummy_image = np.array([[0, 1]])  # 2D image with values 0 and 1
+            im_dummy = plt.imshow(dummy_image, cmap=c, visible=False)  # use the same colormap as lines
+            plt.colorbar(im_dummy, orientation='vertical', fraction=0.046)
+
             plt.savefig(fn), plt.close()
 
         junc = meta[i]["junc"].cpu().numpy() * 4
