@@ -57,7 +57,11 @@ class WireframeDataset(Dataset):
             lpos1 = np.random.permutation(npz["lpos1"])[: M.n_stc_posl1]
             lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
 
-            lpre = np.concatenate([lpos0, lpos1,  lneg], 0)
+            if len(lpos0) != 0:
+                lpre = np.concatenate([lpos0, lpos1,  lneg], 0)
+            else:
+                lpre = np.concatenate([lpos1,  lneg], 0)
+
             npos0, npos1, nneg = len(lpos0),  len(lpos1), len(lneg)
 
             labels_dashed = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0 dashed
