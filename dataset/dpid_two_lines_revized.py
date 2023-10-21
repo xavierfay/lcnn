@@ -130,7 +130,7 @@ def save_heatmap(prefix, image, lines, classes):
 
     lneg = np.array([l[:2] for l in lneg], dtype=np.float32)
 
-    image = cv2.resize(image, im_rescale)
+    image = cv2.resize(image, im_rescale, interpolation=cv2.INTER_LANCZOS4)
 
     # plt.subplot(131), plt.imshow(lmap)
     # plt.subplot(132), plt.imshow(image)

@@ -189,14 +189,14 @@ class LineVectorizer(nn.Module):
             class_weights = torch.tensor([1, 10, 10]).to(x.device)
 
             y = torch.argmax(y, dim=1)
-            count = torch.bincount(y)
-            unique_values = torch.unique(y)
-            print("values of labels",unique_values, count)
-
-            x_class = torch.argmax(x, dim=1)
-            count = torch.bincount(x_class)
-            unique_values = torch.unique(x_class)
-            print("values of pred", unique_values, count)
+            # count = torch.bincount(y)
+            # unique_values = torch.unique(y)
+            # # print("values of labels",unique_values, count)
+            #
+            # x_class = torch.argmax(x, dim=1)
+            # count = torch.bincount(x_class)
+            # unique_values = torch.unique(x_class)
+            # print("values of pred", unique_values, count)
 
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
                 mask = jmap > M.eval_junc_thres
                 filtered_jmap = jmap * mask
-                print(filtered_jmap.shape)
+                # print(filtered_jmap.shape)
             else:
                 K = min(int(N * 2 + 2), max_K)
             if K < 2:
@@ -282,20 +282,20 @@ class LineVectorizer(nn.Module):
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
-            if mode != "training":
-
-                print(scalar_labels)
-                unique_labels = torch.unique(scalar_labels)
-                count_labels = torch.bincount(scalar_labels)
-
-                for value, freq in zip(scalar_labels, count_labels):
-                    print(f"Value: {value}, Count: {freq}")
-
-                print(Lpos)
-                unique_Lpos = torch.unique(Lpos)
-                count_Lpos = torch.bincount(Lpos.flatten().long())
-                for value, freq in zip(unique_Lpos, count_Lpos):
-                    print(f"Value: {value}, Count: {freq}")
+            #     if mode != "training":
+            #
+            #         # print(scalar_labels)
+            #         unique_labels = torch.unique(scalar_labels)
+            #         count_labels = torch.bincount(scalar_labels)
+            #
+            #         for value, freq in zip(scalar_labels, count_labels):
+            #             print(f"Value: {value}, Count: {freq}")
+            #
+            #         print(Lpos)
+            #         unique_Lpos = torch.unique(Lpos)
+            #         count_Lpos = torch.bincount(Lpos.flatten().long())
+            #         for value, freq in zip(unique_Lpos, count_Lpos):
+            #             print(f"Value: {value}, Count: {freq}")
 
             if mode == "training":
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)

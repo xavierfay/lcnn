@@ -1,6 +1,6 @@
 io:
   logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines
-  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/twolines
+  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/twolines_2
   resume_from: #/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231019-205048-0fd2617-baseline
   num_workers: 2
   tensorboard_port: 0
@@ -34,8 +34,8 @@ model:
   # sampler parameters
   ## static sampler
   n_stc_posl0: 200
-  n_stc_posl1: 100
-  n_stc_negl: 40
+  n_stc_posl1: 200
+  n_stc_negl: 80
 
   ## dynamic sampler
   n_dyn_junc: 600
@@ -45,12 +45,12 @@ model:
   n_dyn_othr: 600
 
   # LOIPool layer parameters
-  n_pts0: 64
-  n_pts1: 16
+  n_pts0: 32
+  n_pts1: 8
 
   # line verification network parameters
-  dim_loi: 256
-  dim_fc: 2048
+  dim_loi: 128
+  dim_fc: 1024
 
   # maximum junction and line outputs
   n_out_junc: 250
@@ -63,7 +63,7 @@ model:
   use_lmap: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.2
+  eval_junc_thres: 0.05
 
 optim:
   name: Adam
