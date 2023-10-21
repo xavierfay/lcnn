@@ -54,8 +54,8 @@ class WireframeDataset(Dataset):
             }
             lpos = npz["lpos"].copy()
 
-            lpos0 = slice_permute(lpos[0], M.n_stc_posl)
-            lpos1 = slice_permute(lpos[1], M.n_stc_posl)
+            lpos0 = slice_permute(lpos[0], M.n_stc_posl0)
+            lpos1 = slice_permute(lpos[1], M.n_stc_posl1)
 
             lneg = npz["lneg"].copy()
             lneg0 = slice_permute(lneg[0], M.n_stc_negl)

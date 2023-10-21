@@ -33,12 +33,13 @@ model:
 
   # sampler parameters
   ## static sampler
-  n_stc_posl: 300
+  n_stc_posl0: 200
+  n_stc_posl1: 100
   n_stc_negl: 40
 
   ## dynamic sampler
   n_dyn_junc: 600
-  n_dyn_posl1: 300
+  n_dyn_posl1: 600
   n_dyn_posl0: 300
   n_dyn_negl: 80
   n_dyn_othr: 600
