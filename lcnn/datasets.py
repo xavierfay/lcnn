@@ -52,7 +52,7 @@ class WireframeDataset(Dataset):
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
             }
-            lpos0 = np.randpermutation(npz["lpos0"])[: M.n_stc_posl0]
+            lpos0 = np.random.permutation(npz["lpos0"])[: M.n_stc_posl0]
             lpos1 = np.random.permutation(npz["lpos1"])[: M.n_stc_posl1]
             lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
 
