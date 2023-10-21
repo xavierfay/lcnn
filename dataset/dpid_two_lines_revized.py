@@ -24,6 +24,7 @@ import cv2
 import numpy as np
 import skimage.draw
 from docopt import docopt
+
 from scipy.ndimage import zoom
 
 import matplotlib.pyplot as plt
@@ -43,32 +44,18 @@ def inrange(v, shape):
 def to_int(x):
     return tuple(map(int, x))
 
+def adjacency_matrix(n, link1, link2):
+    mat = np.zeros((n + 1, n + 1))
 
-def pad_and_convert_to_array(lpos):
-    max_len = max(len(sublist) for sublist in lpos)
+    if len(link1) > 0:
+        mat[link1[:, 0], link1[:, 1]] = 1
+        mat[link1[:, 1], link1[:, 0]] = 1
 
-    # Determine the shape of individual data points
-    if lpos:
-        if lpos[0]:  # If lpos[0] is not empty/0, use it to determine data_shape
-            data_shape = np.asarray(lpos[0][0]).shape
-        elif len(lpos) > 1 and lpos[1]:  # If lpos[0] is empty/0 and lpos[1] exists and is not empty, use lpos[1]
-            data_shape = np.asarray(lpos[1][0]).shape
-        else:
-            print(lpos)
-            raise ValueError("Unable to determine data_shape from lpos[0] and lpos[1].")
-    else:
-        print(lpos)
-        raise ValueError("lpos is empty, cannot determine data_shape.")
+    if len(link2) > 0:
+        mat[link2[:, 0], link2[:, 1]] = 2
+        mat[link2[:, 1], link2[:, 0]] = 2
 
-    # Initialize an array filled with -1 with appropriate shape
-    padded_lpos = -1 * np.ones((len(lpos), max_len) + data_shape, dtype=np.float32)
-
-    # Populate the array with available data
-    for i, sublist in enumerate(lpos):
-        for j, data_point in enumerate(sublist):
-            padded_lpos[i, j] = data_point
-
-    return padded_lpos
+    return mat
 
 def save_heatmap(prefix, image, lines, classes):
     im_rescale = (1024, 1024)
@@ -94,25 +81,24 @@ def save_heatmap(prefix, image, lines, classes):
         junc.append(np.array(jun))
         return len(junc) - 1
 
-    lnid = [[], []]
-    lpos, lneg = [[], []]
-    num_classes = max(classes) + 1
-    #print("Number of classes", num_classes)
-    num_classes = 2
     # # Initialize sublists
-    lnid = [[] for _ in range(num_classes)]
-    lpos = [[] for _ in range(num_classes)]
-    lneg = [[] for _ in range(num_classes)]
+    lnid = [[], []]
+    lpos0 = []
+    lpos1 = []
+    lneg = []
 
     for i, line in enumerate(lines):
         v0, v1 = line[0], line[1]
         lclass = classes[i]
         lnid[lclass].append((jid(v0), jid(v1)))
-        lpos[lclass].append([junc[jid(v0)], junc[jid(v1)]])
+        if lclass == 0:
+            lpos0.append([junc[jid(v0)], junc[jid(v1)]])
+        else:
+            lpos1.append([junc[jid(v0)], junc[jid(v1)]])
 
         vint0, vint1 = to_int(v0[:2]), to_int(v1[:2])
-        jmap[int(v0[2]-1)][vint0] = 1  # assuming v0[2] gives the correct index in the first dimension and the value to set is 1
-        jmap[int(v1[2]-1)][vint1] = 1  # assuming v1[2] gives the correct index in the first dimension and the value to set is 1
+        jmap[int(v0[2] - 1)][vint0] = 1
+        jmap[int(v1[2] - 1)][vint1] = 1
         rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
         lmap[lclass, rr, cc] = np.maximum(lmap[lclass, rr, cc], value)
 
@@ -122,39 +108,27 @@ def save_heatmap(prefix, image, lines, classes):
         joff[1, :, vint[0], vint[1]] = v[:2] - vint - 0.5
 
     lineset = set([frozenset(l) for l in lnid])
-    for lclass in [0, 1]:  # iterating through each layer
-        llmap = zoom(lmap[lclass], [0.5, 0.5])  # zoom operation on a specific layer of lmap
 
-        for i0, i1 in combinations(range(len(junc)), 2):
-            if frozenset([i0, i1]) not in lineset:
-                v0, v1 = junc[i0], junc[i1]
-                vint0, vint1 = to_int(v0[:2] / 2), to_int(v1[:2] / 2)
-                rr, cc, value = skimage.draw.line_aa(*vint0, *vint1)
-                avg_value = np.average(np.minimum(value, llmap[rr, cc]))
-                if not isinstance(avg_value, (int, float)):
-                    print(f"Unexpected value: {avg_value}")
-                    # handle or raise an error as appropriate
-                lneg[lclass].append([v0, v1, i0, i1, avg_value])
+    for i0, i1 in combinations(range(len(junc)), 2):
+        if frozenset([i0, i1]) not in lineset:
+            v0, v1 = junc[i0], junc[i1]
+            rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
+            avg_value = np.average(np.minimum(value, lmap[0, rr, cc]))
+            lneg.append([v0, v1, i0, i1, avg_value])
 
 
-    lneg[1].sort(key=lambda l: -l[-1])
-    lneg[0].sort(key=lambda l: -l[-1])
+    lneg.sort(key=lambda l: -l[-1])
 
     junc = np.array(junc, dtype=np.float32)
-
-    lnid = pad_and_convert_to_array(lnid)
-    Lpos = np.array(lnid, dtype=int)
-
-    Lneg_0 = np.array([l[2:4] for l in lneg[0][:4000]], dtype=int)
-    Lneg_1 = np.array([l[2:4] for l in lneg[1][:4000]], dtype=int)
+    Lpos = adjacency_matrix(len(junc), np.array(lnid[0]), np.array(lnid[1]))
+    Lneg_0 = np.array([l[2:4] for l in lneg if l[2] in lpos0 and l[3] in lpos0], dtype=int)
+    Lneg_1 = np.array([l[2:4] for l in lneg if l[2] in lpos1 and l[3] in lpos1], dtype=int)
     Lneg = np.array([Lneg_0, Lneg_1])
 
-    lpos = pad_and_convert_to_array(lpos)
-    lpos = np.array(lpos, dtype=np.float32)
+    lpos0 = np.array(lpos0, dtype=np.float32)
+    lpos1 = np.array(lpos1, dtype=np.float32)
 
-
-    lneg[0] = np.array([l[:2] for l in lneg[0][:2000]], dtype=np.float32)
-    lneg[1] = np.array([l[:2] for l in lneg[1][:2000]], dtype=np.float32)
+    lneg = np.array([l[:2] for l in lneg], dtype=np.float32)
 
     image = cv2.resize(image, im_rescale)
 
@@ -176,17 +150,17 @@ def save_heatmap(prefix, image, lines, classes):
     np.savez_compressed(
         f"{prefix}_label.npz",
         aspect_ratio=image.shape[1] / image.shape[0],
-        jmap=jmap,  # [J, H, W]       Junction heat map
-        joff=joff,  # [J, 2, H, W]    Junction offset within each pixel
-        lmap=lmap,  # [L, H, W]       Line heat map with anti-aliasing
-        junc=junc,  # [Na, 3]         Junction coordinate
-        Lpos=Lpos,  # [L, M, 2]       Positive lines represented with junction indices
-        Lneg=Lneg,  # [L, M, 2]       Negative lines represented with junction indices
-        lpos=lpos,  # [L, Np, 2, 3]   Positive lines represented with junction coordinates
-        lneg=lneg,  # [L, Nn, 2, 3]   Negative lines represented with junction coordinates
+        jmap=jmap,
+        joff=joff,
+        lmap=lmap,
+        junc=junc,
+        Lpos=Lpos,
+        Lneg=Lneg,
+        lpos0=lpos0,
+        lpos1=lpos1,
+        lneg=lneg,
     )
     cv2.imwrite(f"{prefix}.png", image)
-
     # plt.imshow(jmap[0])
     # plt.savefig("/tmp/1jmap0.jpg")
     # plt.imshow(jmap[1])
@@ -311,7 +285,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in [ "train_twolines_2", "test_twolines_2","valid_twolines_2"]:
+    for batch in ["valid_twolines_2", "train_twolines_2", "test_twolines_2"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:
