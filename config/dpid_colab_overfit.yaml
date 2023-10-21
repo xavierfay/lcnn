@@ -63,7 +63,7 @@ model:
   use_lmap: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.15
+  eval_junc_thres: 0.05
 
 optim:
   name: Adam
