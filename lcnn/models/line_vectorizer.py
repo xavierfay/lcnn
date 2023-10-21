@@ -276,15 +276,12 @@ class LineVectorizer(nn.Module):
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
 
-            plt.imshow(Lpos, cmap='hot', interpolation='nearest')
-            plt.colorbar()
-            plt.title('Adjacency Matrix Heatmap')
-            plt.show()
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
             if mode != "training":
+                print(Lpos)
                 print(scalar_labels)
                 unique_values = torch.unique(scalar_labels)
                 count = torch.bincount(scalar_labels)
