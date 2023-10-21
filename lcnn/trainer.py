@@ -310,7 +310,7 @@ class Trainer(object):
 
             # Display a dummy colorbar for the line colors
             dummy_image = np.array([[0, 1]])  # 2D image with values 0 and 1
-            im_dummy = plt.imshow(dummy_image, cmap=c, visible=False)  # use the same colormap as lines
+            im_dummy = plt.imshow(dummy_image, cmap='jet', visible=False)  # use the same colormap as lines
             plt.colorbar(im_dummy, orientation='vertical', fraction=0.046)
 
             plt.savefig(fn), plt.close()
