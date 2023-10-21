@@ -281,7 +281,7 @@ class LineVectorizer(nn.Module):
 
 
             if mode == "training":
-                c = torch.zeros_like(label[:, 0], dtype=torch.bool)
+                c = torch.zeros_like(scalar_labels[:, 0], dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
                 cdx = Lneg[up, vp].nonzero().flatten()
@@ -320,7 +320,7 @@ class LineVectorizer(nn.Module):
                         # print(f"XY before filter: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
-            u, v, label = u[c], v[c], scalar_labels[c]
+            u, v, scalar_labels = u[c], v[c], scalar_labels[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
