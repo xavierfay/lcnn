@@ -73,7 +73,7 @@ class LineVectorizer(nn.Module):
             # add random offset:
             offset_magnitude = 0.5 / M.n_pts0
             offset = torch.randn(p.shape, device=p.device) * offset_magnitude
-            p = p + offset
+            # p = p + offset
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
             p = p.reshape(-1, 2)  # [N_LINE x N_POINT, 2_XY]
             px, py = p[:, 0].contiguous(), p[:, 1].contiguous()
@@ -111,7 +111,7 @@ class LineVectorizer(nn.Module):
             cond3 = s[:, 2] > 0.34
 
             # Combine the conditions using logical OR
-            b = (cond1 & cond2) | cond3
+            b = (cond3 & cond2) | cond1
             # b = (s > 0.3).any(dim=-1)
             lines = []
             score = []
@@ -163,7 +163,6 @@ class LineVectorizer(nn.Module):
 
                 # Calculate the softmax along the second dimension
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
-                print("softmax", softmax)
 
                 # Initialize an empty tensor to store the per-class losses
                 loss_per_class = torch.zeros(num_classes).float().to(
@@ -187,16 +186,19 @@ class LineVectorizer(nn.Module):
 
                 return loss_per_class
 
-            class_weights = torch.tensor([100, 10, 10]).to(x.device)
+            class_weights = torch.tensor([1, 10, 10]).to(x.device)
 
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
             unique_values = torch.unique(y)
             print("values of labels",unique_values, count)
 
+            x_class = torch.argmax(x, dim=1)
+            count = torch.bincount(x_class)
+            unique_values = torch.unique(x_class)
+            print("values of pred", unique_values, count)
+
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
-
-
 
             lneg = loss_per_class[0]
             lpos0 = loss_per_class[1]
@@ -389,34 +391,34 @@ class LineVectorizer(nn.Module):
 
 
 
-            if mode != "training":
-                reshaped_line = line.view(-1, 2)
-                print("shape of the lines", line.shape)
+            # if mode != "training":
+            #     reshaped_line = line.view(-1, 2)
+            #     print("shape of the lines", line.shape)
+            #
+            #     # Convert tensor rows to tuples and find unique rows using set
+            #     unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
+            #     #print("unique points in lines after sample:", len(unique_rows))
+            #     #print(line)
+            #     for i in range(n_type):
+            #         mask = score[i] > 0.003
+            #         filtered_xy = xy[i][mask]
+            #         # Sort filtered_xy along the last dimension
+            #         sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
+            #         print(f"XY after: {sorted_filtered_xy.shape}")
+            #         #print(sorted_filtered_xy)
 
-                # Convert tensor rows to tuples and find unique rows using set
-                unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
-                #print("unique points in lines after sample:", len(unique_rows))
-                #print(line)
-                for i in range(n_type):
-                    mask = score[i] > 0.003
-                    filtered_xy = xy[i][mask]
-                    # Sort filtered_xy along the last dimension
-                    sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
-                    print(f"XY after: {sorted_filtered_xy.shape}")
-                    #print(sorted_filtered_xy)
 
 
-
-                for i, jc in enumerate(jcs):
-                    print(f"Shape of jcs[{i}] after sample:", jc.shape)
-                    #print(jc)
+                # for i, jc in enumerate(jcs):
+                #     print(f"Shape of jcs[{i}] after sample:", jc.shape)
+                #     #print(jc)
             label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
 
-            if mode != "training":
-                print("label", label)
+            # if mode != "training":
+            #     print("label", label)
             return line, label, jcs
 
 def non_maximum_suppression(a):
