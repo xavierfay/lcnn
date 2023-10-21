@@ -162,7 +162,7 @@ class LineVectorizer(nn.Module):
 
                 # Calculate the softmax along the second dimension
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
-                print(softmax)
+                print("softmax", softmax)
 
                 # Initialize an empty tensor to store the per-class losses
                 loss_per_class = torch.zeros(num_classes).float().to(
@@ -278,10 +278,7 @@ class LineVectorizer(nn.Module):
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
-            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
-            # Assign a "1" in the respective column according to the scalar label
-            label[torch.arange(label.shape[0]), scalar_labels] = 1
 
             if mode == "training":
                 c = torch.zeros_like(label[:, 0], dtype=torch.bool)
@@ -323,7 +320,7 @@ class LineVectorizer(nn.Module):
                         # print(f"XY before filter: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
-            u, v, label = u[c], v[c], label[c]
+            u, v, label = u[c], v[c], scalar_labels[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
@@ -398,7 +395,10 @@ class LineVectorizer(nn.Module):
             #     for i, jc in enumerate(jcs):
             #         print(f"Shape of jcs[{i}] after sample:", jc.shape)
             #         #print(jc)
+            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
+            # Assign a "1" in the respective column according to the scalar label
+            label[torch.arange(label.shape[0]), scalar_labels] = 1
             return line, label, jcs
 
 def non_maximum_suppression(a):
