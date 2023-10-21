@@ -162,6 +162,7 @@ class LineVectorizer(nn.Module):
 
                 # Calculate the softmax along the second dimension
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
+                print(softmax)
 
                 # Initialize an empty tensor to store the per-class losses
                 loss_per_class = torch.zeros(num_classes).float().to(
@@ -234,8 +235,8 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-            print("K", K)
-            print("jmap shape",jmap.shape)
+            # print("K", K)
+            # print("jmap shape",jmap.shape)
 
 
             # Now get top-K scores and their indices from the filtered jmap
@@ -250,7 +251,7 @@ class LineVectorizer(nn.Module):
                 formatted_output = [f"score: {s.item()}, index: {idx.item()}" for s, idx in output]
                 formatted_output_string = "\n".join(formatted_output)
                 #print(formatted_output_string)
-                print("x,y", x.shape, y.shape)
+                #print("x,y", x.shape, y.shape)
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -314,12 +315,12 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            if mode != "training":
-                for i in range(n_type):
-                    print("xy shape", xy[i].shape)
-                    for coord, sc in zip(xy[i], score[i]):
+            # if mode != "training":
+            #     for i in range(n_type):
+            #         print("xy shape", xy[i].shape)
+            #         for coord, sc in zip(xy[i], score[i]):
 
-                        print(f"XY before filter: {coord}, Score: {sc}")
+                        # print(f"XY before filter: {coord}, Score: {sc}")
             # sample lines
             #print("before:",u.shape, v.shape, label.shape, xy.shape)
             u, v, label = u[c], v[c], label[c]
@@ -376,27 +377,27 @@ class LineVectorizer(nn.Module):
 
 
 
-            if mode != "training":
-                reshaped_line = line.view(-1, 2)
-                print("shape of the lines", line.shape)
-
-                # Convert tensor rows to tuples and find unique rows using set
-                unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
-                print("unique points in lines after sample:", len(unique_rows))
-                #print(line)
-                for i in range(n_type):
-                    mask = score[i] > 0.003
-                    filtered_xy = xy[i][mask]
-                    # Sort filtered_xy along the last dimension
-                    sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
-                    print(f"XY after: {sorted_filtered_xy.shape}")
-                    print(sorted_filtered_xy)
-
-
-
-                for i, jc in enumerate(jcs):
-                    print(f"Shape of jcs[{i}] after sample:", jc.shape)
-                    #print(jc)
+            # if mode != "training":
+            #     reshaped_line = line.view(-1, 2)
+            #     print("shape of the lines", line.shape)
+            #
+            #     # Convert tensor rows to tuples and find unique rows using set
+            #     unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
+            #     print("unique points in lines after sample:", len(unique_rows))
+            #     #print(line)
+            #     for i in range(n_type):
+            #         mask = score[i] > 0.003
+            #         filtered_xy = xy[i][mask]
+            #         # Sort filtered_xy along the last dimension
+            #         sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
+            #         print(f"XY after: {sorted_filtered_xy.shape}")
+            #         print(sorted_filtered_xy)
+            #
+            #
+            #
+            #     for i, jc in enumerate(jcs):
+            #         print(f"Shape of jcs[{i}] after sample:", jc.shape)
+            #         #print(jc)
 
             return line, label, jcs
 
