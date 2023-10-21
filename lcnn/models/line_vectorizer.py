@@ -155,7 +155,7 @@ class LineVectorizer(nn.Module):
             # print("line tensor results", lines_tensor.shape, lines)
 
         if input_dict["mode"] != "testing":
-            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3):
+            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3, misclass_penalty=10):
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
                 y = y.long()
@@ -176,17 +176,25 @@ class LineVectorizer(nn.Module):
                         c]  # Summing up the loss and adjusting by class weight
 
                 # Normalize by the total number of samples in the batch
+                misclass_mask = (y == 0).float() * (torch.argmax(softmax, dim=1) == 1).float()
+                misclass_loss = misclass_mask.sum() * misclass_penalty
+
+                loss_per_class[0] += misclass_loss
+
                 loss_per_class /= x.shape[0]
 
                 return loss_per_class
 
-            class_weights = torch.tensor([100, 100, 100]).to(x.device)
+            class_weights = torch.tensor([100, 10, 10]).to(x.device)
 
             y = torch.argmax(y, dim=1)
             count = torch.bincount(y)
             unique_values = torch.unique(y)
-            #print(unique_values, count)
+            print("values of labels",unique_values, count)
+
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
+
+
 
             lneg = loss_per_class[0]
             lpos0 = loss_per_class[1]
