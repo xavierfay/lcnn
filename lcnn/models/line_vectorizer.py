@@ -268,7 +268,7 @@ class LineVectorizer(nn.Module):
             # TODO: this flatten can help
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
-            match[cost > 10] = N
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             _ = torch.arange(n_type * K, device=device)

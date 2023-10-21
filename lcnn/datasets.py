@@ -59,6 +59,7 @@ class WireframeDataset(Dataset):
 
             lneg = npz["lneg"].copy()
             lneg = np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[0][np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[1] == 2].reshape(-1, 2, 3)
+            lneg = np.random.permutation(lneg)
             lpre = np.concatenate([lpos0, lpos1,  lneg], 0)
             npos0, npos1, nneg = len(lpos0),  len(lpos1), len(lneg)
 
@@ -83,7 +84,7 @@ class WireframeDataset(Dataset):
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
-                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"][0], npz["Lpos"][1]),
+                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"][1], npz["Lpos"][0]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"][0], npz["Lneg"][1]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": lpre_label,
@@ -121,7 +122,6 @@ def slice_permute(lpos, n_stc_posl):
     # Check if lpos_processed is empty
     if lpos_processed.size == 0:
         print("Warning: All slices removed, returning empty array.")
-    return lpos_processed
 
     # Permute the slices
     lpos_processed = np.random.permutation(lpos_processed)
