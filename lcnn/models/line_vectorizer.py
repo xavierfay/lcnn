@@ -1,6 +1,7 @@
 import itertools
 import random
 from collections import defaultdict
+import matplotlib.pyplot as plt
 
 import numpy as np
 import torch
@@ -274,6 +275,11 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
+
+            plt.imshow(Lpos, cmap='hot', interpolation='nearest')
+            plt.colorbar()
+            plt.title('Adjacency Matrix Heatmap')
+            plt.show()
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
