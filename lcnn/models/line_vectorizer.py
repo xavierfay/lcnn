@@ -281,7 +281,7 @@ class LineVectorizer(nn.Module):
 
 
             if mode == "training":
-                c = torch.zeros_like(scalar_labels[:, 0], dtype=torch.bool)
+                c = torch.zeros_like(scalar_labels, dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
                 cdx = Lneg[up, vp].nonzero().flatten()
@@ -292,15 +292,15 @@ class LineVectorizer(nn.Module):
                 c[cdx] = 1
 
                 # Sample dashed Lines (Class 1)
-                cdx = (label[:, 1] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_negl:
+                cdx = (scalar_labels == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl0:
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl0]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
                 # Sample continous Lines (Class 2)
-                cdx = (label[:, 2] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_othr:
+                cdx = (scalar_labels == 2).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl1:
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl1]
                     cdx = cdx[perm]
                 c[cdx] = 1
