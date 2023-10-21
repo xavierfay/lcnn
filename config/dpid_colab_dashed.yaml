@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines
   datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/twolines_2
-  resume_from: #/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231019-205048-0fd2617-baseline
+  resume_from: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231021-192627-122e14b-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 3
+  batch_size: 2
   batch_size_eval: 2
 
   # backbone multi-task parameters

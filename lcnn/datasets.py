@@ -29,7 +29,6 @@ class WireframeDataset(Dataset):
 
     def __getitem__(self, idx):
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
-        print(iname)
         image = io.imread(iname, as_gray=True).astype(float)
         image = image[:, :, np.newaxis]
         if "a1" in self.filelist[idx]:
