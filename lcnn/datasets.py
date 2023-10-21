@@ -52,17 +52,14 @@ class WireframeDataset(Dataset):
                 name: torch.from_numpy(npz[name]).float()
                 for name in ["jmap", "joff", "lmap"]
             }
-            lpos = npz["lpos"].copy()
+            lpos0 = npz["lpos0"].copy()
+            lpos1 = npz["lpos1"].copy()
 
-            lpos0 = slice_permute(lpos[0], M.n_stc_posl0)
-            lpos1 = slice_permute(lpos[1], M.n_stc_posl1)
 
             lneg = npz["lneg"].copy()
-            lneg = np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[0][np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[1] == 2].reshape(-1, 2, 3)
-            lneg = np.random.permutation(lneg)
+
             lpre = np.concatenate([lpos0, lpos1,  lneg], 0)
             npos0, npos1, nneg = len(lpos0),  len(lpos1), len(lneg)
-
 
             labels_dashed = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0 dashed
             labels_cont = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1 continous
@@ -84,7 +81,7 @@ class WireframeDataset(Dataset):
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
-                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"][1], npz["Lpos"][0]),
+                "Lpos": torch.from_numpy(npz["Lpos"]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"][0], npz["Lneg"][1]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": lpre_label,
