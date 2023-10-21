@@ -389,27 +389,27 @@ class LineVectorizer(nn.Module):
 
 
 
-            # if mode != "training":
-            #     reshaped_line = line.view(-1, 2)
-            #     print("shape of the lines", line.shape)
-            #
-            #     # Convert tensor rows to tuples and find unique rows using set
-            #     unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
-            #     print("unique points in lines after sample:", len(unique_rows))
-            #     #print(line)
-            #     for i in range(n_type):
-            #         mask = score[i] > 0.003
-            #         filtered_xy = xy[i][mask]
-            #         # Sort filtered_xy along the last dimension
-            #         sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
-            #         print(f"XY after: {sorted_filtered_xy.shape}")
-            #         print(sorted_filtered_xy)
-            #
-            #
-            #
-            #     for i, jc in enumerate(jcs):
-            #         print(f"Shape of jcs[{i}] after sample:", jc.shape)
-            #         #print(jc)
+            if mode != "training":
+                reshaped_line = line.view(-1, 2)
+                print("shape of the lines", line.shape)
+
+                # Convert tensor rows to tuples and find unique rows using set
+                unique_rows = set(tuple(row.cpu().numpy()) for row in reshaped_line)
+                #print("unique points in lines after sample:", len(unique_rows))
+                #print(line)
+                for i in range(n_type):
+                    mask = score[i] > 0.003
+                    filtered_xy = xy[i][mask]
+                    # Sort filtered_xy along the last dimension
+                    sorted_filtered_xy, _ = torch.sort(filtered_xy, dim=-1)
+                    print(f"XY after: {sorted_filtered_xy.shape}")
+                    #print(sorted_filtered_xy)
+
+
+
+                for i, jc in enumerate(jcs):
+                    print(f"Shape of jcs[{i}] after sample:", jc.shape)
+                    #print(jc)
             label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
