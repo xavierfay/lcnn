@@ -279,6 +279,7 @@ class LineVectorizer(nn.Module):
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
             if mode != "training":
+                print(scalar_labels)
                 unique_values = torch.unique(scalar_labels)
                 count = torch.bincount(scalar_labels)
 

@@ -58,16 +58,14 @@ class WireframeDataset(Dataset):
             lpos1 = slice_permute(lpos[1], M.n_stc_posl1)
 
             lneg = npz["lneg"].copy()
-            lneg0 = slice_permute(lneg[0], M.n_stc_negl)
-            lneg1 = slice_permute(lneg[1], M.n_stc_negl)
-
-            lpre = np.concatenate([lpos0, lpos1, lneg0, lneg1], 0)
-            npos0, nneg0, npos1, nneg1 = len(lpos0), len(lneg0), len(lpos1), len(lneg1)
+            lneg = np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[0][np.unique(lneg.reshape(-1, 6), axis=0, return_counts=True)[1] == 2].reshape(-1, 2, 3)
+            lpre = np.concatenate([lpos0, lpos1,  lneg], 0)
+            npos0, npos1, nneg = len(lpos0),  len(lpos1), len(lneg)
 
 
             labels_dashed = torch.tensor([0, 1, 0]).float().repeat((npos0, 1))  # Class 1 for lpos0 dashed
             labels_cont = torch.tensor([0, 0, 1]).float().repeat((npos1, 1))  # Class 2 for lpos1 continous
-            labels_neg = torch.tensor([1, 0, 0]).float().repeat((nneg0 + nneg1, 1))  # Class 0 for nneg all
+            labels_neg = torch.tensor([1, 0, 0]).float().repeat((nneg + nneg, 1))  # Class 0 for nneg all
             lpre_label = torch.cat([labels_dashed, labels_cont, labels_neg], dim=0)
 
 
