@@ -212,13 +212,8 @@ class LineVectorizer(nn.Module):
 
             # index: [N_TYPE, K]
             score, index = torch.topk(jmap, k=K)
-            #print("index", index.shape)
-            # Reshape joff to have the same number of dimensions as index
-            joff_y_flat = joff[0].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]
-            joff_x_flat = joff[1].view(1, -1).expand(n_type, -1)  # Shape [n_type, 65536]
-
-            y = (index // 256).float() + torch.gather(joff_y_flat, 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(joff_x_flat, 1, index) + 0.5
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
