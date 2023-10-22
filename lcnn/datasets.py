@@ -66,7 +66,7 @@ class WireframeDataset(Dataset):
             # Get the labels corresponding to the selected indices
             l_label = npz["l_label"].copy()
             lpos_label = l_label[lpos_indices]
-            lneg_label = l_label[lneg_indices]
+            lneg_label = np.zeros(len(lneg_indices))
 
             # Concatenate to get lpre_label of the same length as lpre
             lpre_label = np.concatenate([lpos_label, lneg_label], 0)
