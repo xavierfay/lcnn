@@ -98,18 +98,24 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            b = (s > 0.1).any(dim=-1)
+            cond1 = s[:, 0] < 0.25
+            cond2 = s[:, 1] > 0.25
+            cond3 = s[:, 2] > 0.25
+            cond4 = s[:, 4] > 0.25
+
+            # Combine the conditions using logical OR
+            b = (cond3 & cond2 & cond4 ) | cond1
             lines = []
             score = []
             for i in range(n_batch):
-                p0 = p[idx[i] : idx[i + 1]]
-                s0 = s[idx[i] : idx[i + 1]]
-                mask = b[idx[i] : idx[i + 1]]
+                p0 = p[idx[i]: idx[i + 1]]
+                s0 = s[idx[i]: idx[i + 1]]
+                mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
-                    score.append(torch.zeros([1, M.n_out_line], device=p.device))
+                    score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
                 else:
                     max_score_indices = torch.argmax(s0, dim=1)
                     arg = torch.argsort(max_score_indices, descending=True)
@@ -131,7 +137,7 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
-            def cross_entropy_loss_per_class(x, y):
+            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3, misclass_penalty=10):
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
                 y = y.long()
@@ -139,22 +145,26 @@ class LineVectorizer(nn.Module):
                 # Calculate the softmax along the second dimension
                 softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
 
-                # One-hot encode the labels
-                y_one_hot = torch.zeros_like(softmax)
-                y_one_hot.scatter_(1, y.unsqueeze(-1), 1)
+                # Initialize an empty tensor to store the per-class losses
+                loss_per_class = torch.zeros(num_classes).float().to(
+                    x.device)  # ensure the tensor is on the same device as x
 
-                # Compute the negative log likelihood for each class
-                loss = -torch.log(softmax + 1e-8) * y_one_hot
-
-                # Sum the loss for each class and normalize by the number of samples
-                loss_per_class = loss.sum(dim=0) / x.shape[0]
+                # Loop over each class and calculate the loss
+                for c in range(num_classes):
+                    # Create a mask that selects only the samples of class c
+                    mask = (y == c).float()
+                    loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
+                    loss_per_class[c] = loss_c.sum() * class_weights[
+                        c]  # Summing up the loss and adjusting by class weight
 
                 return loss_per_class
+
+            class_weights = torch.tensor([1, 100, 100, 100]).to(x.device)
 
             y = torch.cat(ys)
             y = torch.argmax(y, dim=1)
 
-            loss_per_class = cross_entropy_loss_per_class(x, y)
+            loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
             lneg = loss_per_class[0]
             lpos0 = loss_per_class[1]

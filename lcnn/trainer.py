@@ -321,6 +321,10 @@ class Trainer(object):
                         plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
                         plt.text(j[1] + 10, j[0], str(jtyp[i]), color="black", fontsize=12, zorder=200)
 
+            # Display a dummy colorbar for the line colors
+            dummy_image = np.array([[0, 1]])  # 2D image with values 0 and 1
+            im_dummy = plt.imshow(dummy_image, cmap='jet', visible=False)  # use the same colormap as lines
+            plt.colorbar(im_dummy, orientation='vertical', fraction=0.046)
 
             plt.savefig(fn), plt.close()
 
@@ -381,7 +385,7 @@ def imshow(im):
     plt.close()
     plt.tight_layout()
     plt.imshow(im, cmap="gray")
-    plt.colorbar(sm, fraction=0.046)
+    plt.colorbar(fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 

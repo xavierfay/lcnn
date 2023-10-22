@@ -50,15 +50,15 @@ class WireframeDataset(Dataset):
         with np.load(self.filelist[idx]) as npz:
             target = {
                 name: torch.from_numpy(npz[name]).float()
-                for name in ["lmap"]
+                for name in ["lmap", "jmap", "joff"]
             }
-            target["jmap"] = torch.from_numpy(npz["jmap"]).float().squeeze(0)
-            tensor = torch.from_numpy(npz["joff"])
-            target["joff"] = tensor.sum(dim=0)
+            # target["jmap"] = torch.from_numpy(npz["jmap"]).float().squeeze(0)
+            # tensor = torch.from_numpy(npz["joff"])
+            # target["joff"] = tensor.sum(dim=0)
 
 
-            lpos = npz["lpos"].copy()
-            lneg = npz["lneg"].copy()
+            lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl]
+            lneg = np.random.permutation(npz["lneg"])[: M.n_stc_neg]
             l_label = npz["l_label"].copy()
 
             # one hot
@@ -73,14 +73,14 @@ class WireframeDataset(Dataset):
             for i in range(len(lpre)):
                 if random.random() > 0.5:
                     lpre[i] = lpre[i, ::-1]
-            ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
-            ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
-            feat = [
-                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
-                ldir * M.use_slop,
-                lpre[:, :, 2],
-            ]
-            feat = np.concatenate(feat, 1)
+            # ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
+            # ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
+            # feat = [
+            #     lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
+            #     ldir * M.use_slop,
+            #     lpre[:, :, 2],
+            # ]
+            # feat = np.concatenate(feat, 1)
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
@@ -88,7 +88,7 @@ class WireframeDataset(Dataset):
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": torch.from_numpy(l_label),
-                "lpre_feat": torch.from_numpy(feat),
+                # "lpre_feat": torch.from_numpy(feat),
             }
             # for key, value in meta.items():
             #     print(f"{key}: {value.shape}")
