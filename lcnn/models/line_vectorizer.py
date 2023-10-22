@@ -153,6 +153,10 @@ class LineVectorizer(nn.Module):
                 for c in range(num_classes):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
+                    print("Shape of x:", x.shape)
+                    print("Shape of y:", y.shape)
+                    print("Shape of softmax:", softmax.shape)
+                    print("Shape of mask for class", c, ":", mask.shape)
                     loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
                     loss_per_class[c] = loss_c.sum() * class_weights[
                         c]  # Summing up the loss and adjusting by class weight
