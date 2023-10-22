@@ -19,7 +19,7 @@ class LineVectorizer(nn.Module):
 
         lambda_ = torch.linspace(0, 1, M.n_pts0)[:, None]
         self.register_buffer("lambda_", lambda_)
-        self.do_static_sampling = M.n_stc_posl + M.n_stc_negl > 0
+        self.do_static_sampling = M.stc_posl0 + M.n_stc_posl1 + M.stc_posl2 + M.n_stc_negl > 0
 
         self.fc1 = nn.Conv2d(256, M.dim_loi, 1)
         scale_factor = M.n_pts0 // M.n_pts1
