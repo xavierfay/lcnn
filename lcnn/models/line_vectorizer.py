@@ -282,7 +282,7 @@ class LineVectorizer(nn.Module):
                 c[cdx] = 1
 
                 # Sample connection Lines (Class 3)
-                cdx = (scalar_labels == 2).nonzero().flatten()
+                cdx = (scalar_labels == 3).nonzero().flatten()
                 if len(cdx) > M.n_dyn_posl1:
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl2]
                     cdx = cdx[perm]
