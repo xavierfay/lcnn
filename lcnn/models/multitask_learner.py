@@ -52,9 +52,12 @@ class MultitaskLearner(nn.Module):
         # switch to CNHW
         for task in ["jmap"]:
             print("jmap shape before permute: ", T[task].shape)
-            T[task] = T[task].permute(1, 0, 2, 3)
+            #T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             print("joff shape before permute: ", T[task].shape)
+            T[task] = T[task].permute(1, 0, 2, 3)
+
+        for task in ["joff"]:
             T[task] = T[task].permute(1, 0, 2, 3)
 
         offset = self.head_off
@@ -62,14 +65,15 @@ class MultitaskLearner(nn.Module):
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-            # Introducing extra dimension for l type with size 1
-            jmap = output[0: offset[0]].reshape(batch, n_jtyp, 1, row, col)
-            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, 1, row, col)
+
+            # Adjusting the reshape operations
+            jmap = output[0: offset[0]].reshape(batch, 1, row, col)
+            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, 1, row, col)  # keeping the extra dimension for lmap
             joff = output[offset[1]: offset[2]].reshape(2, batch, 1, row, col)
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(0, 1, 2, 3, 4).softmax(2).squeeze(2),
+                    "jmap": jmap.softmax(1).squeeze(1),  # removing the n_jtyp dimension after softmax
                     "lmap": lmap.permute(0, 1, 2, 3, 4).softmax(2).squeeze(2),
                     "joff": joff.permute(1, 0, 2, 3, 4).sigmoid().squeeze(2) - 0.5,
                 }
@@ -77,9 +81,9 @@ class MultitaskLearner(nn.Module):
                     return result
 
             L = OrderedDict()
-            L["jmap"] = cross_entropy_loss(jmap.squeeze(2), T["jmap"])
+            L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
 
-            jmap_losses_per_class = cross_entropy_loss_per_class(jmap.squeeze(2), T["jmap"])
+            jmap_losses_per_class = cross_entropy_loss_per_class(jmap, T["jmap"])
             for idx, loss in enumerate(jmap_losses_per_class):
                 L[f"jmap_class_{idx}"] = loss
 
@@ -89,7 +93,6 @@ class MultitaskLearner(nn.Module):
                 sigmoid_l1_loss(joff[j].squeeze(2), T["joff"][j], -0.5, T["jmap"])
                 for j in range(2)
             )
-
             weights = [0.5] + [10.0] * (n_jtyp - 1)
             for idx, weight in enumerate(weights):
                 loss_weight[f'jmap_class_{idx}'] = weight
