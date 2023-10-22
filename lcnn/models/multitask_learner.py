@@ -51,8 +51,10 @@ class MultitaskLearner(nn.Module):
 
         # switch to CNHW
         for task in ["jmap"]:
+            print("jmap shape before permute: ", T[task].shape)
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
+            print("joff shape before permute: ", T[task].shape)
             T[task] = T[task].permute(1, 0, 2, 3)
 
         offset = self.head_off
