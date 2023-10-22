@@ -255,38 +255,19 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu()
-        mask_result_transformed = torch.argmax(mask_result, dim=0)
-        mask_result = mask_result_transformed.numpy()
-
+        mask_result = result["jmap"][i].cpu().numpy()
         mask_target = target["jmap"][i].cpu().numpy()
-
-        imshow(mask_target), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
-        imshow(mask_result), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        # for ch, ia in enumerate(zip(mask_result)):
-        #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
-
-        # for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
-        #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
-        #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
-
-
-        # line_result = result["lmap"][i].cpu().numpy()
-        # line_result = line_result.reshape(256, 256)
-        # imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
+        for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
+            imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
+            imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
-            line_results = results.cpu().numpy()
-            imshow(line_results), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
+            line_result = results.cpu().numpy()
+            imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
-        # line_result = result["lmap"][i].cpu().numpy()
-        # line_result = line_result.reshape(i,256, 256)
-        # imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
-
-        line_target = target["lmap"][i].cpu().numpy()
-        line_target = line_target.reshape(256, 256)
-        imshow(line_target), plt.savefig(f"{prefix}_line_a.jpg"), plt.close()
-
+        for j, target in enumerate(target["lmap"][i]):
+            line_target = target.cpu().numpy()
+            imshow(line_target), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
         def draw_vecl(lines, sline, juncs, jtyp, fn):
             imshow(img)
@@ -343,8 +324,6 @@ class Trainer(object):
         rtype = np.ones(len(rjuncs))
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
-        lpre_label = meta[i]["lpre_label"].cpu().numpy()
-        #print("lpre_label", lpre_label.shape)
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("vecl target max", np.max(lpre_label), lpre_label)
         vecl_result = result["lines"][i].cpu().numpy() * 4
