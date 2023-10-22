@@ -275,13 +275,13 @@ class Trainer(object):
         # line_result = line_result.reshape(256, 256)
         # imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
-        # for j, target in enumerate(target["lmap"][i]):
-        #     line_target = target.cpu().numpy()
-        #     imshow(line_target), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
+        for j, result in enumerate(result["lmap"][i]):
+            line_result = result.cpu().numpy()
+            imshow(line_result), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
-        line_result = result["lmap"][i].cpu().numpy()
-        line_result = line_result.reshape(4,256, 256)
-        imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
+        # line_result = result["lmap"][i].cpu().numpy()
+        # line_result = line_result.reshape(i,256, 256)
+        # imshow(line_result), plt.savefig(f"{prefix}_line_b.jpg"), plt.close()
 
         line_target = target["lmap"][i].cpu().numpy()
         line_target = line_target.reshape(256, 256)
