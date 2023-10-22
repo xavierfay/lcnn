@@ -49,28 +49,6 @@ def resize_image_binary(img, new_size, upscale_factor=4):
     upscale_height = img.shape[0] * upscale_factor
     img = cv2.resize(img, (upscale_width, upscale_height), interpolation=cv2.INTER_NEAREST)
 
-    height, width = img.shape
-
-    # Initial cropping values
-    left = 0
-    top = 0
-    right = int(width * 0.79)
-    bottom = int(height * 0.95)
-
-    # Calculate the dimensions of the cropped area
-    cropped_width = right - left
-    cropped_height = bottom - top
-
-    # Determine the side of the square based on the smaller dimension
-    side = min(cropped_width, cropped_height)
-
-    # Adjust right or bottom to make the cropped area square
-    if cropped_width < cropped_height:
-        right = left + side
-    else:
-        bottom = top + side
-
-    img = img[top:bottom, left:right]
 
     # Downscale to the desired size using bilinear interpolation
     while img.shape[1] > new_size[0] * 2 and img.shape[0] > new_size[1] * 2:
@@ -186,6 +164,31 @@ def handle_wrapper(args):
         return  # exit the function
 
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+    height, width = img.shape
+
+    # Initial cropping values
+    left = 0
+    top = 0
+    right = int(width * 0.80)
+    bottom = int(height * 0.96)
+
+    # Calculate the dimensions of the cropped area
+    cropped_width = right - left
+    cropped_height = bottom - top
+
+    # Determine the side of the square based on the smaller dimension
+    side = min(cropped_width, cropped_height)
+
+    # Adjust right or bottom to make the cropped area square
+    if cropped_width < cropped_height:
+        right = left + side
+    else:
+        bottom = top + side
+
+    img = img[top:bottom, left:right]
+
+
 
     prefix = data["filename"].split(".")[0]
 
