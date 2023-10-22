@@ -102,7 +102,7 @@ class LineVectorizer(nn.Module):
             cond1 = s[:, 0] < 0.25
             cond2 = s[:, 1] > 0.25
             cond3 = s[:, 2] > 0.25
-            cond4 = s[:, 4] > 0.25
+            cond4 = s[:, 3] > 0.25
 
             # Combine the conditions using logical OR
             b = (cond3 & cond2 & cond4 ) | cond1
