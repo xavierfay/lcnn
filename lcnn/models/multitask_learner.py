@@ -47,12 +47,13 @@ class MultitaskLearner(nn.Module):
         T = input_dict["target"].copy()
         n_jtyp = T["jmap"].shape[1]
         n_ltyp = T["lmap"].shape[1]
-
+        print(T["jmap"].shape)
         # switch to CNHW
         for task in ["jmap", "lmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             T[task] = T[task].permute(1, 2, 0, 3, 4)
+
 
         offset = self.head_off
         loss_weight = M.loss_weight
