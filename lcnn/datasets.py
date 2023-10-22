@@ -65,6 +65,7 @@ class WireframeDataset(Dataset):
 
             # Get the labels corresponding to the selected indices
             lpos_label = npz["l_label"].copy()
+            print(lpos_label.shape, lpos_label)
             lpos_label = lpos_label[lpos_indices]
             lneg_label = np.zeros(len(lneg_indices))
 
@@ -91,8 +92,8 @@ class WireframeDataset(Dataset):
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(npz["junc"][:, 2]).byte(),
-                "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
-                "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
+                "Lpos": torch.from_numpy(npz["Lpos"]),
+                "Lneg": torch.from_numpy(npz["Lneg"]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": torch.from_numpy(lpre_label),
                 # "lpre_feat": torch.from_numpy(feat),
