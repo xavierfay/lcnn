@@ -137,7 +137,7 @@ class LineVectorizer(nn.Module):
                 )
 
         if input_dict["mode"] != "testing":
-            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=3, misclass_penalty=10):
+            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
                 # Ensure the logits are float, Convert labels to long
                 x = x.float()
                 y = y.long()
