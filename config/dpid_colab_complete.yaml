@@ -41,7 +41,9 @@ model:
 
   ## dynamic sampler
   n_dyn_junc: 300
-  n_dyn_posl: 300
+  n_dyn_posl0: 300
+  n_dyn_posl1: 200
+  n_dyn_posl2: 200
   n_dyn_negl: 80
   n_dyn_othr: 600
 
