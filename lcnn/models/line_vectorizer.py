@@ -309,7 +309,7 @@ class LineVectorizer(nn.Module):
             # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
             # label = label[valid_lines_mask]
 
-            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
+            label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
