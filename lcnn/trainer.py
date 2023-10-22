@@ -275,9 +275,9 @@ class Trainer(object):
         # line_result = line_result.reshape(256, 256)
         # imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
-        for j, result in enumerate(result["lmap"][i]):
-            line_result = result.cpu().numpy()
-            imshow(line_result), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
+        for j, results in enumerate(result["lmap"][i]):
+            line_results = results.cpu().numpy()
+            imshow(line_results), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
         # line_result = result["lmap"][i].cpu().numpy()
         # line_result = line_result.reshape(i,256, 256)
@@ -331,7 +331,7 @@ class Trainer(object):
         juncs = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
 
-        print(result["juncs"].shape)
+
         rjuncs = result["juncs"][i].cpu().numpy() * 4
 
         rjunts = None
