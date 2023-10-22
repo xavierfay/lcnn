@@ -58,7 +58,7 @@ class WireframeDataset(Dataset):
 
 
             lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl]
-            lneg = np.random.permutation(npz["lneg"])[: M.n_stc_neg]
+            lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
             l_label = npz["l_label"].copy()
 
             # one hot
