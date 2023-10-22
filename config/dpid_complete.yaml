@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 3
+  batch_size: 4
   batch_size_eval: 2
 
   # backbone multi-task parameters
