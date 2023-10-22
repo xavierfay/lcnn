@@ -197,9 +197,9 @@ class LineVectorizer(nn.Module):
             Lneg = meta["Lneg"]  # [N+1, N+1]
             lpre_label = meta["lpre_label"]  # [N, 3]
 
-            n_type = jmap.size(0)
-            #print("n_type", n_type)
-            jmap = non_maximum_suppression(jmap.view(n_type, -1))
+            n_type = jmap.shape[0]
+            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
+            joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
             if mode != "training":
