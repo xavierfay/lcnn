@@ -56,18 +56,21 @@ class WireframeDataset(Dataset):
             tensor = torch.from_numpy(npz["joff"])
             target["joff"] = tensor.sum(dim=0)
 
+            lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
+            lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
 
-            lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl0]
-            lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
-            l_label = npz["l_label"].copy()
+            # Use these indices to get lpos and lneg
+            lpos = npz["lpos"][lpos_indices]
+            lneg = npz["lneg"][lneg_indices]
 
-            # one hot
-            num_classes = np.max(l_label) + 1
-            l_label = np.eye(num_classes)[l_label]
+            # Get the labels corresponding to the selected indices
+            lpos_label = l_label[lpos_indices]
+            lneg_label = l_label[lneg_indices]
 
+            # Concatenate to get lpre_label of the same length as lpre
+            lpre_label = np.concatenate([lpos_label, lneg_label], 0)
 
-
-
+            # Concatenate to get lpre
             lpre = np.concatenate([lpos, lneg], 0)
 
             for i in range(len(lpre)):
@@ -87,7 +90,7 @@ class WireframeDataset(Dataset):
                 "Lpos": self.adjacency_matrix(len(npz["junc"]), npz["Lpos"]),
                 "Lneg": self.adjacency_matrix(len(npz["junc"]), npz["Lneg"]),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
-                "lpre_label": torch.from_numpy(l_label),
+                "lpre_label": torch.from_numpy(lpre_label),
                 # "lpre_feat": torch.from_numpy(feat),
             }
             # for key, value in meta.items():
