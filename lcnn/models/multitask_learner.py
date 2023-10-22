@@ -45,62 +45,56 @@ class MultitaskLearner(nn.Module):
         batch, channel, row, col = outputs[0].shape
 
         T = input_dict["target"].copy()
-        n_jtyp = int(torch.max(T["jmap"]).item())+1
-        n_ltyp = int(torch.max(T["lmap"]).item())+1
-
+        n_jtyp = T["jmap"].shape[1]
+        n_ltyp = T["lmap"].shape[1]
 
         # switch to CNHW
-        # for task in ["jmap"]:
-        #     T[task] = T[task].permute(1, 0, 2, 3)
-        for task in ["joff"]:
+        for task in ["jmap", "lmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
-        # for task in ["joff"]:
-        #     print("joff shape before permute: ", T[task].shape)
-        #     T[task] = T[task].permute(1, 2, 0, 3, 4)
+        for task in ["joff"]:
+            T[task] = T[task].permute(1, 2, 0, 3, 4)
 
         offset = self.head_off
         loss_weight = M.loss_weight
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-            # jmap now predicts class scores for each pixel
-            jmap = output[0: offset[0]].reshape(batch, n_jtyp, row, col)
-            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, row, col)
-            joff = output[offset[1]: offset[2]].reshape(2, batch, row, col)
+            jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
+
+            lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
+            joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
+
+            # print("jmap in forward pass", jmap.shape)
+            # print("lmap in forward pass",lmap.shape)
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.softmax(1),
-                    "lmap": lmap.softmax(1),
-                    "joff": joff.permute(1, 0, 2, 3).sigmoid() - 0.5,
+                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
+                    "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
+                    "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
                     return result
 
             L = OrderedDict()
-            L["jmap"] = cross_entropy_loss(jmap, T["jmap"])
-
-            jmap_losses_per_class = cross_entropy_loss_per_class(jmap, T["jmap"])
-            for idx, loss in enumerate(jmap_losses_per_class):
-                L[f"jmap_class_{idx}"] = loss
-
-            #print(lmap.shape, T["lmap"].shape)
-            L["lmap"] = cross_entropy_loss(lmap, T["lmap"])
+            L["jmap"] = sum(
+                cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
+            )
+            L["lmap"] = sum(
+                cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
+            )
 
             L["joff"] = sum(
-                sigmoid_l1_loss(joff[j], T["joff"][j], -0.5, T["jmap"])
+                sigmoid_l1_loss(joff[i, j], T["joff"][i, j], -0.5, T["jmap"][i])
+                for i in range(n_jtyp)
                 for j in range(2)
             )
-            weights = [0.5] + [10.0] * (n_jtyp - 1)
-            for idx, weight in enumerate(weights):
-                loss_weight[f'jmap_class_{idx}'] = weight
-
             for loss_name in L:
-                L[loss_name] = L[loss_name] * loss_weight[loss_name]
+                L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            # for key, value in L.items():
-            #     print(f"{key} shape when in results forward: {value}")
+            # for key, value in T.items():
+            #     print(f"{key} shape when in results forward: {value.shape}")
 
         result["losses"] = losses
         return result
@@ -110,25 +104,10 @@ def l2loss(input, target):
     return ((target - input) ** 2).mean(2).mean(1)
 
 
-def cross_entropy_loss(logits, target):
-    # print(target.max())
-    # print(logits.size(1))
-    # print(target.min())
-    nlogp = F.log_softmax(logits, dim=1)
-    return F.nll_loss(nlogp, target.long(), reduction='mean')
+def cross_entropy_loss(logits, positive):
+    nlogp = -F.log_softmax(logits, dim=0)
+    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
-def cross_entropy_loss_per_class(logits, target):
-    # Get the softmax along the class dimension
-    probs = F.softmax(logits, dim=1)
-
-    # Convert target to one-hot encoding with casting to int64
-    target_one_hot = torch.zeros_like(logits).scatter_(1, target.unsqueeze(1).long(), 1)
-
-    # Compute the loss for each class
-    losses = -target_one_hot * torch.log(probs + 1e-8)
-
-    # Return the mean loss for each class
-    return losses.mean(dim=(0, 2, 3))
 
 def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
     logp = torch.sigmoid(logits) + offset

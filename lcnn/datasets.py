@@ -65,7 +65,6 @@ class WireframeDataset(Dataset):
 
             # Get the labels corresponding to the selected indices
             lpos_label = npz["l_label"].copy()
-            print(lpos_label.shape, lpos_label)
             lpos_label = lpos_label[lpos_indices]
             lneg_label = np.zeros(len(lneg_indices))
 

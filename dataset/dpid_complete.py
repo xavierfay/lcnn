@@ -118,7 +118,7 @@ def save_heatmap(prefix, image, lines, classes):
         return len(junc) - 1
 
     lnid = [[], [], [], []]
-    l_label = [], []
+    l_label = []
     lpos, lneg = [], []
 
     for i, line in enumerate(lines):
@@ -126,6 +126,7 @@ def save_heatmap(prefix, image, lines, classes):
         lclass = classes[i]-1
         lnid[lclass].append((jid(v0), jid(v1)))
         lpos.append([junc[jid(v0)], junc[jid(v1)]])
+        l_label.append(classes[i])
 
 
         vint0, vint1 = to_int(v0[:2]), to_int(v1[:2])
@@ -230,7 +231,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in [ "test_complete"]:
+    for batch in [ "valid_complete"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:
