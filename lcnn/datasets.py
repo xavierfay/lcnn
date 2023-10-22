@@ -71,6 +71,9 @@ class WireframeDataset(Dataset):
             # Concatenate to get lpre_label of the same length as lpre
             lpre_label = np.concatenate([lpos_label, lneg_label], 0)
 
+            num_classes = int(np.max(lpre_label)) + 1
+            lpre_label = np.eye(num_classes)[lpre_label.astype(int)]
+
             # Concatenate to get lpre
             lpre = np.concatenate([lpos, lneg], 0)
 

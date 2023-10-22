@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 2
+  batch_size: 4
   batch_size_eval: 2
 
   # backbone multi-task parameters
@@ -65,7 +65,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.008
+  eval_junc_thres: 0.01
 
 optim:
   name: Adam
