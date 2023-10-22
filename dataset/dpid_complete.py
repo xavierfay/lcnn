@@ -43,41 +43,64 @@ def inrange(v, shape):
 def to_int(x):
     return tuple(map(int, x))
 
+def resize_image_binary(img, new_size, upscale_factor=4):
 
-def pad_and_convert_to_array(lpos):
-    max_len = max(len(sublist) for sublist in lpos)
+    upscale_width = img.shape[1] * upscale_factor
+    upscale_height = img.shape[0] * upscale_factor
+    img = cv2.resize(img, (upscale_width, upscale_height), interpolation=cv2.INTER_NEAREST)
 
-    # Determine the shape of individual data points
-    if lpos:
-        if lpos[0]:  # If lpos[0] is not empty/0, use it to determine data_shape
-            data_shape = np.asarray(lpos[0][0]).shape
-        elif len(lpos) > 1 and lpos[1]:  # If lpos[0] is empty/0 and lpos[1] exists and is not empty, use lpos[1]
-            data_shape = np.asarray(lpos[1][0]).shape
-        else:
-            print(lpos)
-            raise ValueError("Unable to determine data_shape from lpos[0] and lpos[1].")
+    height, width = img.shape
+
+    # Initial cropping values
+    left = 0
+    top = 0
+    right = int(width * 0.79)
+    bottom = int(height * 0.95)
+
+    # Calculate the dimensions of the cropped area
+    cropped_width = right - left
+    cropped_height = bottom - top
+
+    # Determine the side of the square based on the smaller dimension
+    side = min(cropped_width, cropped_height)
+
+    # Adjust right or bottom to make the cropped area square
+    if cropped_width < cropped_height:
+        right = left + side
     else:
-        print(lpos)
-        raise ValueError("lpos is empty, cannot determine data_shape.")
+        bottom = top + side
 
-    # Initialize an array filled with -1 with appropriate shape
-    padded_lpos = -1 * np.ones((len(lpos), max_len) + data_shape, dtype=np.float32)
+    img = img[top:bottom, left:right]
 
-    # Populate the array with available data
-    for i, sublist in enumerate(lpos):
-        for j, data_point in enumerate(sublist):
-            padded_lpos[i, j] = data_point
+    # Downscale to the desired size using bilinear interpolation
+    while img.shape[1] > new_size[0] * 2 and img.shape[0] > new_size[1] * 2:
+        img = cv2.resize(img, (img.shape[1] // 2, img.shape[0] // 2), interpolation=cv2.INTER_CUBIC)
 
-    return padded_lpos
+    img = cv2.resize(img, new_size, interpolation=cv2.INTER_CUBIC)
+    # Binarize the image
+    _, binary_img = cv2.threshold(img, 127, 255, cv2.THRESH_BINARY)
+    # Save the resized image
+    return binary_img
 
+
+def adjacency_matrix(n, *links):
+    mat = np.zeros((n + 1, n + 1))
+
+    for idx, link in enumerate(links, 1):  # idx will start from 1, corresponding to link1, link2, etc.
+        if len(link) > 0:
+            mat[link[:, 0], link[:, 1]] = idx
+            mat[link[:, 1], link[:, 0]] = idx
+
+    return mat
 def save_heatmap(prefix, image, lines, classes):
     im_rescale = (1024, 1024)
     heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
-    jmap = np.zeros((1,) + heatmap_scale, dtype=np.float32)
-    joff = np.zeros((2, 2) + heatmap_scale, dtype=np.float32)
-    lmap = np.zeros(heatmap_scale, dtype=np.float32)
+    jmap = np.zeros((34,) + heatmap_scale, dtype=np.float32)
+    joff = np.zeros((34, 2) + heatmap_scale, dtype=np.float32)
+    lmap = np.zeros((3,)+ heatmap_scale, dtype=np.float32)
+
 
     lines[:, :, 0] = np.clip(lines[:, :, 0] * fx, 0, heatmap_scale[0] - 1e-4)
     lines[:, :, 1] = np.clip(lines[:, :, 1] * fy, 0, heatmap_scale[1] - 1e-4)
@@ -94,56 +117,49 @@ def save_heatmap(prefix, image, lines, classes):
         junc.append(np.array(jun))
         return len(junc) - 1
 
-    lnid, l_label = [], []
+    lnid = [[], [], [], []]
+    l_label = [], []
     lpos, lneg = [], []
-    num_classes = max(classes) + 1
-    #print("Number of classes", num_classes)
-    #num_classes = 2
-    # # Initialize sublists
-    # lnid = [[] for _ in range(num_classes)]
-    # lpos = [[] for _ in range(num_classes)]
-    # lneg = []
 
     for i, line in enumerate(lines):
         v0, v1 = line[0], line[1]
-        lclass = classes[i]
-        lnid.append((jid(v0), jid(v1)))
+        lclass = classes[i]-1
+        lnid[lclass].append((jid(v0), jid(v1)))
         lpos.append([junc[jid(v0)], junc[jid(v1)]])
-        l_label.append(lclass)
+
 
         vint0, vint1 = to_int(v0[:2]), to_int(v1[:2])
-        jmap[0][vint0] = int(v0[2])  # assuming v0[2] gives the correct index in the first dimension and the value to set is 1
-        jmap[0][vint1] = int(v1[2])  # assuming v1[2] gives the correct index in the first dimension and the value to set is 1
-        #print("v0", v0, "v1", v1, "vint0", vint0, "vint1", vint1, "lclass", lclass)
+        jmap[int(v0[2] - 1)][vint0] = 1
+        jmap[int(v1[2] - 1)][vint1] = 1
         rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
-
-        lmap[rr, cc] = np.maximum(lmap[rr, cc], value*lclass)
+        lmap[lclass, rr, cc] = np.maximum(lmap[lclass, rr, cc], value)
 
     for v in junc:
         vint = to_int(v[:2])
         joff[0, :, vint[0], vint[1]] = v[:2] - vint - 0.5
-    llmap = zoom(lmap, [0.5, 0.5])
+        joff[1, :, vint[0], vint[1]] = v[:2] - vint - 0.5
+        joff[2, :, vint[0], vint[1]] = v[:2] - vint - 0.5
     lineset = set([frozenset(l) for l in lnid])
 
     for i0, i1 in combinations(range(len(junc)), 2):
         if frozenset([i0, i1]) not in lineset:
             v0, v1 = junc[i0], junc[i1]
-            vint0, vint1 = to_int(v0[:2] / 2), to_int(v1[:2] / 2)
-            rr, cc, value = skimage.draw.line_aa(*vint0, *vint1)
-            avg_value = np.average(np.minimum(value, llmap[rr, cc]))
+            rr, cc, value = skimage.draw.line_aa(*to_int(v0[:2]), *to_int(v1[:2]))
+            avg_value = np.average(np.minimum(value, lmap[0, rr, cc]))
             lneg.append([v0, v1, i0, i1, avg_value])
 
     assert len(lneg) != 0
     lneg.sort(key=lambda l: -l[-1])
 
     junc = np.array(junc, dtype=np.float32)
-    Lpos = np.array(lnid, dtype=int)
+    Lpos = adjacency_matrix(len(junc), np.array(lnid[0]), np.array(lnid[1]), np.array(lnid[2]), np.array(lnid[3]))
     Lneg = np.array([l[2:4] for l in lneg][:4000], dtype=int)
+    Lneg = adjacency_matrix(len(junc), Lneg)
     lpos = np.array(lpos, dtype=np.float32)
     l_label = np.array(l_label, dtype=int)
     lneg = np.array([l[:2] for l in lneg[:2000]], dtype=np.float32)
 
-    image = cv2.resize(image, im_rescale)
+    image = resize_image_binary(image, im_rescale)
 
     np.savez_compressed(
         f"{prefix}_label.npz",
@@ -168,18 +184,7 @@ def handle_wrapper(args):
         print(f"Failed to load image from {file_path}")
         return  # exit the function
 
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # Binarize the image using a threshold
-    _, binarized = cv2.threshold(gray, 128, 255, cv2.THRESH_BINARY)
-
-    # Crop the image to 4/5 of its left size
-    height, width = binarized.shape
-    left = 0
-    top = 0
-    right = width * 4 // 5
-    bottom = height
-    img = binarized[top:bottom, left:right]
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     prefix = data["filename"].split(".")[0]
 
@@ -225,7 +230,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in [ "train_complete", "test_complete"]:
+    for batch in [ "test_complete"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:

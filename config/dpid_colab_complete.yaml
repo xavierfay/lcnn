@@ -1,6 +1,6 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/overfit_complete
-  datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete
+  datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete_2
   resume_from:  #/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231009-091908-4fbdb8a-baseline
   num_workers: 2
   tensorboard_port: 0
