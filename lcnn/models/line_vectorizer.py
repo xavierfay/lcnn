@@ -90,7 +90,11 @@ class LineVectorizer(nn.Module):
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
 
-        print(xs, ys)
+        for i, tensor in enumerate(xs):
+            print(f"Shape of tensor {i} in xs:", tensor.shape)
+        for i, tensor in enumerate(ys):
+            print(f"Shape of tensor {i} in ys:", tensor.shape)
+
         x= torch.cat(xs)
 
         y = torch.cat(ys)
