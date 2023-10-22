@@ -21,9 +21,9 @@ model:
     jmap: 1.0
     lmap: 0.5
     joff: 0.25
-    lpos0: 2
-    lpos1: 10
-    lpos2: 10
+    lpos0: 1
+    lpos1: 1
+    lpos2: 1
     lneg: 1
 
   # backbone parameters
