@@ -50,29 +50,29 @@ class MultitaskLearner(nn.Module):
 
 
         # switch to CNHW
-        for task in ["jmap"]:
-            print("jmap shape before permute: ", T[task].shape)
-            T[task] = T[task].permute(1, 0, 2, 3)
+        # for task in ["jmap"]:
+        #     T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
-            print("joff shape before permute: ", T[task].shape)
-            T[task] = T[task].permute(1, 2, 0, 3, 4)
+            T[task] = T[task].permute(1, 0, 2, 3)
+        # for task in ["joff"]:
+        #     print("joff shape before permute: ", T[task].shape)
+        #     T[task] = T[task].permute(1, 2, 0, 3, 4)
 
         offset = self.head_off
         loss_weight = M.loss_weight
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-
-            # Adjusting the reshape operations
-            jmap = output[0: offset[0]].reshape(batch, 1, row, col)
-            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, 1, row, col)  # keeping the extra dimension for lmap
-            joff = output[offset[1]: offset[2]].reshape(2, batch, 1, row, col)
+            # jmap now predicts class scores for each pixel
+            jmap = output[0: offset[0]].reshape(batch, n_jtyp, row, col)
+            lmap = output[offset[0]: offset[1]].reshape(batch, n_ltyp, row, col)
+            joff = output[offset[1]: offset[2]].reshape(2, batch, row, col)
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.softmax(1).squeeze(1),  # removing the n_jtyp dimension after softmax
-                    "lmap": lmap.permute(0, 1, 2, 3, 4).softmax(2).squeeze(2),
-                    "joff": joff.permute(1, 0, 2, 3, 4).sigmoid().squeeze(2) - 0.5,
+                    "jmap": jmap.softmax(1),
+                    "lmap": lmap.softmax(1),
+                    "joff": joff.permute(1, 0, 2, 3).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
                     return result
@@ -84,10 +84,11 @@ class MultitaskLearner(nn.Module):
             for idx, loss in enumerate(jmap_losses_per_class):
                 L[f"jmap_class_{idx}"] = loss
 
-            L["lmap"] = cross_entropy_loss(lmap.squeeze(2), T["lmap"])
+            #print(lmap.shape, T["lmap"].shape)
+            L["lmap"] = cross_entropy_loss(lmap, T["lmap"])
 
             L["joff"] = sum(
-                sigmoid_l1_loss(joff[j].squeeze(2), T["joff"][j], -0.5, T["jmap"])
+                sigmoid_l1_loss(joff[j], T["joff"][j], -0.5, T["jmap"])
                 for j in range(2)
             )
             weights = [0.5] + [10.0] * (n_jtyp - 1)
@@ -110,18 +111,13 @@ def l2loss(input, target):
 
 
 def cross_entropy_loss(logits, target):
-    # Ensure that target and logits have the same number of dimensions
-    if len(logits.shape) != len(target.shape):
-        target = target.unsqueeze(2)
-
+    # print(target.max())
+    # print(logits.size(1))
+    # print(target.min())
     nlogp = F.log_softmax(logits, dim=1)
     return F.nll_loss(nlogp, target.long(), reduction='mean')
 
 def cross_entropy_loss_per_class(logits, target):
-    # Ensure that target and logits have the same number of dimensions
-    if len(logits.shape) != len(target.shape):
-        target = target.unsqueeze(2)
-
     # Get the softmax along the class dimension
     probs = F.softmax(logits, dim=1)
 
@@ -132,7 +128,7 @@ def cross_entropy_loss_per_class(logits, target):
     losses = -target_one_hot * torch.log(probs + 1e-8)
 
     # Return the mean loss for each class
-    return losses.mean(dim=(0, 2, 3, 4))
+    return losses.mean(dim=(0, 2, 3))
 
 def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
     logp = torch.sigmoid(logits) + offset
