@@ -57,7 +57,7 @@ class WireframeDataset(Dataset):
             target["joff"] = tensor.sum(dim=0)
 
 
-            lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl]
+            lpos = np.random.permutation(npz["lpos"])[: M.n_stc_posl0]
             lneg = np.random.permutation(npz["lneg"])[: M.n_stc_negl]
             l_label = npz["l_label"].copy()
 

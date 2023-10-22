@@ -200,14 +200,6 @@ class LineVectorizer(nn.Module):
             Lneg = meta["Lneg"]  # [N+1, N+1]
             lpre_label = meta["lpre_label"]  # [N, 3]
 
-            # print("jmap:", jmap.shape)
-            # print("joff:" , joff.shape)
-
-            # print("junc:", junc, junc.shape)
-            # print("jtype", jtyp, jtyp.shape)
-            # print("Lpos:", Lpos, Lpos.shape)
-            # print("Lneg", Lneg, Lneg.shape)
-
             n_type = jmap.size(0)
             #print("n_type", n_type)
             jmap = non_maximum_suppression(jmap.view(n_type, -1))
@@ -236,15 +228,10 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
-            #print("xy_", xy_.shape, xy_)
-
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # xy: [N_TYPE * K, 2]
-            # match: [N_TYPE, K]
-            # TODO: this flatten can help
 
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
@@ -254,43 +241,17 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
-            # class_two_indices = (Lpos == 2).nonzero(as_tuple=True)
-
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            #print("up max",torch.max(up))
 
-            # Ensuring Class 2 Inclusion in up and vp
-            # Define how many entries you want to ensure are class 2
-            # num_class_two_to_include = 100
-            #
-            # # Randomly select some class 2 indices
-            # selected_indices = torch.randint(0, len(class_two_indices[0]), (num_class_two_to_include,))
-            #
-            # selected_class_two_indices_row = class_two_indices[0][selected_indices]
-            # selected_class_two_indices_col = class_two_indices[1][selected_indices]
-            #
-            # # Replace some of the initially sampled indices with class 2 indices
-            # up[:num_class_two_to_include] = selected_class_two_indices_row
-            # vp[:num_class_two_to_include] = selected_class_two_indices_col
-
-            # # Optionally shuffle up and vp if order matters
-            # up = up[torch.randperm(up.size(0))]
-            # vp = vp[torch.randperm(vp.size(0))]
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
-            label = torch.zeros(scalar_labels.shape[0], lpre_label.shape[1], device=scalar_labels.device)
-
-            # Assign a "1" in the respective column according to the scalar label
-            label[torch.arange(label.shape[0]), scalar_labels] = 1
-            # print("after sampling", label, torch.max(label), label.shape)
-
             if mode == "training":
-                c = torch.zeros_like(label[:, 0], dtype=torch.bool)
+                c = torch.zeros_like(scalar_labels, dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
                 cdx = Lneg[up, vp].nonzero().flatten()
@@ -300,17 +261,24 @@ class LineVectorizer(nn.Module):
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # Sample continous Lines (Class 1)
-                cdx = (label[:, 1] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_negl:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                # Sample dashed Lines (Class 1)
+                cdx = (scalar_labels == 1).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl0:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl0]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
-                # Sample dashed Lines (Class 2)
-                cdx = (label[:, 2] == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_othr:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl]
+                # Sample continous Lines (Class 2)
+                cdx = (scalar_labels == 2).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl1:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl1]
+                    cdx = cdx[perm]
+                c[cdx] = 1
+
+                # Sample connection Lines (Class 3)
+                cdx = (scalar_labels == 2).nonzero().flatten()
+                if len(cdx) > M.n_dyn_posl1:
+                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl2]
                     cdx = cdx[perm]
                 c[cdx] = 1
 
@@ -322,51 +290,29 @@ class LineVectorizer(nn.Module):
                 c = (u < v).flatten()
 
             #sample lines
-            u, v, label = u[c], v[c], label[c]
+            u, v, scalar_labels = u[c], v[c], scalar_labels[c]
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
-            # Reshape xy and generate jcs
-            # xy = xy.reshape(n_type * K, 2)
-            # xy = xy.reshape(n_type, K, 2)
-            # jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+
+            # # Compute slopes and create masks for valid lines (horizontal/vertical)
+            # deltas = xyv - xyu
+            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            # horizontal_mask = torch.abs(slopes) < 0.001
+            # vertical_mask = torch.abs(slopes) > 10000
+            # valid_lines_mask = horizontal_mask | vertical_mask
+            # #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
             #
-            # # Flatten jcs and extract xyu and xyv using u, v
-            # jcs_flat = torch.cat(jcs, dim=0)
-            # print("shape jcs, shape u,v", len(jcs_flat), len(u), len(v) )
-            # xyu, xyv = jcs_flat[u], jcs_flat[v]
+            # # Ensure that valid_lines_mask does not contain invalid indices
+            # assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
+            #
+            # # Filter xyu, xyv, and label using the valid_lines_mask
+            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
+            # label = label[valid_lines_mask]
 
+            label = torch.zeros(scalar_labels.shape[0], 3, device=scalar_labels.device)
 
-
-
-            # Compute slopes and create masks for valid lines (horizontal/vertical)
-            deltas = xyv - xyu
-            slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            horizontal_mask = torch.abs(slopes) < 0.001
-            vertical_mask = torch.abs(slopes) > 10000
-            valid_lines_mask = horizontal_mask | vertical_mask
-            #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
-
-            # Ensure that valid_lines_mask does not contain invalid indices
-            assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
-
-            # Filter xyu, xyv, and label using the valid_lines_mask
-            xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
-            label = label[valid_lines_mask]
-
-            #print("label after filtering", label.shape)
-
-            # u2v = xyu - xyv
-            # u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
-            # feat = torch.cat(
-            #     [
-            #         xyu / 256 * M.use_cood,
-            #         xyv / 256 * M.use_cood,
-            #         u2v * M.use_slop,
-            #         (u[:, None] > K).float(),
-            #         (v[:, None] > K).float(),
-            #     ],
-            #     1,
-            # )
+            # Assign a "1" in the respective column according to the scalar label
+            label[torch.arange(label.shape[0]), scalar_labels] = 1
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
