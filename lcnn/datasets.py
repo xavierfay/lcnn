@@ -50,11 +50,9 @@ class WireframeDataset(Dataset):
         with np.load(self.filelist[idx]) as npz:
             target = {
                 name: torch.from_numpy(npz[name]).float()
-                for name in ["lmap"]
+                for name in ["lmap", "joff", "jmap"]
             }
-            target["jmap"] = torch.from_numpy(npz["jmap"]).float().squeeze(0)
-            tensor = torch.from_numpy(npz["joff"])
-            target["joff"] = tensor.sum(dim=0)
+
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
