@@ -90,7 +90,7 @@ class LineVectorizer(nn.Module):
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
 
-        print(x, y)
+        print(xs, ys)
         x= torch.cat(xs)
 
         y = torch.cat(ys)
