@@ -331,6 +331,7 @@ class Trainer(object):
         juncs = meta[i]["junc"].cpu().numpy() * 4
         jtyp = meta[i]["jtyp"].cpu().numpy()
 
+        print(result["juncs"].shape)
         rjuncs = result["juncs"][i].cpu().numpy() * 4
 
         rjunts = None
