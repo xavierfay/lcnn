@@ -48,6 +48,8 @@ class MultitaskLearner(nn.Module):
         n_jtyp = T["jmap"].shape[1]
         n_ltyp = T["lmap"].shape[1]
         print(T["jmap"].shape)
+
+
         # switch to CNHW
         for task in ["jmap", "lmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
