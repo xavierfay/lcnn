@@ -90,8 +90,10 @@ class LineVectorizer(nn.Module):
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
 
+        print(x, y)
+        x= torch.cat(xs)
 
-        x, y = torch.cat(xs), torch.cat(ys)
+        y = torch.cat(ys)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
         x = self.fc2(x)
 
