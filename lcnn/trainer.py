@@ -260,6 +260,13 @@ class Trainer(object):
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = np.sum(mask_target, axis=0)
 
+        colored_mask_result_2D = generate_colored_heatmap_for_2D(mask_result, num_colors=result["jmap"][i].cpu().numpy().shape(0))
+        colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape(0))
+
+        # Displaying the results using the updated imshow function
+        imshow(colored_mask_target_2D),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(colored_mask_result_2D), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+
         imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
@@ -371,6 +378,17 @@ def imshow(im):
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
 
+
+def generate_colored_heatmap_for_2D(layers, num_colors=35):
+    # Generate a colormap with the specified number of colors
+    colormap = plt.cm.get_cmap('jet', num_colors)
+
+    # Extract the RGB values from the colormap
+    colors = colormap(np.linspace(0, 1, num_colors))[:, :3]
+
+    # Since the input is 2D, we'll just multiply with a single color (for demonstration, we choose the first color)
+    colored_map = layers[:, :, np.newaxis] * colors[0]
+    return colored_map
 
 def tprint(*args):
     """Temporarily prints things on the screen"""
