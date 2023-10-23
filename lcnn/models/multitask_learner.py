@@ -114,8 +114,8 @@ def focal_loss(logits, positive, alpha=0.25, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)
 
-    mask = positive == 1
-    p_t = mask * probas[1] + (1 - mask) * probas[0]
+    mask = (positive == 1).float()
+    p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Compute the focal loss
     loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t)
