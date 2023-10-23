@@ -256,28 +256,25 @@ class Trainer(object):
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
         mask_result = result["jmap"][i].cpu().numpy()
-        mask_result = np.sum(mask_result, axis=0)
+        mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
-        mask_target = np.sum(mask_target, axis=0)
+        mask_target = plt_heatmaps(mask_target)
 
-        colored_mask_result_2D = generate_colored_heatmap_for_2D(mask_result, num_colors=result["jmap"][i].cpu().numpy().shape[0])
-
-        colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape[0])
 
         # Displaying the results using the updated imshow function
-        imshow(colored_mask_target_2D, cmap="hot"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        imshow(colored_mask_result_2D, cmap="hot"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        imshow(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
-            imshow(line_result, cmap="jet"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
+            imshow(line_result, cmap="hot"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
             line_target = target.cpu().numpy()
-            imshow(line_target, cmap="jet"), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
+            imshow(line_target, cmap="hot"), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
         def draw_vecl(lines, sline, juncs, jtyp, fn):
             imshow(img)
@@ -380,16 +377,22 @@ def imshow(im, cmap="gray"):
     plt.ylim([im.shape[0], 0])
 
 
-def generate_colored_heatmap_for_2D(layers, num_colors=35):
-    # Generate a colormap with the specified number of colors
-    colormap = plt.cm.get_cmap('jet', num_colors)
+def plt_heatmaps(jmap):
+    # Define a colormap of 34 unique colors (you can customize this)
+    colormap = plt.cm.jet(np.linspace(0, 1, 34))
 
-    # Extract the RGB values from the colormap
-    colors = colormap(np.linspace(0, 1, num_colors))[:, :3]
+    # Create an image of shape 256x256x3 initialized with ones to have a white background
+    combined_image = np.ones((256, 256, 3))
 
-    # Since the input is 2D, we'll just multiply with a single color (for demonstration, we choose the first color)
-    colored_map = layers[:, :, np.newaxis] * colors[0]
-    return colored_map
+    for i in range(jmap.shape[0]):
+        # Multiply each heatmap layer with its corresponding color
+        colored_layer = np.expand_dims(jmap[i], axis=-1) * (colormap[i, :3] - 1)
+        combined_image += colored_layer
+
+    # Clip values between 0 and 1 for visualization
+    combined_image = np.clip(combined_image, 0, 1)
+
+    return combined_image
 
 def tprint(*args):
     """Temporarily prints things on the screen"""
