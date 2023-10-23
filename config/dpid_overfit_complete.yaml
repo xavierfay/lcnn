@@ -1,0 +1,76 @@
+io:
+  logdir: /content/drive/MyDrive/Xavier/logs/overfit_complete
+  datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete_2
+  resume_from:  #/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231009-091908-4fbdb8a-baseline
+  num_workers: 2
+  tensorboard_port: 0
+  validation_interval: 24000
+
+model:
+  image:
+      mean: [247.55]
+      stddev: [41.36]
+
+  batch_size: 2
+  batch_size_eval: 2
+
+  # backbone multi-task parameters
+  # jmap, lmap, joff
+  head_size: [[68], [6], [68]]
+  loss_weight:
+    jmap: 10
+    lmap: 0.5
+    joff: 0.25
+    lpos0: 1
+    lpos1: 1
+    lpos2: 1
+    lneg: 1
+
+  # backbone parameters
+  backbone: stacked_hourglass
+  depth: 4
+  num_stacks: 2
+  num_blocks: 1
+
+  # sampler parameters
+  ## static sampler
+  n_stc_posl0: 200
+  n_stc_posl1: 200
+  n_stc_posl2: 200
+  n_stc_negl: 40
+
+  ## dynamic sampler
+  n_dyn_junc: 300
+  n_dyn_posl0: 300
+  n_dyn_posl1: 200
+  n_dyn_posl2: 200
+  n_dyn_negl: 80
+  n_dyn_othr: 600
+
+  # LOIPool layer parameters
+  n_pts0: 32
+  n_pts1: 8
+
+  # line verification network parameters
+  dim_loi: 256
+  dim_fc: 1024
+
+  # maximum junction and line outputs
+  n_out_junc: 250
+  n_out_line: 2500
+
+  # additional ablation study parameters
+  use_cood: 0
+  use_slop: 0
+  use_conv: 0
+
+  # junction threashold for evaluation (See #5)
+  eval_junc_thres: 0.0001
+
+optim:
+  name: Adam
+  lr: 4.0e-4
+  amsgrad: True
+  weight_decay: 1.0e-4
+  max_epoch: 24
+  lr_decay_epoch: 10

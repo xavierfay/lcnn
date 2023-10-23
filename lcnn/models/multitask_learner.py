@@ -81,7 +81,7 @@ class MultitaskLearner(nn.Module):
 
             L = OrderedDict()
             L["jmap"] = sum(
-                cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
+                weighted_cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
             )
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
@@ -111,6 +111,22 @@ def cross_entropy_loss(logits, positive):
     nlogp = -F.log_softmax(logits, dim=0)
     return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
+
+def weighted_cross_entropy_loss(logits, positive):
+    # Calculate class frequencies
+    positive_pixels = positive.sum()
+    total_pixels = positive.numel()
+    negative_pixels = total_pixels - positive_pixels
+
+    # Calculate class weights
+    w_1 = positive_pixels / total_pixels
+    w_0 = 1 - w_1
+
+    # Compute weighted cross entropy loss
+    nlogp = -F.log_softmax(logits, dim=0)
+    loss = w_1 * positive * nlogp[1] + w_0 * (1 - positive) * nlogp[0]
+
+    return loss.mean(2).mean(1)
 
 def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
     logp = torch.sigmoid(logits) + offset

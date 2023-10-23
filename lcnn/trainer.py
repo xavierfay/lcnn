@@ -260,8 +260,9 @@ class Trainer(object):
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = np.sum(mask_target, axis=0)
 
-        colored_mask_result_2D = generate_colored_heatmap_for_2D(mask_result, num_colors=result["jmap"][i].cpu().numpy().shape(0))
-        colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape(0))
+        colored_mask_result_2D = generate_colored_heatmap_for_2D(mask_result, num_colors=result["jmap"][i].cpu().numpy().shape[0])
+
+        colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape[0])
 
         # Displaying the results using the updated imshow function
         imshow(colored_mask_target_2D),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
