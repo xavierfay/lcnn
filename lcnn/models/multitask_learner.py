@@ -47,8 +47,6 @@ class MultitaskLearner(nn.Module):
         T = input_dict["target"].copy()
         n_jtyp = T["jmap"].shape[1]
         n_ltyp = T["lmap"].shape[1]
-        print(T["jmap"].shape)
-
 
         # switch to CNHW
         for task in ["jmap", "lmap"]:
@@ -81,7 +79,7 @@ class MultitaskLearner(nn.Module):
 
             L = OrderedDict()
             L["jmap"] = sum(
-                weighted_cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
+                focal_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
             )
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
@@ -112,6 +110,15 @@ def cross_entropy_loss(logits, positive):
     return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
 
+def focal_loss(logits, positive, alpha=0.25, gamma=2.0):
+    # Get the probability of the positive class
+    probas = F.softmax(logits, dim=0)
+    p_t = probas[1] if positive == 1 else probas[0]
+
+    # Compute the focal loss
+    loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t)
+
+    return loss.mean(2).mean(1)
 def weighted_cross_entropy_loss(logits, positive):
     # Calculate class frequencies
     positive_pixels = positive.sum()
