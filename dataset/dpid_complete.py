@@ -243,7 +243,7 @@ def main():
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in [ "valid_complete", "train_complete", "test_complete"]:
+    for batch in [ "train_complete"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:

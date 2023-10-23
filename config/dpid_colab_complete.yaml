@@ -65,7 +65,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.001
 
 optim:
   name: Adam

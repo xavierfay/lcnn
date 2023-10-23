@@ -255,11 +255,13 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        # mask_result = result["jmap"][i].cpu().numpy()
-        # mask_target = target["jmap"][i].cpu().numpy()
-        # for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
-        #     imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
-        #     imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
+        mask_result = result["jmap"][i].cpu().numpy()
+        mask_result = np.concatenate(mask_result, axis=0)
+        mask_target = target["jmap"][i].cpu().numpy()
+        mask_target = np.concatenate(mask_target, axis=0)
+        for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
+            imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
+            imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
