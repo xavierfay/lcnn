@@ -259,9 +259,9 @@ class Trainer(object):
         mask_result = np.concatenate(mask_result, axis=0)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = np.concatenate(mask_target, axis=0)
-        for ch, (ia, ib) in enumerate(zip(mask_target, mask_result)):
-            imshow(ia), plt.savefig(f"{prefix}_mask_{ch}a.jpg"), plt.close()
-            imshow(ib), plt.savefig(f"{prefix}_mask_{ch}b.jpg"), plt.close()
+
+        imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
