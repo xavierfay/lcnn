@@ -113,12 +113,14 @@ def cross_entropy_loss(logits, positive):
 def focal_loss(logits, positive, alpha=0.25, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)
-    p_t = probas[1] if positive == 1 else probas[0]
+
+    mask = positive == 1
+    p_t = mask * probas[1] + (1 - mask) * probas[0]
 
     # Compute the focal loss
     loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t)
-
     return loss.mean(2).mean(1)
+
 def weighted_cross_entropy_loss(logits, positive):
     # Calculate class frequencies
     positive_pixels = positive.sum()
