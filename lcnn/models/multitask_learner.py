@@ -120,7 +120,10 @@ def weighted_cross_entropy_loss(logits, positive):
 
     # Calculate class weights
     w_1 = positive_pixels / total_pixels
-    w_0 = 1 - w_1
+    w_0 = negative_pixels / total_pixels
+
+    w_1 = w_1 / (w_0+w_1)
+    w_0 = w_0 / (w_0+w_1)
 
     print(w_0, w_1)
 

@@ -265,8 +265,8 @@ class Trainer(object):
         colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape[0])
 
         # Displaying the results using the updated imshow function
-        imshow(colored_mask_target_2D, cmap="jet"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        imshow(colored_mask_result_2D, cmap="jet"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        imshow(colored_mask_target_2D, cmap="hot"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(colored_mask_result_2D, cmap="hot"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
