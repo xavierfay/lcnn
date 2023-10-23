@@ -256,9 +256,9 @@ class Trainer(object):
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
         mask_result = result["jmap"][i].cpu().numpy()
-        mask_result = np.concatenate(mask_result, axis=0)
+        mask_result = np.sum(mask_result, axis=0)
         mask_target = target["jmap"][i].cpu().numpy()
-        mask_target = np.concatenate(mask_target, axis=0)
+        mask_target = np.sum(mask_target, axis=0)
 
         imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
