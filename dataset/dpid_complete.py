@@ -237,20 +237,51 @@ def handle_wrapper(args):
     print("Finishing", os.path.join(data_output, batch, prefix))
 
 
+# def main():
+#     args = docopt(__doc__)
+#     data_root = args["<src>"]
+#     data_output = args["<dst>"]
+#
+#     os.makedirs(data_output, exist_ok=True)
+#     for batch in [ "train_complete"]:
+#         anno_file = os.path.join(data_root, f"{batch}.json")
+#
+#         with open(anno_file, "r") as f:
+#             dataset = json.load(f)
+#
+#         args_to_pass = [(data_item, data_root, data_output, batch) for data_item in dataset]
+#         results = parmap(handle_wrapper, args_to_pass, 16)
+
 def main():
     args = docopt(__doc__)
     data_root = args["<src>"]
     data_output = args["<dst>"]
 
     os.makedirs(data_output, exist_ok=True)
-    for batch in [ "train_complete"]:
+
+    # Extract numbers from the list of filenames
+    filenames = [
+        "465.png", "56.png", "275.png", "275.png", "407.png",
+        # ... (and so on for the rest of the filenames)
+    ]
+    numbers_to_include = set(filenames)
+
+    for batch in ["train_complete"]:
         anno_file = os.path.join(data_root, f"{batch}.json")
 
         with open(anno_file, "r") as f:
             dataset = json.load(f)
 
+        # Print filenames for debugging purposes
+        for item in dataset:
+            print(item["filename"])
+
+        # Filter the dataset based on the numbers extracted from the filenames
+        dataset = [item for item in dataset if item["filename"] in numbers_to_include]
+
         args_to_pass = [(data_item, data_root, data_output, batch) for data_item in dataset]
         results = parmap(handle_wrapper, args_to_pass, 16)
+
 
 if __name__ == "__main__":
     main()

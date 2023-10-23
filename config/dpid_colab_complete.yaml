@@ -1,6 +1,6 @@
 io:
-  logdir: /content/drive/MyDrive/Xavier/logs/overfit_complete
-  datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete_2
+  logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete
+  datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
   resume_from:  #/content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/twolines/231009-091908-4fbdb8a-baseline
   num_workers: 2
   tensorboard_port: 0
@@ -18,7 +18,7 @@ model:
   # jmap, lmap, joff
   head_size: [[68], [6], [68]]
   loss_weight:
-    jmap: 1.0
+    jmap: 10
     lmap: 0.5
     joff: 0.25
     lpos0: 1
@@ -65,7 +65,7 @@ model:
   use_conv: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.001
+  eval_junc_thres: 0.0001
 
 optim:
   name: Adam
