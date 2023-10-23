@@ -265,19 +265,19 @@ class Trainer(object):
         colored_mask_target_2D = generate_colored_heatmap_for_2D(mask_target, num_colors=result["jmap"][i].cpu().numpy().shape[0])
 
         # Displaying the results using the updated imshow function
-        imshow(colored_mask_target_2D),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        imshow(colored_mask_result_2D), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        imshow(colored_mask_target_2D, cmap="jet"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(colored_mask_result_2D, cmap="jet"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
-        imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
-            imshow(line_result), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
+            imshow(line_result, cmap="jet"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
             line_target = target.cpu().numpy()
-            imshow(line_target), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
+            imshow(line_target, cmap="jet"), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
 
         def draw_vecl(lines, sline, juncs, jtyp, fn):
             imshow(img)
@@ -371,10 +371,10 @@ def c(x):
     return sm.to_rgba(x)
 
 
-def imshow(im):
+def imshow(im, cmap="gray"):
     plt.close()
     plt.tight_layout()
-    plt.imshow(im, cmap="gray")
+    plt.imshow(im, cmap=cmap)
     plt.colorbar(fraction=0.046)
     plt.xlim([0, im.shape[0]])
     plt.ylim([im.shape[0], 0])
