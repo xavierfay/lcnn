@@ -122,6 +122,8 @@ def weighted_cross_entropy_loss(logits, positive):
     w_1 = positive_pixels / total_pixels
     w_0 = 1 - w_1
 
+    print(w_0, w_1)
+
     # Compute weighted cross entropy loss
     nlogp = -F.log_softmax(logits, dim=0)
     loss = w_1 * positive * nlogp[1] + w_0 * (1 - positive) * nlogp[0]
