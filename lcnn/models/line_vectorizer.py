@@ -308,7 +308,7 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.001] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.01] for i in range(n_type)]
             return line, label, jcs
 
 
