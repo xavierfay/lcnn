@@ -59,7 +59,12 @@ class Trainer(object):
         self.avg_metrics = None
         self.metrics = np.zeros(0)
 
-        wandb.init(project='line_reader', entity='xfung', mode="disabled")
+        if M.use_wandb:
+            mode = "online"
+        else:
+            mode = "disabled"
+
+        wandb.init(project='line_reader', entity='xfung', mode=mode)
         config = wandb.config
         config.update(M, allow_val_change=True)
 
