@@ -59,7 +59,10 @@ class Trainer(object):
         self.avg_metrics = None
         self.metrics = np.zeros(0)
 
-        wandb.init(project='line_reader', entity='xfung')
+        if M.use_wandb:
+            mode = 'online' if M.wandb_online else 'disabled'
+
+        wandb.init(project='line_reader', entity='xfung', mode=mode)
         config = wandb.config
         config.update(M, allow_val_change=True)
 
@@ -203,8 +206,16 @@ class Trainer(object):
 
             loss = self._loss(result)
             if np.isnan(loss.item()):
-                print(f"Loss Name: {loss_name}")
+                # Identify which loss in `losses[0]` is NaN
+                nan_loss_name = next((name for name, value in losses[0].items() if np.isnan(value.item())), None)
+
+                if nan_loss_name:
+                    print(f"Loss Name: {nan_loss_name}")
+                else:
+                    print("Loss Name not found in losses[0].")
+
                 raise ValueError("loss is nan while training")
+
             wandb.log({"grad_norm": torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)},
                       step=self.iteration)
             loss.backward()
