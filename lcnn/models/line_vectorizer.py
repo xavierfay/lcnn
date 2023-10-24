@@ -310,9 +310,7 @@ class LineVectorizer(nn.Module):
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
             jcs = [xy[i, score[i] > 0.001] for i in range(n_type)]
 
-            if mode != "training":
 
-                print(line.shape)
             return line, label, jcs
 
 

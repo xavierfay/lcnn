@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete
   datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
-  resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231024-144236-f5b9f8c-baseline
+  resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231024-144236-f5b9f8c-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -40,10 +40,10 @@ model:
   n_stc_negl: 40
 
   ## dynamic sampler
-  n_dyn_junc: 300
-  n_dyn_posl0: 100
-  n_dyn_posl1: 100
-  n_dyn_posl2: 100
+  n_dyn_junc: 800
+  n_dyn_posl0: 200
+  n_dyn_posl1: 200
+  n_dyn_posl2: 200
   n_dyn_negl: 80
   n_dyn_othr: 200
 
