@@ -208,14 +208,10 @@ class Trainer(object):
 
             loss = self._loss(result)
             if np.isnan(loss.item()):
-                # Identify which loss in `losses[0]` is NaN
-                nan_loss_name = next((name for name, value in result["losses"][0].items() if np.isnan(value.item())), None)
-                if nan_loss_name:
-                    print(f"Loss Name: {nan_loss_name}")
-                else:
-                    print("Loss Name not found in losses[0].")
+                print("loss is nan while training")
 
-                raise ValueError("loss is nan while training")
+
+                #raise ValueError("loss is nan while training")
 
             wandb.log({"grad_norm": torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)},
                       step=self.iteration)

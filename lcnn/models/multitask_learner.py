@@ -118,7 +118,8 @@ def focal_loss(logits, positive, alpha=0.25, gamma=2.0):
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Compute the focal loss
-    loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t)
+    epsilon = 1e-7
+    loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
     return loss.mean(2).mean(1)
 
 def weighted_cross_entropy_loss(logits, positive):
