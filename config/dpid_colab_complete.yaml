@@ -40,12 +40,12 @@ model:
   n_stc_negl: 40
 
   ## dynamic sampler
-  n_dyn_junc: 500
+  n_dyn_junc: 600
   n_dyn_posl0: 100
-  n_dyn_posl1: 150
-  n_dyn_posl2: 150
+  n_dyn_posl1: 100
+  n_dyn_posl2: 100
   n_dyn_negl: 80
-  n_dyn_othr: 400
+  n_dyn_othr: 200
 
   # LOIPool layer parameters
   n_pts0: 32
@@ -66,7 +66,7 @@ model:
   use_wandb: 1
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.001
+  eval_junc_thres: 0.01
 
 optim:
   name: Adam
