@@ -143,8 +143,8 @@ class LineVectorizer(nn.Module):
                 x = x.float()
                 y = y.long()
 
-                # Calculate the softmax along the second dimension
-                softmax = torch.exp(x) / torch.exp(x).sum(dim=-1, keepdim=True)
+                # Calculate the log softmax along the second dimension
+                log_softmax = F.log_softmax(x, dim=-1)
 
                 # Initialize an empty tensor to store the per-class losses
                 loss_per_class = torch.zeros(num_classes).float().to(
@@ -154,7 +154,7 @@ class LineVectorizer(nn.Module):
                 for c in range(num_classes):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
-                    loss_c = -torch.log(softmax[:, c] + 1e-8) * mask  # adding a small value to avoid log(0)
+                    loss_c = -log_softmax[:, c] * mask
                     loss_per_class[c] = loss_c.sum() * class_weights[
                         c]  # Summing up the loss and adjusting by class weight
 
