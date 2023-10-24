@@ -209,8 +209,7 @@ class Trainer(object):
             loss = self._loss(result)
             if np.isnan(loss.item()):
                 # Identify which loss in `losses[0]` is NaN
-                nan_loss_name = next((name for name, value in losses[0].items() if np.isnan(value.item())), None)
-
+                nan_loss_name = next((name for name, value in result["losses"][0].items() if np.isnan(value.item())), None)
                 if nan_loss_name:
                     print(f"Loss Name: {nan_loss_name}")
                 else:
@@ -372,8 +371,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
