@@ -94,8 +94,8 @@ class MultitaskLearner(nn.Module):
                 L[loss_name].mul_(loss_weight[loss_name])
             losses.append(L)
 
-            # for key, value in T.items():
-            #     print(f"{key} shape when in results forward: {value.shape}")
+            for key, value in T.items():
+                print(f"{key} shape when in results forward: {value.shape}")
 
         result["losses"] = losses
         return result
