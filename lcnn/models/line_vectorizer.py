@@ -48,8 +48,6 @@ class LineVectorizer(nn.Module):
         x = self.fc1(result["feature"])
         n_batch, n_channel, row, col = x.shape
 
-        print(len(input_dict["meta"]), input_dict["meta"])
-
         xs, ys, fs, ps, idx, jcs = [], [], [], [], [0], []
         for i, meta in enumerate(input_dict["meta"]):
 
@@ -92,7 +90,6 @@ class LineVectorizer(nn.Module):
             xp = self.pooling(xp)
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
-        print(xs)
         x= torch.cat(xs)
 
         y = torch.cat(ys)
