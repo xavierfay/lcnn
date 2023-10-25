@@ -97,6 +97,8 @@ class LineVectorizer(nn.Module):
 
         y = torch.cat(ys)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
+        if M.use_half:
+            x = x.half()
         x = self.fc2(x)
 
         if input_dict["mode"] != "training":
