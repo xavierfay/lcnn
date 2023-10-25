@@ -211,6 +211,11 @@ class Trainer(object):
                 "target": recursive_to(target, self.device),
                 "mode": "training",
             }
+            if M.use_half and self.device == torch.device("cuda"):
+                input_dict["image"] = input_dict["image"].half()
+                input_dict["meta"] = input_dict["meta"].half()
+                input_dict["target"] = input_dict["target"].half()
+
             result = self.model(input_dict)
 
             loss = self._loss(result)
