@@ -99,8 +99,13 @@ class WireframeDataset(Dataset):
             #     print(f"{key}: {value.shape}")
             # for key, value in target.items():
             #     print(f"{key}: {value.shape}")
+        image_tensor = torch.from_numpy(image).float()
+        if M.use_half:
+            image_tensor = image_tensor.half()
+            target = {key: value.half() for key, value in target.items()}
+            meta = {key: value.half() if torch.is_tensor(value) else value for key, value in meta.items()}
 
-        return torch.from_numpy(image).float(), meta, target
+        return image_tensor, meta, target
 
     def adjacency_matrix(self, n, link):
         mat = torch.zeros(n + 1, n + 1, dtype=torch.uint8)
