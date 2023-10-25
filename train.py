@@ -135,6 +135,8 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
+    if M.use_half and device == torch.device("cuda"):
+        model = model.half()
 
     # 3. optimizer
     if C.optim.name == "Adam":

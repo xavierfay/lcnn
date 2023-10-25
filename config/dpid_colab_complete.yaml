@@ -64,6 +64,7 @@ model:
   use_slop: 0
   use_conv: 0
   use_wandb: 0
+  use_half: 1
 
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.01
