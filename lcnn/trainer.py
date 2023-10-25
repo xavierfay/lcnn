@@ -139,8 +139,11 @@ class Trainer(object):
 
                 if M.use_half and self.device == torch.device("cuda"):
                     input_dict["image"] = input_dict["image"].half()
-                    input_dict["meta"] = input_dict["meta"].half()
-                    input_dict["target"] = input_dict["target"].half()
+                    if isinstance(input_dict["meta"], list):
+                        input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in
+                                              input_dict["meta"]]
+                    if torch.is_tensor(input_dict["target"]):
+                        input_dict["target"] = input_dict["target"].half()
 
                 result = self.model(input_dict)
                 H = result["preds"]
@@ -214,10 +217,9 @@ class Trainer(object):
             if M.use_half and self.device == torch.device("cuda"):
                 input_dict["image"] = input_dict["image"].half()
                 if isinstance(input_dict["meta"], list):
-                    input_dict["meta"] = [item.half() for item in input_dict["meta"] if torch.is_tensor(item)]
+                    input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in input_dict["meta"]]
                 if torch.is_tensor(input_dict["target"]):
                     input_dict["target"] = input_dict["target"].half()
-
 
             result = self.model(input_dict)
 
