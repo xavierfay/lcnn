@@ -61,6 +61,7 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
+            jmap = torch.where(jmap == 0, torch.tensor(float('nan')), jmap)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)

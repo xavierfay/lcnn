@@ -25,8 +25,6 @@ import wandb
 class Trainer(object):
     def __init__(self, device, model, optimizer, train_loader, val_loader, out):
         self.device = device
-        if M.use_half and device == torch.device("cuda"):
-            model = model.half()
         self.model = model
         self.optim = optimizer
 
@@ -137,14 +135,6 @@ class Trainer(object):
                     "mode": "validation",
                 }
 
-                if M.use_half and self.device == torch.device("cuda"):
-                    input_dict["image"] = input_dict["image"].half()
-                    if isinstance(input_dict["meta"], list):
-                        input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in
-                                              input_dict["meta"]]
-                    if torch.is_tensor(input_dict["target"]):
-                        input_dict["target"] = input_dict["target"].half()
-
                 result = self.model(input_dict)
                 H = result["preds"]
 
@@ -214,12 +204,6 @@ class Trainer(object):
                 "target": recursive_to(target, self.device),
                 "mode": "training",
             }
-            if M.use_half and self.device == torch.device("cuda"):
-                input_dict["image"] = input_dict["image"].half()
-                if isinstance(input_dict["meta"], list):
-                    input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in input_dict["meta"]]
-                if torch.is_tensor(input_dict["target"]):
-                    input_dict["target"] = input_dict["target"].half()
 
             result = self.model(input_dict)
 
