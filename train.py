@@ -37,7 +37,7 @@ from lcnn.config import C, M
 from lcnn.datasets import WireframeDataset, collate
 from lcnn.models.line_vectorizer import LineVectorizer
 from lcnn.models.multitask_learner import MultitaskHead, MultitaskLearner
-
+from torch.cuda.amp import autocast, GradScaler
 
 def git_hash():
     cmd = 'git log -n 1 --pretty="%h"'
@@ -137,7 +137,7 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
-
+    scaler = GradScaler()
 
     # 3. optimizer
     if C.optim.name == "Adam":

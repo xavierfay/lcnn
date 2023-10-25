@@ -20,7 +20,7 @@ from lcnn.config import C, M
 from lcnn.utils import recursive_to
 
 import wandb
-
+from torch.cuda.amp import autocast, GradScaler
 
 class Trainer(object):
     def __init__(self, device, model, optimizer, train_loader, val_loader, out):
@@ -29,6 +29,7 @@ class Trainer(object):
             model = model.half()
         self.model = model
         self.optim = optimizer
+        self.scaler = GradScaler()
 
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -221,19 +222,21 @@ class Trainer(object):
                 if torch.is_tensor(input_dict["target"]):
                     input_dict["target"] = input_dict["target"].half()
 
-            result = self.model(input_dict)
+            with autocast():
+                result = self.model(input_dict)
+                loss = self._loss(result)
 
-            loss = self._loss(result)
             if np.isnan(loss.item()):
                 print("loss is nan while training")
 
-
-                #raise ValueError("loss is nan while training")
-
             wandb.log({"grad_norm": torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)},
                       step=self.iteration)
-            loss.backward()
-            self.optim.step()
+
+            # Backward pass and optimizer step with scaler
+            self.scaler.scale(loss).backward()
+            self.scaler.step(self.optim)
+            self.scaler.update()
+            self.optim.zero_grad()
 
             if self.avg_metrics is None:
                 self.avg_metrics = self.metrics
