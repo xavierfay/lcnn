@@ -146,14 +146,10 @@ class Trainer(object):
                     if torch.is_tensor(input_dict["target"]):
                         input_dict["target"] = input_dict["target"].half()
 
-                result = self.model(input_dict)
-                H = result["preds"]
-
-                # for key, value in H.items():
-                #     if isinstance(value, (torch.Tensor, np.ndarray)):
-                #         print(f"Validate function {key}: {value.shape}")
-                #     else:
-                #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
+                # Using autocast for the forward pass
+                with autocast():
+                    result = self.model(input_dict)
+                    H = result["preds"]
 
                 total_loss += self._loss(result)
 
@@ -163,12 +159,6 @@ class Trainer(object):
                         f"{npz}/{index:06}.npz",
                         **{k: v[i].cpu().numpy() for k, v in H.items()},
                     )
-
-                    # for key, value in H.items():
-                    #     if isinstance(value, (torch.Tensor, np.ndarray)):
-                    #         print(f"Validate function {key}: {value.shape}")
-                    #     else:
-                    #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
                     if index >= 20:
                         continue
