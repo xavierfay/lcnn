@@ -354,11 +354,12 @@ class Trainer(object):
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjtyp = result["jtype"][i].cpu().numpy()
+        print(rjtyp)
         if rjtyp == 0:
             rjtyp = np.ones(len(rjuncs))
 
 
-        print(rjtyp)
+
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
@@ -376,8 +377,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        if self.iteration == 0:
-            self.validate()
+        # if self.iteration == 0:
+        #     self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):

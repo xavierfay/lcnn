@@ -64,7 +64,7 @@ def save_heatmap(prefix, image, lines):
         if jun in jids:
             return jids[jun]
         jids[jun] = len(junc)
-        junc.append(np.array(jun + (0=)))
+        junc.append(np.array(jun + (0,)))
         return len(junc) - 1
 
     lnid = []
@@ -189,6 +189,29 @@ def save_heatmap(prefix, image, lines):
     # plt.savefig("/tmp/8tdir.jpg")
 
 
+def handle(data):
+    im = cv2.imread(os.path.join(data_root, "images", data["filename"]))
+    prefix = data["filename"].split(".")[0]
+    lines = np.array(data["lines"]).reshape(-1, 2, 2)
+    os.makedirs(os.path.join(data_output, batch), exist_ok=True)
+
+    lines0 = lines.copy()
+    lines1 = lines.copy()
+    lines1[:, :, 0] = im.shape[1] - lines1[:, :, 0]
+    lines2 = lines.copy()
+    lines2[:, :, 1] = im.shape[0] - lines2[:, :, 1]
+    lines3 = lines.copy()
+    lines3[:, :, 0] = im.shape[1] - lines3[:, :, 0]
+    lines3[:, :, 1] = im.shape[0] - lines3[:, :, 1]
+
+    path = os.path.join(data_output, batch, prefix)
+    save_heatmap(f"{path}_0", im[::, ::], lines0)
+    if batch != "valid":
+        save_heatmap(f"{path}_1", im[::, ::-1], lines1)
+        save_heatmap(f"{path}_2", im[::-1, ::], lines2)
+        save_heatmap(f"{path}_3", im[::-1, ::-1], lines3)
+    print("Finishing", os.path.join(data_output, batch, prefix))
+
 def main():
     args = docopt(__doc__)
     data_root = args["<src>"]
@@ -200,29 +223,6 @@ def main():
 
         with open(anno_file, "r") as f:
             dataset = json.load(f)
-
-        def handle(data):
-            im = cv2.imread(os.path.join(data_root, "images", data["filename"]))
-            prefix = data["filename"].split(".")[0]
-            lines = np.array(data["lines"]).reshape(-1, 2, 2)
-            os.makedirs(os.path.join(data_output, batch), exist_ok=True)
-
-            lines0 = lines.copy()
-            lines1 = lines.copy()
-            lines1[:, :, 0] = im.shape[1] - lines1[:, :, 0]
-            lines2 = lines.copy()
-            lines2[:, :, 1] = im.shape[0] - lines2[:, :, 1]
-            lines3 = lines.copy()
-            lines3[:, :, 0] = im.shape[1] - lines3[:, :, 0]
-            lines3[:, :, 1] = im.shape[0] - lines3[:, :, 1]
-
-            path = os.path.join(data_output, batch, prefix)
-            save_heatmap(f"{path}_0", im[::, ::], lines0)
-            if batch != "valid":
-                save_heatmap(f"{path}_1", im[::, ::-1], lines1)
-                save_heatmap(f"{path}_2", im[::-1, ::], lines2)
-                save_heatmap(f"{path}_3", im[::-1, ::-1], lines3)
-            print("Finishing", os.path.join(data_output, batch, prefix))
 
         parmap(handle, dataset, 16)
 

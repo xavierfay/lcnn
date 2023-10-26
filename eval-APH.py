@@ -33,8 +33,8 @@ plt.rcParams["font.family"] = "Times New Roman"
 del mpl.font_manager.weight_dict["roman"]
 #mpl.font_manager._rebuild()
 
-image_path = "data/Twoclass/valid/"
-line_gt_path = "data/Twoclass/valid/"
+image_path = "C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\data\\Twoclass\\valid\\"
+line_gt_path = "C:\\Users\\xavier\\Documents\\GitHub\\lcnn\\post\\0_010-APH\\mat\\"
 output_size = 256
 
 
@@ -52,7 +52,7 @@ def main():
     thresh = [0.5, 0.6, 0.7, 0.8, 0.9, 0.95, 0.97, 0.99, 0.995, 0.999, 0.9995, 0.9999]
     for t in thresh:
         for fname in file_list:
-            name = fname.split("/")[-1].split(".")[0]
+            name, _ = os.path.splitext(os.path.basename(fname))
             mat_name = name + ".mat"
             npz = np.load(fname)
             lines = npz["lines"].reshape(-1, 4)
@@ -66,6 +66,7 @@ def main():
             os.makedirs(osp.join(target_dir, str(t)), exist_ok=True)
             sio.savemat(osp.join(target_dir, str(t), mat_name), {"lines": lines[idx]})
 
+
     cmd = "matlab -nodisplay -nodesktop "
     cmd += '-r "dbstop if error; '
     cmd += "eval_release('{:s}', '{:s}', '{:s}', '{:s}', {:d}); quit;\"".format(
@@ -75,7 +76,11 @@ def main():
     os.environ["MATLABPATH"] = "matlab/"
     subprocess.call(cmd, shell=True)
 
+    if not os.path.exists(output_file):
+        print(f"Error: Expected MATLAB to produce {output_file}, but it's missing.")
+        return
     mat = sio.loadmat(output_file)
+
     tps = mat["sumtp"]
     fps = mat["sumfp"]
     N = mat["sumgt"]

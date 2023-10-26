@@ -115,7 +115,7 @@ class LineVectorizer(nn.Module):
             # cond4 = s[:, 3] > 0.1
 
             # Combine the conditions using logical OR
-            b = (cond3 | cond2 | cond4 ) & cond1
+            b = (cond2 | cond3 | cond4 ) & cond1
             lines = []
             score = []
             for i in range(n_batch):
@@ -145,7 +145,7 @@ class LineVectorizer(nn.Module):
             all_tensors = []
             jtype_list = []
 
-            # Loop from 2 to 34 to gather tensors and their types
+            # Loop from 0 to 34 to gather tensors and their types
             for idx in range(len(jcs[i])):
                 current_tensors = [jcs[i][idx] for i in range(n_batch) if len(jcs[i]) > idx]
                 all_tensors.extend(current_tensors)
@@ -224,7 +224,7 @@ class LineVectorizer(nn.Module):
             lpre_label = meta["lpre_label"]  # [N, 3]
 
             n_type = jmap.shape[0]
-            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
+            # jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -334,7 +334,7 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.001] for i in range(n_type)]
 
 
             return line, label, jcs

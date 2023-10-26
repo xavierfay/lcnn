@@ -17,14 +17,16 @@ for index=1:numResults
   end
   filename = filename(1:end-4);
   fprintf('processed %d/%d\n', index - 2, numResults - 2)
-  gtname = [line_gt_path, '/', filename, '_line.mat'];
-  imgname = [image_path, filename, '.jpg'];
+  
+  gtname = fullfile(line_gt_path, [filename, '_line.mat']);
+  imgname = [image_path, filename, '.png'];
   
   I = imread(imgname);
   height = size(I,1);
   width = size(I,2);
   
   % convert GT lines to binary map
+  disp(['Trying to read ground truth: ', gtname]);
   gtlines = load(gtname);
   gtlines = gtlines.lines;
   
@@ -52,7 +54,7 @@ for index=1:numResults
   end
   
   parfor m=1:nLineThresh
-    resultname = [result_path, '/', num2str(lineThresh(m)), '/', sprintf('%06d', index - 3), '.mat'];
+    resultname = [result_path, '\', num2str(lineThresh(m)), '\', sprintf('%06d', index - 3), '.mat'];
     resultlines = load(resultname);
     resultlines = resultlines.lines;
     ne = size(resultlines,1);
