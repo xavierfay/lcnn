@@ -118,6 +118,9 @@ class LineVectorizer(nn.Module):
             b = (cond2 | cond3 | cond4 ) & cond1
             lines = []
             score = []
+            jtypes = []
+            juncs = []
+
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
                 s0 = s[idx[i]: idx[i + 1]]
@@ -154,15 +157,16 @@ class LineVectorizer(nn.Module):
                         jtype_list.extend([idx] * num_coords)
 
             # Convert the list of tensors to a single tensor
-            juncs = torch.cat(all_tensors)
-
+            junc = torch.cat(all_tensors)
+            juncs.append(junc)
             # Convert the list of types to a tensor
             jtype = torch.tensor(jtype_list)
+            jtypes.append(jtype)
             print("jtype", jtype)
 
             # Update the result dictionary
             result["preds"]["juncs"] = juncs
-            result["preds"]["jtype"] = jtype
+            result["preds"]["jtype"] = jtypes
 
 
         if input_dict["mode"] != "testing":
