@@ -352,14 +352,7 @@ class Trainer(object):
 
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
-
-        rjunts = None
-        if "junts" in result:
-            rjunts = result["junts"][i].cpu().numpy() * 4
-            rjuncs = rjuncs + rjunts
-
-
-        rtype = np.ones(len(rjuncs))
+        rjtyp = result["jtype"][i].cpu().numpy()
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
@@ -373,7 +366,7 @@ class Trainer(object):
         #     lpre = lpre[vecl_target == i]
         #     draw_vecl(lpre, np.ones(lpre.shape[0]), juncs, junts, f"{prefix}_vecl_{i}a.jpg")
         draw_vecl(lpre, lpre_label, juncs, jtyp, f"{prefix}_vecl_a.jpg")
-        draw_vecl(vecl_result, score, rjuncs, rtype, f"{prefix}_vecl_b.jpg")
+        draw_vecl(vecl_result, score, rjuncs, rjtyp, f"{prefix}_vecl_b.jpg")
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
