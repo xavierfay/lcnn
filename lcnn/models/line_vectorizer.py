@@ -157,6 +157,7 @@ class LineVectorizer(nn.Module):
 
             # Convert the list of types to a tensor
             jtype = torch.tensor(jtype_list)
+            print("jtype", jtype)
 
             # Update the result dictionary
             result["preds"]["juncs"] = juncs
@@ -225,7 +226,6 @@ class LineVectorizer(nn.Module):
 
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
-            #jmap = jmap.reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
@@ -255,7 +255,9 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
+            print("match shape before", match.shape)
             match = match.flatten()
+            print("match shape after", match.shape)
 
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
@@ -335,10 +337,11 @@ class LineVectorizer(nn.Module):
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
             xy = xy.reshape(n_type, K, 2)
             #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            jcs = [xy[i, score[i] > 0.001] for i in range(n_type)]
+            jcs = [xy[i, score[i] > 0.0001] for i in range(n_type)]
 
             if mode != "training":
-                print("jcs", len(jcs))
+                shapes = [jc.shape for jc in jcs]
+                print("jcs shapes:", shapes)
 
 
             return line, label, jcs
