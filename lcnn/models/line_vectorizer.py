@@ -153,7 +153,7 @@ class LineVectorizer(nn.Module):
                 for batch_idx in range(n_batch):
                     if len(jcs[batch_idx]) > idx:
                         all_tensors.append(jcs[batch_idx][idx])
-                        num_coords = jcs[batch_idx][idx].shape[0]
+                        num_coords = len(jcs[batch_idx][idx])
                         jtype_list.extend([idx] * num_coords)
 
             # Convert the list of tensors to a single tensor

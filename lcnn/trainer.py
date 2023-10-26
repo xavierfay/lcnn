@@ -355,8 +355,7 @@ class Trainer(object):
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjtyp = result["jtype"][i].cpu().numpy()
         print(rjtyp)
-        if rjtyp == 0:
-            rjtyp = np.ones(len(rjuncs))
+        rjtyp = np.ones(len(rjuncs))
 
 
 
