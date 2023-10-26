@@ -150,7 +150,8 @@ class LineVectorizer(nn.Module):
                 for batch_idx in range(n_batch):
                     if len(jcs[batch_idx]) > idx:
                         all_tensors.append(jcs[batch_idx][idx])
-                        jtype_list.append(idx)
+                        num_coords = jcs[batch_idx][idx].shape[0]
+                        jtype_list.extend([idx] * num_coords)
 
             # Convert the list of tensors to a single tensor
             juncs = torch.cat(all_tensors)
@@ -160,8 +161,8 @@ class LineVectorizer(nn.Module):
             print("jtype", jtype)
 
             # Update the result dictionary
-            result["preds"]["juncs"] = juncs
-            result["preds"]["jtype"] = jtype
+            result["preds"]["juncs"] = torch.cat(juncs)
+            result["preds"]["jtype"] = torch.cat(jtype)
 
 
         if input_dict["mode"] != "testing":
@@ -255,9 +256,7 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
-            print("match shape before", match.shape)
             match = match.flatten()
-            print("match shape after", match.shape)
 
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
@@ -347,12 +346,21 @@ class LineVectorizer(nn.Module):
             return line, label, jcs
 
 
+# def non_maximum_suppression(a):
+#     a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
+#     ap = F.max_pool2d(a, 3, stride=1, padding=1)
+#     keep = (a == ap).float()
+#     a = a.view(a.shape[0], -1)  # Flatten it back after processing
+#     return a * keep.view(keep.shape[0], -1)
 def non_maximum_suppression(a):
-    a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
-    ap = F.max_pool2d(a, 3, stride=1, padding=1)
+    original_shape = a.shape
+    # Reshape tensor to [1, n_type, 256, 256]
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    # Apply 3D max pooling across the layers and spatial dimensions
+    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
     keep = (a == ap).float()
-    a = a.view(a.shape[0], -1)  # Flatten it back after processing
-    return a * keep.view(keep.shape[0], -1)
+    a = a.view(original_shape[0], -1)  # Flatten it back after processing
+    return a * keep.view(original_shape[0], -1)
 
 
 class Bottleneck1D(nn.Module):
