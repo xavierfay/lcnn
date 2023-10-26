@@ -161,8 +161,8 @@ class LineVectorizer(nn.Module):
             print("jtype", jtype)
 
             # Update the result dictionary
-            result["preds"]["juncs"] = torch.cat(juncs)
-            result["preds"]["jtype"] = torch.cat(jtype)
+            result["preds"]["juncs"] = juncs
+            result["preds"]["jtype"] = jtype
 
 
         if input_dict["mode"] != "testing":
