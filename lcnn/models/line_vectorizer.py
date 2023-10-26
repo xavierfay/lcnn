@@ -134,11 +134,27 @@ class LineVectorizer(nn.Module):
                     ]
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
-            result["preds"]["juncs"] = torch.cat([jcs[i][0] for i in range(n_batch)])
-            if len(jcs[i]) > 1:
-                result["preds"]["junts"] = torch.cat(
-                    [jcs[i][1] for i in range(n_batch)]
-                )
+
+            all_tensors = []
+            jtype_list = []
+
+            # Loop from 2 to 34 to gather tensors and their types
+            for idx in range(len(jcs[i])):
+                current_tensors = [jcs[i][idx] for i in range(n_batch) if len(jcs[i]) > idx]
+                all_tensors.extend(current_tensors)
+                jtype_list.extend([idx] * len(current_tensors))
+
+            # Convert the list of tensors to a single tensor
+            juncs = torch.cat(all_tensors)
+
+            # Convert the list of types to a tensor
+            jtype = torch.tensor(jtype_list)
+
+            # Update the result dictionary
+            result["preds"]["juncs"] = juncs
+            result["preds"]["jtype"] = jtype
+
+
 
         if input_dict["mode"] != "testing":
             def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
