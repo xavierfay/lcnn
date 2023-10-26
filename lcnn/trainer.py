@@ -354,6 +354,10 @@ class Trainer(object):
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjtyp = result["jtype"][i].cpu().numpy()
+        if rjtyp == 0:
+            rjtyp = np.ones(len(rjuncs))
+
+
         print(rjtyp)
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
