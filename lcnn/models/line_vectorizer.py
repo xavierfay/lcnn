@@ -107,8 +107,15 @@ class LineVectorizer(nn.Module):
             cond3 = s[:, 2] > 0.25
             cond4 = s[:, 3] > 0.25
 
+            # s_arg = torch.argmax(s, dim=1)
+            #
+            # cond1 = s_arg != 0
+            # cond2 = s[:, 1] > 0.1
+            # cond3 = s[:, 2] > 0.1
+            # cond4 = s[:, 3] > 0.1
+
             # Combine the conditions using logical OR
-            b = (cond3 & cond2 & cond4 ) | cond1
+            b = (cond3 | cond2 | cond4 ) & cond1
             lines = []
             score = []
             for i in range(n_batch):
