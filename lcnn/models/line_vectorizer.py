@@ -145,11 +145,12 @@ class LineVectorizer(nn.Module):
             all_tensors = []
             jtype_list = []
 
-            # Loop from 0 to 34 to gather tensors and their types
+            # Loop through all tensors in jcs[i]
             for idx in range(len(jcs[i])):
-                current_tensors = [jcs[i][idx] for i in range(n_batch) if len(jcs[i]) > idx]
-                all_tensors.extend(current_tensors)
-                jtype_list.extend([idx] * len(current_tensors))
+                for batch_idx in range(n_batch):
+                    if len(jcs[batch_idx]) > idx:
+                        all_tensors.append(jcs[batch_idx][idx])
+                        jtype_list.append(idx)
 
             # Convert the list of tensors to a single tensor
             juncs = torch.cat(all_tensors)
@@ -160,7 +161,6 @@ class LineVectorizer(nn.Module):
             # Update the result dictionary
             result["preds"]["juncs"] = juncs
             result["preds"]["jtype"] = jtype
-
 
 
         if input_dict["mode"] != "testing":
