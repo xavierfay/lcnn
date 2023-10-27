@@ -78,8 +78,10 @@ class MultitaskLearner(nn.Module):
                     return result
 
             L = OrderedDict()
+
+            alpha = compute_alpha(T["jmap"])
             L["jmap"] = sum(
-                focal_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
+                focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
@@ -110,17 +112,39 @@ def cross_entropy_loss(logits, positive):
     return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
 
-def focal_loss(logits, positive, alpha=0.25, gamma=2.0):
+def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)
 
     mask = (positive == 1).float()
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
-    # Compute the focal loss
+    # Extend alpha to have the same shape as logits
+    alpha_t = alpha[None, :, None, None].expand_as(logits)
+
     epsilon = 1e-7
-    loss = -alpha * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
+    loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
     return loss.mean(2).mean(1)
+
+
+def compute_alpha(labels):
+    """
+    Compute the frequency of each class in the dataset.
+
+    Args:
+    - labels (torch.Tensor): a tensor of shape [num_samples, n_classes, 256, 256]
+
+    Returns:
+    - alpha (torch.Tensor): a tensor of shape [n_classes]
+    """
+    # Count the number of positive activations for each class
+    class_counts = labels.sum(dim=(0, 2, 3))
+    # Compute the frequency
+    total_counts = labels.numel() / labels.shape[1]
+    class_frequencies = class_counts / total_counts
+
+    alpha = 1.0 / (class_frequencies + 1e-6)  # Adding a small constant to avoid division by zero
+    return alpha
 
 def weighted_cross_entropy_loss(logits, positive):
     # Calculate class frequencies

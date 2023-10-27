@@ -231,6 +231,7 @@ class LineVectorizer(nn.Module):
             device = jmap.device
 
             # index: [N_TYPE, K]
+            print(K)
             score, index = torch.topk(jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
@@ -250,8 +251,8 @@ class LineVectorizer(nn.Module):
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            if mode == "testing":
-                match = (match - 1).clamp(min=0)
+            # if mode == "testing":
+            #     match = (match - 1).clamp(min=0)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
@@ -306,20 +307,6 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type * K, 2)
             xyu, xyv = xy[u], xy[v]
 
-            # # Compute slopes and create masks for valid lines (horizontal/vertical)
-            # deltas = xyv - xyu
-            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
-            # horizontal_mask = torch.abs(slopes) < 0.001
-            # vertical_mask = torch.abs(slopes) > 10000
-            # valid_lines_mask = horizontal_mask | vertical_mask
-            # #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
-            #
-            # # Ensure that valid_lines_mask does not contain invalid indices
-            # assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
-            #
-            # # Filter xyu, xyv, and label using the valid_lines_mask
-            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
-            # label = label[valid_lines_mask]
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
 
