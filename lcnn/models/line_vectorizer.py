@@ -339,7 +339,7 @@ class LineVectorizer(nn.Module):
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
                     jcs_list.append(subset)
-                    jtype_list.extend([i] * len(subset))
+                    jtype_list.extend([i+1] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
             jcs = torch.cat(jcs_list, dim=0)
@@ -360,7 +360,7 @@ def non_maximum_suppression(a):
     # Reshape tensor to [1, n_type, 256, 256]
     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
     # Apply 3D max pooling across the layers and spatial dimensions
-    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
     keep = (a == ap).float()
     a = a.view(original_shape[0], -1)  # Flatten it back after processing
     return a * keep.view(original_shape[0], -1)
