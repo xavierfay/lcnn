@@ -40,7 +40,7 @@ model:
   n_stc_negl: 40
 
   ## dynamic sampler
-  n_dyn_junc: 300
+  n_dyn_junc: 5000
   n_dyn_posl0: 300
   n_dyn_posl1: 200
   n_dyn_posl2: 200
@@ -56,7 +56,7 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 50
+  n_out_junc: 250
   n_out_line: 2500
 
   # additional ablation study parameters
