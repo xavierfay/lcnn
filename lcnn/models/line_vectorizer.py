@@ -382,7 +382,7 @@ class LineVectorizer(nn.Module):
             jtype_list = []
 
             xy_splits = torch.split(xy, K_values, dim=0)
-            score_splits = torch.split(score, K_values, dim=0)  # Assuming score has a shape that can be split similarly
+            score_splits = torch.split(score, K_values, dim=1)  # Assuming score has a shape that can be split similarly
 
             for i, (xy_i, score_i) in enumerate(zip(xy_splits, score_splits)):
                 valid_indices = score_i > 0.0001
