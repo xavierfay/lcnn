@@ -138,7 +138,6 @@ class LineVectorizer(nn.Module):
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
 
-
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
@@ -146,12 +145,18 @@ class LineVectorizer(nn.Module):
 
                     expanded_indices = torch.arange(M.n_out_junc) % len(jcs[i][j])
                     jcs_expanded = jcs[i][j][None, expanded_indices]
-
                     jcs_list.append(jcs_expanded)
 
+                    # Check the type of jtypes[i][j] and get the fill_value
+                    if isinstance(jtypes[i][j], list):
+                        fill_value = jtypes[i][j][0]  # Assuming the list has at least one value
+                    else:
+                        fill_value = jtypes[i][j].item()
+
                     # Replicate jtypes[i][j] values to match the length of expanded jcs[i][j]
-                    jtypes_tensor = torch.full(jcs_expanded.shape, jtypes[i][j], device=jcs[i][j].device)
+                    jtypes_tensor = torch.full(jcs_expanded.shape, fill_value, device=jcs[i][j].device)
                     jtype_list.append(jtypes_tensor)
+
                 jcs = torch.cat(jcs_list, dim=0)
                 jtypes = torch.cat(jtype_list, dim=0)
 
