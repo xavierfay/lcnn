@@ -395,7 +395,7 @@ class LineVectorizer(nn.Module):
             xy = xy.reshape(n_type, K, 2)
             for i in range(n_type):
                 valid_indices = score[i] > 0.0001
-                subset = xy[valid_indices]
+                subset = xy[i][valid_indices]
 
                 jcs_list.append(subset)
                 jtype_list.extend([i] * len(subset))
