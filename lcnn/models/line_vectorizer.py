@@ -257,7 +257,7 @@ class LineVectorizer(nn.Module):
 
             # Convert updated_K_values to the same type as K_values (assuming K_values is a list of integers)
             K_values = [int(k) for k in updated_K_values]
-            print(K_values)
+            # print(K_values)
 
             max_size = max([s.size(0) for s in scores])
 
@@ -359,14 +359,14 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            print("u.shape:", u.shape, "v.shape:", v.shape)
-            print("Max value in u:", u.max().item())
-            print("Max value in v:", v.max().item())
+            # print("u.shape:", u.shape, "v.shape:", v.shape)
+            # print("Max value in u:", u.max().item())
+            # print("Max value in v:", v.max().item())
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
-            print("xy.shape:", xy.shape)
+            # print("xy.shape:", xy.shape)
 
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
