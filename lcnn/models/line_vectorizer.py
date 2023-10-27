@@ -416,14 +416,13 @@ class LineVectorizer(nn.Module):
                 valid_indices = score[i] > 0.0001
                 subset = xy[i][valid_indices]
 
-                jcs_list.append(subset)
-                jtype_list.extend([i] * len(subset))
+                if len(subset) > 0:  # Only append/extend when subset is non-empty
+                    jcs_list.append(subset)
+                    jtype_list.extend([i] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
-            jcs = jcs_list
-            jtype = jtype_list
-
-
+            jcs = torch.cat(jcs_list, dim=0)
+            jtype = torch.tensor(jtype_list, device=xy.device)
 
             if mode != "training":
                 for jc in jcs:
