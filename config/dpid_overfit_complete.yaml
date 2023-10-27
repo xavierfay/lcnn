@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/overfit_complete
   datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete_2
-  resume_from:  #/content/drive/MyDrive/Xavier/logs/overfit_complete/231023-180324-f99763a-baseline
+  resume_from:  /content/drive/MyDrive/Xavier/logs/overfit_complete/231027-161441-ba11a89-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -67,7 +67,7 @@ model:
   use_half: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.0001
+  eval_junc_thres: 0.01
 
 optim:
   name: Adam
