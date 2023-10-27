@@ -349,9 +349,9 @@ class LineVectorizer(nn.Module):
             xy = torch.stack(reshaped_xy).to(device)
 
             xyu, xyv = xy[u].to(device), xy[v].to(device)
-            print(scalar_labels.shape)
-            label = torch.zeros(scalar_labels.shape[0], 4, device=device)
 
+            label = torch.zeros(scalar_labels.shape[0], 4, device=device)
+            print(scalar_labels.shape, label.shape)
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
