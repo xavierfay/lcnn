@@ -223,14 +223,14 @@ class LineVectorizer(nn.Module):
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            max_K = [150, 150] + [15] * 32
-            assert len(max_K) == n_type
+            K_values = [150, 150] + [15] * 32
+            assert len(K_values) == n_type
             scores = []
             indices = []
 
             for i in range(n_type):
                 # Current layer's maximum allowable K
-                current_max_K = max_K[i]
+                current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
                 above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
@@ -248,6 +248,7 @@ class LineVectorizer(nn.Module):
                 score, index = torch.topk(jmap[i], k=K)
                 scores.append(score)
                 indices.append(index)
+
                 print(f"Layer {i}: K = {K}")
 
             max_size = max([s.size(0) for s in scores])
@@ -280,9 +281,14 @@ class LineVectorizer(nn.Module):
             # if mode == "testing":
             #     match = (match - 1).clamp(min=0)
 
-            _ = torch.arange(n_type * K, device=device)
-            u, v = torch.meshgrid(_, _)
-            u, v = u.flatten(), v.flatten()
+            u, v = [], []
+            for i, k in enumerate(K_values):
+                u_i, v_i = torch.meshgrid(torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                                          torch.arange(i * K_values[i], (i + 1) * K_values[i]))
+                u.append(u_i)
+                v.append(v_i)
+
+            u, v = torch.cat(u).flatten(), torch.cat(v).flatten()
             up, vp = match[u], match[v]
 
 
@@ -330,9 +336,14 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            xy = xy.reshape(n_type * K, 2)
-            xyu, xyv = xy[u], xy[v]
+            # Use cumsum to determine start and end index for each layer
+            cumulative_K = [0] + torch.cumsum(torch.tensor(K_values), dim=0).tolist()
+            reshaped_xy = []
+            for i in range(n_type):
+                reshaped_xy.extend(xy[cumulative_K[i]:cumulative_K[i + 1]])
+            xy = torch.stack(reshaped_xy)
 
+            xyu, xyv = xy[u], xy[v]
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
 
@@ -345,14 +356,14 @@ class LineVectorizer(nn.Module):
 
             jcs_list = []
             jtype_list = []
-            xy = xy.reshape(n_type, K, 2)
-            for i in range(n_type):
+            xy_splits = torch.split(xy, K_values, dim=0)
+            for i, (xy_i, k) in enumerate(zip(xy_splits, K_values)):
                 valid_indices = score[i] > 0.0001
-                subset = xy[i][valid_indices]
+                subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
                     jcs_list.append(subset)
-                    jtype_list.extend([i+1] * len(subset))
+                    jtype_list.extend([i + 1] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
             jcs = torch.cat(jcs_list, dim=0)
