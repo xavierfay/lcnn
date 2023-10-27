@@ -118,8 +118,8 @@ class LineVectorizer(nn.Module):
             b = (cond2 | cond3 | cond4 ) & cond1
             lines = []
             score = []
-            jtype_list = []
-            concatenated_list = []
+            jtype_list = [[] for _ in range(n_batch)]  # Initialize sublists for each batch
+            concatenated_list = [[] for _ in range(n_batch)]  # Initialize sublists for each batch
 
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
@@ -136,29 +136,22 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
-                current_jcs_tensors = []  # List to store tensors from the current batch i
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jcs[i][j] = jcs[i][j][
                         None, torch.arange(M.n_out_junc) % len(jcs[i][j])
                     ]
-                    concatenated_list.append(jcs[i][j])
-                    jtype_list.append(j)
+                    concatenated_list[i].append(jcs[i][j])
+                    jtype_list[i].append(j)
 
             print("jtype", jtype_list)
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
-            result["preds"]["juncs"] = torch.cat(concatenated_list, dim=0)
-            result["preds"]["jtype"] = torch.tensor(jtype_list)
 
-
-
-
-
-            # Final tensors
-
-
+            # Flatten the lists and concatenate
+            result["preds"]["juncs"] = torch.cat([item for sublist in concatenated_list for item in sublist], dim=0)
+            result["preds"]["jtype"] = torch.tensor([item for sublist in jtype_list for item in sublist])
 
             # all_tensors = []
             # jtype_list = []
