@@ -141,32 +141,16 @@ class LineVectorizer(nn.Module):
                 print("jtypes len", len(jtypes))
                 print("jtypes[0] len", len(jtypes[0]))
 
-                for j in range(len(jcs[i])):
-                    if len(jcs[i][j]) == 0:
-                        jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
-                        jtypes[i][j] = torch.zeros([M.n_out_junc], device=p.device)
+                if len(jcs[i]) == 0:
+                    jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
+                    jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
 
-                    expanded_indices = torch.arange(M.n_out_junc) % len(jcs[i][j])
-                    jcs_expanded = jcs[i][j][None, expanded_indices]
-                    jcs_list.append(jcs_expanded)
-
-                    # Check the type of jtypes[i][j] and get the fill_value
-                    if isinstance(jtypes[i][j], list):
-                        fill_value = jtypes[i][j][0]  # Assuming the list has at least one value
-                    elif isinstance(jtypes[i][j], torch.Tensor):
-                        if jtypes[i][j].numel() == 1:  # If it's a tensor with one element
-                            fill_value = jtypes[i][j].item()
-                        else:
-                            fill_value = jtypes[i][j][0].item()  # Use the first element if tensor has multiple elements
-                    else:
-                        fill_value = jtypes[i][j]  # Directly use the integer value
-
-                    # Replicate jtypes[i][j] values to match the length of expanded jcs[i][j]
-                    jtypes_tensor = torch.full(jcs_expanded.shape, fill_value, device=jcs[i][j].device)
-                    jtype_list.append(jtypes_tensor)
-
-                jcs = torch.cat(jcs_list, dim=0)
-                jtypes = torch.cat(jtype_list, dim=0)
+                jcs[i] = jcs[i][
+                    None, torch.arange(M.n_out_junc) % len(jcs[i])
+                ]
+                jtypes[i] = jtypes[i][
+                    None, torch.arange(M.n_out_junc) % len(jtypes[i])
+                ]
 
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
@@ -425,10 +409,11 @@ class LineVectorizer(nn.Module):
             jtype = torch.tensor(jtype_list, device=xy.device)
 
             if mode != "training":
-                for jc in jcs:
-                    print(jc)
-                    print(jc.shape)
-
+                # print(jcs.shape)
+                # for jc in jcs:
+                #     print(jc)
+                #     print(jc.shape)
+                print("jcs length", len(jcs))
                 print("jtype length", len(jtype), jtype)
 
 
