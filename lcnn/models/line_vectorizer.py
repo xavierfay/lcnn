@@ -336,12 +336,8 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-
-
             if mode == "training":
                 c = c.to(device).bool()
-
-
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
@@ -353,7 +349,7 @@ class LineVectorizer(nn.Module):
             xy = torch.stack(reshaped_xy).to(device)
 
             xyu, xyv = xy[u].to(device), xy[v].to(device)
-
+            print(scalar_labels.shape)
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
 
             # Assign a "1" in the respective column according to the scalar label
