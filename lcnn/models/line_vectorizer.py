@@ -223,7 +223,7 @@ class LineVectorizer(nn.Module):
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            K_values = [100, 100] + [5] * 32
+            K_values = [200, 200] + [15] * 32
             assert len(K_values) == n_type
             scores = []
             indices = []
@@ -285,8 +285,8 @@ class LineVectorizer(nn.Module):
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            # if mode == "testing":
-            #     match = (match - 1).clamp(min=0)
+            if mode == "testing":
+                match = (match - 1).clamp(min=0)
 
             u, v = [], []
             for i, k in enumerate(K_values):
