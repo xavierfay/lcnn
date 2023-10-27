@@ -118,8 +118,8 @@ class LineVectorizer(nn.Module):
             b = (cond2 | cond3 | cond4 ) & cond1
             lines = []
             score = []
-            jtype_list = [[] for _ in range(n_batch)]  # Initialize sublists for each batch
-            concatenated_list = [[] for _ in range(n_batch)]  # Initialize sublists for each batch
+            juncs_list = []  # List to store concatenated tensors from each j
+            jtype_list = []  # List to store the corresponding j values
 
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
@@ -136,22 +136,33 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
+
+
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jcs[i][j] = jcs[i][j][
                         None, torch.arange(M.n_out_junc) % len(jcs[i][j])
                     ]
-                    concatenated_list[i].append(jcs[i][j])
-                    jtype_list[i].append(j)
+
+                max_j = max(len(jc) for jc in jcs)  # Maximum j value across all batches
+
+                for j in range(max_j):
+                    current_juncs = [jcs[i][j] for i in range(n_batch) if j < len(jcs[i])]
+                    concatenated_juncs = torch.cat(current_juncs, dim=0)
+                    juncs_list.append(concatenated_juncs)
+
+                    # Append the corresponding j values
+                    jtype_list.extend([j] * concatenated_juncs.shape[0])
 
             print("jtype", jtype_list)
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
 
             # Flatten the lists and concatenate
-            result["preds"]["juncs"] = torch.cat([item for sublist in concatenated_list for item in sublist], dim=0)
-            result["preds"]["jtype"] = torch.tensor([item for sublist in jtype_list for item in sublist])
+            result["preds"]["juncs"] = torch.cat(juncs_list, dim=0)
+            result["preds"]["jtype"] = torch.tensor(jtype_list)
+            print( result["preds"]["jtype"])
 
             # all_tensors = []
             # jtype_list = []
