@@ -255,6 +255,7 @@ class LineVectorizer(nn.Module):
 
             # Convert updated_K_values to the same type as K_values (assuming K_values is a list of integers)
             K_values = [int(k) for k in updated_K_values]
+            print(K_values)
 
             max_size = max([s.size(0) for s in scores])
 
