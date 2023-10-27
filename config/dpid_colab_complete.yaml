@@ -18,7 +18,7 @@ model:
   # jmap, lmap, joff
   head_size: [[68], [6], [68]]
   loss_weight:
-    jmap: 100
+    jmap: 8.0
     lmap: 0.5
     joff: 0.25
     lpos0: 1
@@ -56,7 +56,7 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 250
+  n_out_junc: 500
   n_out_line: 2500
 
   # additional ablation study parameters

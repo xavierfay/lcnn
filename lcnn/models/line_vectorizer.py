@@ -223,7 +223,7 @@ class LineVectorizer(nn.Module):
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            K_values = [150, 150] + [10] * 32
+            K_values = [150, 150] + [15] * 32
             assert len(K_values) == n_type
             scores = []
             indices = []
@@ -261,24 +261,17 @@ class LineVectorizer(nn.Module):
             score = torch.stack(padded_scores)
             index = torch.stack(padded_indices)
 
-
-
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
-
-
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
 
-
-
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
-
 
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
@@ -289,20 +282,23 @@ class LineVectorizer(nn.Module):
                 match = (match - 1).clamp(min=0)
 
             u, v = [], []
-            for i, k in enumerate(K_values):
-                u_i, v_i = torch.meshgrid(torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                                          torch.arange(i * K_values[i], (i + 1) * K_values[i]))
-                u.append(u_i.flatten())
-                v.append(v_i.flatten())
+            for i in range(n_type):
+                for j in range(n_type):
+                    u_i, v_i = torch.meshgrid(
+                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                    )
+                    u.append(u_i.flatten())
+                    v.append(v_i.flatten())
 
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
-
             up, vp = match[u].to(device), match[v].to(device)
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
+
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)
@@ -356,16 +352,9 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
-            label[torch.arange(label.shape[0]), scalar_labels] = 1
-
-
-
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
-            # xy = xy.reshape(n_type, K, 2)
-            # #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            # jcs = [xy[i, score[i] > 0.0001] for i in range(n_type)]
 
             jcs_list = []
             jtype_list = []
