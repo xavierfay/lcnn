@@ -380,9 +380,12 @@ class LineVectorizer(nn.Module):
 
             jcs_list = []
             jtype_list = []
+
             xy_splits = torch.split(xy, K_values, dim=0)
-            for i, (xy_i, k) in enumerate(zip(xy_splits, K_values)):
-                valid_indices = score[i] > 0.0001
+            score_splits = torch.split(score, K_values, dim=0)  # Assuming score has a shape that can be split similarly
+
+            for i, (xy_i, score_i) in enumerate(zip(xy_splits, score_splits)):
+                valid_indices = score_i > 0.0001
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
