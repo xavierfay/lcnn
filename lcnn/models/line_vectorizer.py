@@ -233,7 +233,7 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                #above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
 
                 if mode != "training":
                     K = current_max_K
@@ -281,15 +281,22 @@ class LineVectorizer(nn.Module):
             if mode == "testing":
                 match = (match - 1).clamp(min=0)
 
+            # paring matrix:
+            pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            # Modify the matrix based on the described pattern
+            pairing_matrix[0, 1] = 0
+            pairing_matrix[1, :2] = 0
+
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    u_i, v_i = torch.meshgrid(
-                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                    )
-                    u.append(u_i.flatten())
-                    v.append(v_i.flatten())
+                    if pairing_matrix[i][j]:  # Check if the pairing is allowed
+                        u_i, v_i = torch.meshgrid(
+                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                        )
+                        u.append(u_i.flatten())
+                        v.append(v_i.flatten())
 
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
@@ -361,9 +368,13 @@ class LineVectorizer(nn.Module):
 
             xy_splits = torch.split(xy, K_values, dim=0)
 
+
+
+
+
             for i, xy_i in enumerate(xy_splits):
                 score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.0001
+                valid_indices = score_i > 0.01
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
