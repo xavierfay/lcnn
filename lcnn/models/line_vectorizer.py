@@ -227,16 +227,16 @@ class LineVectorizer(nn.Module):
             assert len(K_values) == n_type
             scores = []
             indices = []
-
+            updated_K_values = []
             for i in range(n_type):
                 # Current layer's maximum allowable K
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
 
                 if mode != "training":
-                    K = current_max_K
+                    K = min(int(above_threshold), current_max_K)
                 else:
                     K = min(int(N * 2 + 2), current_max_K)
 
@@ -244,12 +244,17 @@ class LineVectorizer(nn.Module):
                 if K < 2:
                     K = 2
 
+                updated_K_values.append(K)
                 # Get top K values and their indices for the current layer
                 score, index = torch.topk(jmap[i], k=K)
                 scores.append(score)
                 indices.append(index)
 
+            while len(updated_K_values) < len(K_values):
+                updated_K_values.append(K_values[len(updated_K_values)])
 
+            # Convert updated_K_values to the same type as K_values (assuming K_values is a list of integers)
+            K_values = [int(k) for k in updated_K_values]
 
             max_size = max([s.size(0) for s in scores])
 
@@ -374,7 +379,7 @@ class LineVectorizer(nn.Module):
 
             for i, xy_i in enumerate(xy_splits):
                 score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.01
+                valid_indices = score_i > 0.03
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
