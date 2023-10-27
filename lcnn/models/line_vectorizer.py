@@ -150,10 +150,13 @@ class LineVectorizer(nn.Module):
                     # Check the type of jtypes[i][j] and get the fill_value
                     if isinstance(jtypes[i][j], list):
                         fill_value = jtypes[i][j][0]  # Assuming the list has at least one value
-                    elif jtypes[i][j].numel() == 1:  # If it's a tensor with one element
-                        fill_value = jtypes[i][j].item()
+                    elif isinstance(jtypes[i][j], torch.Tensor):
+                        if jtypes[i][j].numel() == 1:  # If it's a tensor with one element
+                            fill_value = jtypes[i][j].item()
+                        else:
+                            fill_value = jtypes[i][j][0].item()  # Use the first element if tensor has multiple elements
                     else:
-                        fill_value = jtypes[i][j][0].item()  # Use the first element if tensor has multiple elements
+                        fill_value = jtypes[i][j]  # Directly use the integer value
 
                     # Replicate jtypes[i][j] values to match the length of expanded jcs[i][j]
                     jtypes_tensor = torch.full(jcs_expanded.shape, fill_value, device=jcs[i][j].device)
