@@ -401,8 +401,8 @@ class LineVectorizer(nn.Module):
                 jtype_list.extend([i] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
-            jcs = torch.cat(jcs_list, dim=0)
-            jtype = torch.tensor(jtype_list, device=xy.device)
+            jcs = jcs_list
+            jtype = jtype_list
 
             if mode != "training":
                 shapes = [jc.shape for jc in jcs]
