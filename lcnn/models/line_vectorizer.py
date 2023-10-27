@@ -220,19 +220,37 @@ class LineVectorizer(nn.Module):
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
-            max_K = M.n_dyn_junc // n_type
-            N = len(junc)
-            if mode != "training":
-                K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
-            else:
-                K = min(int(N * 2 + 2), max_K)
-            if K < 2:
-                K = 2
-            device = jmap.device
+            #max_K = M.n_dyn_junc // n_type
+            max_K = [150, 150] + [15] * 32
+            assert len(max_K) == n_type
+            scores = []
+            indices = []
 
-            # index: [N_TYPE, K]
-            print(K)
-            score, index = torch.topk(jmap, k=K)
+            for i in range(n_type):
+                # Current layer's maximum allowable K
+                current_max_K = max_K[i]
+
+                # Calculate the number of values above the threshold for the current layer
+                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+
+                if mode != "training":
+                    K = min(int(above_threshold), current_max_K)
+                else:
+                    K = min(int(N * 2 + 2), current_max_K)
+
+                # Ensure a minimum value for K
+                if K < 2:
+                    K = 2
+
+                # Get top K values and their indices for the current layer
+                score, index = torch.topk(jmap[i], k=K)
+                scores.append(score)
+                indices.append(index)
+                print(f"Layer {i}: K = {K}")
+
+            # Convert lists to tensors for further processing
+            scores = torch.stack(scores)
+            indices = torch.stack(indices)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
