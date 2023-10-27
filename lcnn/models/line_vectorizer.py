@@ -143,12 +143,8 @@ class LineVectorizer(nn.Module):
                     jcs[i][j] = jcs[i][j][
                         None, torch.arange(M.n_out_junc) % len(jcs[i][j])
                     ]
-                    current_jcs_tensors.append(jcs[i][j])
-                jc = torch.cat(current_jcs_tensors, dim=0)
-                if jc.shape[0] > 0:
-                    concatenated_list.append(jc)
-                jtype_list.append((len(jc.shape), jc.shape[0]))
-
+                    concatenated_list.append(jcs[i][j])
+                    jtype_list.append(j)
 
             print("jtype", jtype_list)
             result["preds"]["lines"] = torch.cat(lines)
