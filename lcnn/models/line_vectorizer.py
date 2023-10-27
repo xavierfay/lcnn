@@ -347,7 +347,7 @@ class LineVectorizer(nn.Module):
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.extend(xy[cumulative_K[i]:cumulative_K[i + 1]])
-                print("reshaped", reshaped_xy)
+                print("reshaped", len(reshaped_xy))
             xy = torch.stack(reshaped_xy).to(device)
             print("Shape of xy:", xy.shape)
             xyu, xyv = xy[u].to(device), xy[v].to(device)
