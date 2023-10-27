@@ -340,7 +340,9 @@ class LineVectorizer(nn.Module):
                 c = c.to(device).bool()
 
             #sample lines
+            print("scalar_labels contents:", scalar_labels)
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
+            print("scalar_labels contents:", scalar_labels)
             # Use cumsum to determine start and end index for each layer
             cumulative_K = [0] + torch.cumsum(torch.tensor(K_values), dim=0).tolist()
             reshaped_xy = []
