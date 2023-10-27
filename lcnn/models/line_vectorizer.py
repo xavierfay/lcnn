@@ -145,29 +145,64 @@ class LineVectorizer(nn.Module):
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
 
-            all_tensors = []
             jtype_list = []
+            concatenated_list = []
 
-            # Loop through all tensors in jcs[i]
-            for idx in range(len(jcs[i])):
-                for batch_idx in range(n_batch):
-                    if len(jcs[batch_idx]) > idx:
-                        all_tensors.append(jcs[batch_idx][idx])
-                        num_coords = len(jcs[batch_idx][idx])
-                        print("num_coords", num_coords)
-                        jtype_list.extend([idx] * num_coords)
+            jc = torch.tensor(jcs[i])  # Convert to tensor
 
-            # Convert the list of tensors to a single tensor
-            junc = torch.cat(all_tensors)
-            juncs.append(junc)
-            # Convert the list of types to a tensor
-            jtype = torch.tensor(jtype_list)
-            jtypes.append(jtype)
-            print("jtype", jtype)
+            # For the concatenated tensor
+            if jc.shape[0] > 0:
+                concatenated_list.append(jc)
 
-            # Update the result dictionary
-            result["preds"]["juncs"] = juncs
-            result["preds"]["jtype"] = jtypes
+            # For the jtype tensor
+            jtype_list.append((len(jc.shape), jc.shape[0]))
+
+            # Final tensors
+            result["preds"]["juncs"] = torch.cat(concatenated_list, dim=0)
+            result["preds"]["jtype"] = torch.tensor(jtype_list)
+
+
+            # all_tensors = []
+            # jtype_list = []
+            #
+            #
+            # shapes = [jc.shape for jc in jcs]
+            # print("jcs shapes:", shapes)
+            #
+            # for idx in range(len(jcs[i])):
+            #     for i in range(n_batch):
+            #         jcs[i][idx]
+            #     result["preds"]["juncs"] = torch.cat([])
+            #
+            #     jtype_list.append(idx)
+            #
+            # if len(jcs[i]) > 1:
+            #     result["preds"]["junts"] = torch.cat(
+            #         [jcs[i][1] for i in range(n_batch)]
+            #     )
+            #
+            #
+            #
+            # # Loop through all tensors in jcs[i]
+            # for idx in range(len(jcs[i])):
+            #     for batch_idx in range(n_batch):
+            #         if len(jcs[batch_idx]) > idx:
+            #             all_tensors.append(jcs[batch_idx][idx])
+            #             num_coords = len(jcs[batch_idx][idx])
+            #             print("num_coords", num_coords)
+            #             jtype_list.extend([idx] * num_coords)
+            #
+            # # Convert the list of tensors to a single tensor
+            # junc = torch.cat(all_tensors)
+            # juncs.append(junc)
+            # # Convert the list of types to a tensor
+            # jtype = torch.tensor(jtype_list)
+            # jtypes.append(jtype)
+            # print("jtype", jtype)
+            #
+            # # Update the result dictionary
+            # result["preds"]["juncs"] = juncs
+            # result["preds"]["jtype"] = jtypes
 
 
         if input_dict["mode"] != "testing":
