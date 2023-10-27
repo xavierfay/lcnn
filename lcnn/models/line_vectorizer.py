@@ -355,7 +355,7 @@ class LineVectorizer(nn.Module):
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
 
             print("scalar_labels shape:", scalar_labels.shape)
-            print("scalar_labels contents:", scalar_labels)
+            print("scalar_labels contents:", scalar_labels.cpu())
             print("label shape:", label.shape)
             print("label contents before assignment:", label)
             label[torch.arange(label.shape[0]), scalar_labels] = 1
