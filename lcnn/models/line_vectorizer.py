@@ -426,8 +426,9 @@ class LineVectorizer(nn.Module):
 
 
             if mode != "training":
-                shapes = [jc.shape for jc in jcs]
-                print("jcs shapes:",len(jcs), shapes)
+                for jc in jcs:
+                    print(jc)
+                    print(jc.shape)
 
                 print("jtype length", len(jtype), jtype)
 
