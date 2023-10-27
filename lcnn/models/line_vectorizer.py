@@ -150,6 +150,7 @@ class LineVectorizer(nn.Module):
                 jtype_list.append((len(jc.shape), jc.shape[0]))
 
 
+            print("jtype", jtype_list)
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
             result["preds"]["juncs"] = torch.cat(concatenated_list, dim=0)
