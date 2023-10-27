@@ -233,10 +233,10 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+                #above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
 
                 if mode != "training":
-                    K = min(int(above_threshold), current_max_K)
+                    K = current_max_K
                 else:
                     K = min(int(N * 2 + 2), current_max_K)
 
@@ -348,9 +348,6 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            # Use cumsum to determine start and end index for each layer
-            cumulative_K = [0] + torch.cumsum(torch.tensor(K_values), dim=0).tolist()
-
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
