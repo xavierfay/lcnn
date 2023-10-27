@@ -334,6 +334,16 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
+            u = [ui.to(device) for ui in u]
+            v = [vi.to(device) for vi in v]
+            u, v = torch.cat(u).to(device), torch.cat(v).to(device)
+            up, vp = match[u].to(device), match[v].to(device)
+            scalar_labels = scalar_labels.to(device).long()
+            if mode == "training":
+                c = c.to(device).bool()
+
+
+
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
             # Use cumsum to determine start and end index for each layer
@@ -341,9 +351,9 @@ class LineVectorizer(nn.Module):
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.extend(xy[cumulative_K[i]:cumulative_K[i + 1]])
-            xy = torch.stack(reshaped_xy)
+            xy = torch.stack(reshaped_xy).to(device)
 
-            xyu, xyv = xy[u], xy[v]
+            xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
 
