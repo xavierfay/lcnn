@@ -289,6 +289,8 @@ class LineVectorizer(nn.Module):
                 v.append(v_i.flatten())
 
             u, v = torch.cat(u), torch.cat(v)
+            up, vp = match[u], match[v]
+
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
