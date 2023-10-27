@@ -384,7 +384,8 @@ class LineVectorizer(nn.Module):
             xy_splits = torch.split(xy, K_values, dim=0)
             score_splits = torch.split(score, K_values, dim=1)  # Assuming score has a shape that can be split similarly
 
-            for i, (xy_i, score_i) in enumerate(zip(xy_splits, score_splits)):
+            for i, xy_i in enumerate(xy_splits):
+                score_i = score[i, :K_values[i]]
                 valid_indices = score_i > 0.0001
                 subset = xy_i[valid_indices]
 
