@@ -260,6 +260,10 @@ class LineVectorizer(nn.Module):
             # Convert lists to tensors for further processing
             score = torch.stack(padded_scores)
             index = torch.stack(padded_indices)
+
+            print("score shape",score.shape)
+            print("index shape", index.shape)
+
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
