@@ -340,22 +340,18 @@ class LineVectorizer(nn.Module):
                 c = c.to(device).bool()
 
             #sample lines
-            print("scalar_labels contents:", scalar_labels)
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            print("scalar_labels contents:", scalar_labels)
             # Use cumsum to determine start and end index for each layer
             cumulative_K = [0] + torch.cumsum(torch.tensor(K_values), dim=0).tolist()
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.extend(xy[cumulative_K[i]:cumulative_K[i + 1]])
             xy = torch.stack(reshaped_xy).to(device)
-
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
 
             print("scalar_labels shape:", scalar_labels.shape)
-            print("scalar_labels contents:", scalar_labels.cpu())
             print("label shape:", label.shape)
             print("label contents before assignment:", label)
             label[torch.arange(label.shape[0]), scalar_labels] = 1
