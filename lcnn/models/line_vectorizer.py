@@ -233,10 +233,12 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
-
+                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+                #
+                # if mode != "training":
+                #     K = min(int(above_threshold), current_max_K)
                 if mode != "training":
-                    K = min(int(above_threshold), current_max_K)
+                    K = current_max_K
                 else:
                     K = min(int(N * 2 + 2), current_max_K)
 
