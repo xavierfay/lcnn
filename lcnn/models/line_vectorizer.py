@@ -136,18 +136,17 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
+                current_jcs_tensors = []  # List to store tensors from the current batch i
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jcs[i][j] = jcs[i][j][
                         None, torch.arange(M.n_out_junc) % len(jcs[i][j])
                     ]
-                jc = torch.tensor(jcs[i])  # Convert to tensor
-
-                # For the concatenated tensor
+                    current_jcs_tensors.append(jcs[i][j])
+                jc = torch.cat(current_jcs_tensors, dim=0)
                 if jc.shape[0] > 0:
                     concatenated_list.append(jc)
-                # For the jtype tensor
                 jtype_list.append((len(jc.shape), jc.shape[0]))
 
 
