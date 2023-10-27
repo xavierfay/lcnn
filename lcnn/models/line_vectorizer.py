@@ -147,16 +147,20 @@ class LineVectorizer(nn.Module):
 
                 max_j = max(len(jc) for jc in jcs)  # Maximum j value across all batches
 
-                for j in range(max_j):
-                    current_juncs = [jcs[i][j].squeeze(0) for i in range(n_batch) if
-                                     j < len(jcs[i]) and torch.prod(torch.tensor(jcs[i][j].shape)) > 0]
+            for j in range(max_j):
+                current_juncs = []
+                for i in range(n_batch):
+                    if j < len(jcs[i]) and torch.prod(torch.tensor(jcs[i][j].shape)) > 0:
+                        tensor = jcs[i][j].squeeze(0)
+                        if len(tensor.shape) == 1:  # If it's a 1D tensor
+                            tensor = tensor.unsqueeze(1)  # Add an extra dimension
+                        current_juncs.append(tensor)
 
+                concatenated_juncs = torch.cat(current_juncs, dim=0)
+                juncs_list.append(concatenated_juncs)
 
-                    concatenated_juncs = torch.cat(current_juncs, dim=0)
-                    juncs_list.append(concatenated_juncs)
-
-                    # Append the corresponding j values
-                    jtype_list.extend([j] * concatenated_juncs.shape[0])
+                # Append the corresponding j values
+                jtype_list.extend([j] * concatenated_juncs.shape[0])
 
             print("jtype", jtype_list)
             result["preds"]["lines"] = torch.cat(lines)
