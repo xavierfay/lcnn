@@ -148,7 +148,17 @@ class LineVectorizer(nn.Module):
                 max_j = max(len(jc) for jc in jcs)  # Maximum j value across all batches
 
                 for j in range(max_j):
+                    # Concatenate tensors along the second dimension for the current j
                     current_juncs = [jcs[i][j] for i in range(n_batch) if j < len(jcs[i])]
+
+                    # Ensure all tensors have the same number of dimensions (e.g., 2)
+                    # If any tensor has a different number of dimensions, adjust it
+                    max_dims = max(tensor.dim() for tensor in current_juncs)
+                    for idx, tensor in enumerate(current_juncs):
+                        while tensor.dim() < max_dims:
+                            tensor = tensor.unsqueeze(0)  # Add a new dimension at the front
+                            current_juncs[idx] = tensor
+
                     concatenated_juncs = torch.cat(current_juncs, dim=0)
                     juncs_list.append(concatenated_juncs)
 
