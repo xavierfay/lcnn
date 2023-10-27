@@ -118,8 +118,8 @@ class LineVectorizer(nn.Module):
             b = (cond2 | cond3 | cond4 ) & cond1
             lines = []
             score = []
-            jtypes = []
-            juncs = []
+            jtype_list = []
+            concatenated_list = []
 
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
@@ -142,24 +142,26 @@ class LineVectorizer(nn.Module):
                     jcs[i][j] = jcs[i][j][
                         None, torch.arange(M.n_out_junc) % len(jcs[i][j])
                     ]
+                jc = torch.tensor(jcs[i])  # Convert to tensor
+
+                # For the concatenated tensor
+                if jc.shape[0] > 0:
+                    concatenated_list.append(jc)
+                # For the jtype tensor
+                jtype_list.append((len(jc.shape), jc.shape[0]))
+
+
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
-
-            jtype_list = []
-            concatenated_list = []
-
-            jc = torch.tensor(jcs[i])  # Convert to tensor
-
-            # For the concatenated tensor
-            if jc.shape[0] > 0:
-                concatenated_list.append(jc)
-
-            # For the jtype tensor
-            jtype_list.append((len(jc.shape), jc.shape[0]))
-
-            # Final tensors
             result["preds"]["juncs"] = torch.cat(concatenated_list, dim=0)
             result["preds"]["jtype"] = torch.tensor(jtype_list)
+
+
+
+
+
+            # Final tensors
+
 
 
             # all_tensors = []
