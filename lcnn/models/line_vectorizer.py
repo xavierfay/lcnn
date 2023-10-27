@@ -138,6 +138,9 @@ class LineVectorizer(nn.Module):
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
 
+                print("jtypes len", len(jtypes))
+                print("jtypes[0] len", len(jtypes[0]))
+
                 for j in range(len(jcs[i])):
                     if len(jcs[i][j]) == 0:
                         jcs[i][j] = torch.zeros([M.n_out_junc, 2], device=p.device)
@@ -420,9 +423,13 @@ class LineVectorizer(nn.Module):
             jcs = jcs_list
             jtype = jtype_list
 
+
+
             if mode != "training":
                 shapes = [jc.shape for jc in jcs]
                 print("jcs shapes:", shapes)
+
+                print("jtype length", len(jtype))
 
 
             return line, label, jcs, jtype
