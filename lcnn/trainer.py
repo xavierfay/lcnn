@@ -354,8 +354,6 @@ class Trainer(object):
 
         rjuncs = result["juncs"][i].cpu().numpy() * 4
         rjtyp = result["jtype"][i].cpu().numpy()
-        print(rjtyp)
-        rjtyp = np.ones(len(rjuncs))
 
 
 
