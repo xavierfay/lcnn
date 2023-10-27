@@ -285,12 +285,10 @@ class LineVectorizer(nn.Module):
             for i, k in enumerate(K_values):
                 u_i, v_i = torch.meshgrid(torch.arange(i * K_values[i], (i + 1) * K_values[i]),
                                           torch.arange(i * K_values[i], (i + 1) * K_values[i]))
-                u.append(u_i)
-                v.append(v_i)
+                u.append(u_i.flatten())
+                v.append(v_i.flatten())
 
-            u, v = torch.cat(u).flatten(), torch.cat(v).flatten()
-            up, vp = match[u], match[v]
-
+            u, v = torch.cat(u), torch.cat(v)
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.long()
