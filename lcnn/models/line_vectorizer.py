@@ -249,7 +249,7 @@ class LineVectorizer(nn.Module):
                 scores.append(score)
                 indices.append(index)
 
-                print(f"Layer {i}: K = {K}")
+
 
             max_size = max([s.size(0) for s in scores])
 
@@ -261,21 +261,19 @@ class LineVectorizer(nn.Module):
             score = torch.stack(padded_scores)
             index = torch.stack(padded_indices)
 
-            print("score shape",score.shape)
-            print("index shape", index.shape)
+
 
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
-            print("x shape:", x.shape)
-            print("y shape:", y.shape)
+
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
 
-            print("xy shape:", xy.shape)
+
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
@@ -352,23 +350,17 @@ class LineVectorizer(nn.Module):
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
             # Use cumsum to determine start and end index for each layer
             cumulative_K = [0] + torch.cumsum(torch.tensor(K_values), dim=0).tolist()
-            print("cumulative_K:", cumulative_K)
-            print("K_values", K_values)
-            print("xy shape before",xy.shape)
+
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
-            print("Shape of xy after:", xy.shape)
+
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
-
-            print("scalar_labels shape:", scalar_labels.shape)
-            print("label shape:", label.shape)
-            print("label contents before assignment:", label)
             label[torch.arange(label.shape[0]), scalar_labels] = 1
-            print("label contents after assignment:", label)
+
 
 
             # Assign a "1" in the respective column according to the scalar label
