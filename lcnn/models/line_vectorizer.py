@@ -288,12 +288,14 @@ class LineVectorizer(nn.Module):
                 u.append(u_i.flatten())
                 v.append(v_i.flatten())
 
-            u, v = torch.cat(u), torch.cat(v)
-            up, vp = match[u], match[v]
+            u = [ui.to(device) for ui in u]
+            v = [vi.to(device) for vi in v]
+            u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
+            up, vp = match[u].to(device), match[v].to(device)
 
             scalar_labels = Lpos[up, vp]
-            scalar_labels = scalar_labels.long()
+            scalar_labels = scalar_labels.to(device).long()
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)
@@ -334,11 +336,8 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            u = [ui.to(device) for ui in u]
-            v = [vi.to(device) for vi in v]
-            u, v = torch.cat(u).to(device), torch.cat(v).to(device)
-            up, vp = match[u].to(device), match[v].to(device)
-            scalar_labels = scalar_labels.to(device).long()
+
+
             if mode == "training":
                 c = c.to(device).bool()
 
