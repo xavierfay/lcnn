@@ -360,6 +360,8 @@ class LineVectorizer(nn.Module):
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
             print("u.shape:", u.shape, "v.shape:", v.shape)
+            print("Max value in u:", u.max().item())
+            print("Max value in v:", v.max().item())
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
