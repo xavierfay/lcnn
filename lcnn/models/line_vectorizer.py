@@ -152,6 +152,8 @@ class LineVectorizer(nn.Module):
                     # Replicate jtypes[i][j] values to match the length of expanded jcs[i][j]
                     jtypes_tensor = torch.full(jcs_expanded.shape, jtypes[i][j], device=jcs[i][j].device)
                     jtype_list.append(jtypes_tensor)
+                jcs = torch.cat(jcs_list, dim=0)
+                jtypes = torch.cat(jtype_list, dim=0)
 
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
@@ -172,8 +174,7 @@ class LineVectorizer(nn.Module):
             #
             #     # Append the corresponding j values
             #     jtype_list.extend([j] * concatenated_juncs.shape[0])
-            jcs = torch.cat(jcs_list, dim=0)
-            jtypes = torch.cat(jtype_list, dim=0)
+
             print("jtype", jtypes)
             result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
             result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
