@@ -305,20 +305,25 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-            unwanted_mask = (
-                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
-                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
-                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
-            )
+            # unwanted_mask = (
+            #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
+            #         ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
+            #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
+            # )
+            #
+            # unwanted_mask = (
+            #         (u >= K_values[0]) & (u < sum(K_values[:2])) |  # u belongs to class 1
+            #         (v >= K_values[0]) & (v < sum(K_values[:2]))  # v belongs to class 1
+            # )
+            # # Filter out unwanted connections
+            # u = u[~unwanted_mask]
+            # v = v[~unwanted_mask]
 
-            unwanted_mask = (
-                    (u >= K_values[0]) & (u < sum(K_values[:2])) |  # u belongs to class 1
-                    (v >= K_values[0]) & (v < sum(K_values[:2]))  # v belongs to class 1
-            )
+            # Create a mask to only include lines between junctions of class 0
+            wanted_mask = (u < K_values[0]) & (v < K_values[0])
 
-            # Filter out unwanted connections
-            u = u[~unwanted_mask]
-            v = v[~unwanted_mask]
+            u = u[wanted_mask]
+            v = v[wanted_mask]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
