@@ -326,6 +326,8 @@ class Trainer(object):
                         plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=4)
                     if line_type == 3:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c="blue", linewidth=4)
+                    else:
+                        plt.plot([a[1], b[1]], [a[0], b[0]], c="red", linewidth=4)
 
             if not (juncs[0] == 0).all():
                 for i, j in enumerate(juncs):
