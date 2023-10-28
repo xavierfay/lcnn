@@ -323,7 +323,15 @@ class LineVectorizer(nn.Module):
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
-            up, vp = match[u].to(device), match[v].to(device)
+
+
+            unwanted_mask = ((u >= K_values[0]) & (u < sum(K_values[:2]))) | \
+                            ((v >= K_values[0]) & (v < sum(K_values[:2])))
+
+            # Filter out unwanted connections
+            u = u[~unwanted_mask]
+            v = v[~unwanted_mask]
+            #scalar_labels = scalar_labels[~unwanted_mask]
 
             for u_val, v_val in zip(u, v):
                 assert not (0 <= u_val < K_values[0] and K_values[0] <= v_val < sum(
@@ -331,6 +339,7 @@ class LineVectorizer(nn.Module):
                 assert not (K_values[0] <= u_val < sum(K_values[:2]) and 0 <= v_val < K_values[
                     0]), "Unwanted connection found! after pairing matrix"
 
+            up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
 
