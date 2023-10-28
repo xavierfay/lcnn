@@ -309,7 +309,7 @@ class LineVectorizer(nn.Module):
                     if pairing_matrix[i][j]:  # Check if the pairing is allowed
                         u_i, v_i = torch.meshgrid(
                             torch.arange(i * K_values[i], j * K_values[j]),
-                            torch.arange(j * K_values[j], i * K_values[i])
+                            torch.arange(i * K_values[j], j * K_values[j])
                         )
                         u.append(u_i.flatten())
                         v.append(v_i.flatten())
