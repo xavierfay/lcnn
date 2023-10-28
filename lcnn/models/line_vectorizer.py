@@ -116,11 +116,9 @@ class LineVectorizer(nn.Module):
             # cond4 = s[:, 3] > 0.1
 
             # Combine the conditions using logical OR
-            b = (cond2 | cond3 | cond4 ) & cond1
+            b = (cond2 & cond3 & cond4) | cond1
             lines = []
             score = []
-            jcs_list = []
-            jtype_list = []
 
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
@@ -130,6 +128,7 @@ class LineVectorizer(nn.Module):
                 s0 = s0[mask]
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
+                    print("length lines", lines.shape)
                     score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
                 else:
                     max_score_indices = torch.argmax(s0, dim=1)
