@@ -189,14 +189,14 @@ class LineVectorizer(nn.Module):
 
             y = torch.argmax(y, dim=1)
 
-            count = torch.bincount(y)
-            unique_values = torch.unique(y)
-            print("values of labels",unique_values, count)
-
-            x_class = torch.argmax(x, dim=1)
-            count = torch.bincount(x_class)
-            unique_values = torch.unique(x_class)
-            print("values of pred", unique_values, count)
+            # count = torch.bincount(y)
+            # unique_values = torch.unique(y)
+            # print("values of labels",unique_values, count)
+            #
+            # x_class = torch.argmax(x, dim=1)
+            # count = torch.bincount(x_class)
+            # unique_values = torch.unique(x_class)
+            # print("values of pred", unique_values, count)
 
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
@@ -297,12 +297,6 @@ class LineVectorizer(nn.Module):
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            print("match:", match.shape, match)
-
-            # for t in range(n_type):
-            #     match[t, jtyp[match[t]] != t] = N
-            # match[cost > 1.5 * 1.5] = N
-            # match = match.flatten()
 
             u, v = [], []
             for i in range(n_type):
@@ -320,34 +314,21 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-            # unwanted_mask = (
-            #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
-            #         ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
-            #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
-            # )
-            #
             unwanted_mask = (
-                    (u >= K_values[0]) & (u < sum(K_values[:2])) |  # u belongs to class 1
-                    (v >= K_values[0]) & (v < sum(K_values[:2]))  # v belongs to class 1
+                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
+                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
+                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
             )
+
+
             # Filter out unwanted connections
             u = u[~unwanted_mask]
             v = v[~unwanted_mask]
 
-            # # Create a mask to only include lines between junctions of class 0
-            # wanted_mask = (u < K_values[0]) & (v < K_values[0])
-            #
-            # u = u[wanted_mask]
-            # v = v[wanted_mask]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
-
-            if mode != "training":
-                counts = torch.bincount(scalar_labels)
-                unique_values = torch.unique(scalar_labels)
-                print("labels size and distrubution", scalar_labels.shape, unique_values, counts)
 
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
@@ -401,10 +382,6 @@ class LineVectorizer(nn.Module):
             xy = torch.cat(reshaped_xy, dim=0).to(device)
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
-            if mode != "training":
-                counts = torch.bincount(scalar_labels)
-                unique_values = torch.unique(scalar_labels)
-                print("labels size and distrubution", scalar_labels.shape, unique_values, counts)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
             # Assign a "1" in the respective column according to the scalar label
