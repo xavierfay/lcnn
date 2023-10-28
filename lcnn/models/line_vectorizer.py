@@ -233,57 +233,20 @@ class LineVectorizer(nn.Module):
             lpre_label = meta["lpre_label"]  # [N, 3]
 
             n_type = jmap.shape[0]
-            N = len(junc)
-            device = jmap.device
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
-            #max_K = M.n_dyn_junc // n_type
-            K_values = [150, 150] + [15] * 32
-            assert len(K_values) == n_type
-            scores = []
-            indices = []
-            updated_K_values = []
-            for i in range(n_type):
-                # Current layer's maximum allowable K
-                current_max_K = K_values[i]
+            max_K = M.n_dyn_junc // n_type
+            N = len(junc)
+            if mode != "training":
+                K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
+            else:
+                K = min(int(N * 2 + 2), max_K)
+            if K < 2:
+                K = 2
+            device = jmap.device
 
-                # Calculate the number of values above the threshold for the current layer
-                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
-
-                if mode != "training":
-                    K = min(int(above_threshold), current_max_K)
-                # if mode != "training":
-                #     K = current_max_K
-                else:
-                    K = min(int(N * 2 + 2), current_max_K)
-
-                # Ensure a minimum value for K
-                if K < 2:
-                    K = 2
-
-                updated_K_values.append(K)
-                # Get top K values and their indices for the current layer
-                score, index = torch.topk(jmap[i], k=K)
-                scores.append(score)
-                indices.append(index)
-
-            while len(updated_K_values) < len(K_values):
-                updated_K_values.append(K_values[len(updated_K_values)])
-
-            # Convert updated_K_values to the same type as K_values (assuming K_values is a list of integers)
-            K_values = [int(k) for k in updated_K_values]
-            # print(K_values)
-
-            max_size = max([s.size(0) for s in scores])
-
-            # Pad each tensor in scores and indices lists to match the max_size
-            padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
-            padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
-
-            # Convert lists to tensors for further processing
-            score = torch.stack(padded_scores)
-            index = torch.stack(padded_indices)
-
+            # index: [N_TYPE, K]
+            score, index = torch.topk(jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
@@ -296,54 +259,29 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            #match[cost > 1.5 * 1.5] = N
-            match[cost > 0.5] = N
+
+            for t in range(n_type):
+                match[t, jtyp[match[t]] != t] = N
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
+            if mode == "testing":
+                match = (match - 1).clamp(min=0)
 
-            u, v = [], []
-            for i in range(n_type):
-                for j in range(n_type):
-
-                    u_i, v_i = torch.meshgrid(
-                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                    )
-                    u.append(u_i.flatten())
-                    v.append(v_i.flatten())
+            _ = torch.arange(n_type * K, device=device)
+            u, v = torch.meshgrid(_, _)
+            u, v = u.flatten(), v.flatten()
+            up, vp = match[u], match[v]
 
 
-            u = [ui.to(device) for ui in u]
-            v = [vi.to(device) for vi in v]
-            u, v = torch.cat(u).to(device), torch.cat(v).to(device)
-
-
-
-            unwanted_mask = (
-                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
-                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
-                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
-            )
-
-
-            # Filter out unwanted connections
-            u = u[~unwanted_mask]
-            v = v[~unwanted_mask]
-
-            u = u[u<xy.size(0)]
-            v = v[v<xy.size(0)]
-
-            up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
-            scalar_labels = scalar_labels.to(device).long()
-
+            scalar_labels = scalar_labels.long()
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
-                #cdx = Lneg[up, vp].nonzero().flatten()
-                cdx = (scalar_labels == 0).nonzero().flatten()
+                cdx = Lneg[up, vp].nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
                     # print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
@@ -366,7 +304,7 @@ class LineVectorizer(nn.Module):
 
                 # Sample connection Lines (Class 3)
                 cdx = (scalar_labels == 3).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl2:
+                if len(cdx) > M.n_dyn_posl1:
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl2]
                     cdx = cdx[perm]
                 c[cdx] = 1
@@ -378,42 +316,49 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            # if mode == "training":
-            #     c = c.to(device).bool()
-
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            reshaped_xy = []
-            for i in range(n_type):
-                reshaped_xy.append(xy[i, :K_values[i]])
-            xy = torch.cat(reshaped_xy, dim=0).to(device)
-            xyu, xyv = xy[u].to(device), xy[v].to(device)
+            xy = xy.reshape(n_type * K, 2)
+            xyu, xyv = xy[u], xy[v]
 
+            # # Compute slopes and create masks for valid lines (horizontal/vertical)
+            # deltas = xyv - xyu
+            # slopes = torch.where(deltas[:, 0] != 0, deltas[:, 1] / deltas[:, 0], float('inf'))
+            # horizontal_mask = torch.abs(slopes) < 0.001
+            # vertical_mask = torch.abs(slopes) > 10000
+            # valid_lines_mask = horizontal_mask | vertical_mask
+            # #print("shapes", valid_lines_mask.shape[0], xyu.shape[0])
+            #
+            # # Ensure that valid_lines_mask does not contain invalid indices
+            # assert valid_lines_mask.shape[0] == xyu.shape[0], "Shape mismatch between mask and data"
+            #
+            # # Filter xyu, xyv, and label using the valid_lines_mask
+            # xyu, xyv = xyu[valid_lines_mask], xyv[valid_lines_mask]
+            # label = label[valid_lines_mask]
 
-            label = torch.zeros(scalar_labels.shape[0], 4, device=device)
+            label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
+
             # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
             line = torch.cat([xyu[:, None], xyv[:, None]], 1)
+            # xy = xy.reshape(n_type, K, 2)
+            # #jcs = [xy[i, score[i].long()] for i in range(n_type)]
+            # jcs = [xy[i, score[i] > 0.0001] for i in range(n_type)]
 
             jcs_list = []
             jtype_list = []
-
-            xy_splits = torch.split(xy, K_values, dim=0)
-
-            for i, xy_i in enumerate(xy_splits):
-                score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.05
-                subset = xy_i[valid_indices]
+            xy = xy.reshape(n_type, K, 2)
+            for i in range(n_type):
+                valid_indices = score[i] > 0.0001
+                subset = xy[i][valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
                     jcs_list.append(subset)
-                    jtype_list.extend([i + 1] * len(subset))
+                    jtype_list.extend([i+1] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
-
-            # print("length lines", line.shape)
 
 
             return line, label, jcs, jtype
