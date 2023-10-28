@@ -248,12 +248,12 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
-                #
-                # if mode != "training":
-                #     K = min(int(above_threshold), current_max_K)
+                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
+
                 if mode != "training":
-                    K = current_max_K
+                    K = min(int(above_threshold), current_max_K)
+                # if mode != "training":
+                #     K = current_max_K
                 else:
                     K = min(int(N * 2 + 2), current_max_K)
 
@@ -317,6 +317,8 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
+
+
             unwanted_mask = (
                     ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
                     ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
@@ -328,6 +330,8 @@ class LineVectorizer(nn.Module):
             u = u[~unwanted_mask]
             v = v[~unwanted_mask]
 
+            u = u[u<xy.size(0)]
+            v = v[v<xy.size(0)]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
