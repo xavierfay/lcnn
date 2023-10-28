@@ -319,7 +319,7 @@ class Trainer(object):
                     if i > 0 and (lines[i] == lines[0]).all() and (sline[i] == sline[0]).all():
                         print("broken because double line")
                         print("printed count", printed_count)
-                        continue
+                        break
                     printed_count += 1
                     if line_type == 0:
                         plt.plot([a[1], b[1]], [a[0], b[0]], c="green", linewidth=4)
