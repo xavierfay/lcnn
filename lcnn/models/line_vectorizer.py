@@ -339,6 +339,9 @@ class LineVectorizer(nn.Module):
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
 
+            if mode != "training":
+                print("labels", scalar_labels.shape, scalar_labels)
+
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)
@@ -389,6 +392,9 @@ class LineVectorizer(nn.Module):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
             xyu, xyv = xy[u].to(device), xy[v].to(device)
+
+            if mode != "training":
+                print("labels", scalar_labels.shape, scalar_labels)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
             # Assign a "1" in the respective column according to the scalar label
