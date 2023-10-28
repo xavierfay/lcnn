@@ -308,11 +308,17 @@ class LineVectorizer(nn.Module):
                 for j in range(n_type):
                     if pairing_matrix[i][j]:  # Check if the pairing is allowed
                         u_i, v_i = torch.meshgrid(
-                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                            torch.arange(i * K_values[i], j * K_values[j]),
+                            torch.arange(j * K_values[j], i * K_values[i])
                         )
                         u.append(u_i.flatten())
                         v.append(v_i.flatten())
+
+            # for i, k in enumerate(K_values):
+            #     u_i, v_i = torch.meshgrid(torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+            #                               torch.arange(i * K_values[i], (i + 1) * K_values[i]))
+            #     u.append(u_i.flatten())
+            #     v.append(v_i.flatten())
 
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
