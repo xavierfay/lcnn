@@ -116,7 +116,7 @@ class LineVectorizer(nn.Module):
             # cond4 = s[:, 3] > 0.1
 
             # Combine the conditions using logical OR
-            b = (cond2 & cond3 & cond4) | cond1
+            b = (cond2 | cond3 | cond4) & cond1
             lines = []
             score = []
 
@@ -189,14 +189,15 @@ class LineVectorizer(nn.Module):
 
             y = torch.argmax(y, dim=1)
 
-            # count = torch.bincount(y)
-            # unique_values = torch.unique(y)
-            # print("values of labels",unique_values, count)
-            #
-            # x_class = torch.argmax(x, dim=1)
-            # count = torch.bincount(x_class)
-            # unique_values = torch.unique(x_class)
-            # print("values of pred", unique_values, count)
+            if mode != "training":
+                count = torch.bincount(y)
+                unique_values = torch.unique(y)
+                print("values of labels",unique_values, count)
+
+                x_class = torch.argmax(x, dim=1)
+                count = torch.bincount(x_class)
+                unique_values = torch.unique(x_class)
+                print("values of pred", unique_values, count)
 
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
