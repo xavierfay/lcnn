@@ -177,6 +177,12 @@ class LineVectorizer(nn.Module):
                     loss_c = -log_softmax[:, c] * mask
                     loss_per_class[c] = loss_c.sum() * class_weights[c]
 
+                # Normalize by the total number of samples in the batch
+                misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=1) == 1).float()
+                misclass_loss = misclass_mask.sum() * misclass_penalty
+
+                loss_per_class[0] += misclass_loss
+
                 loss_per_class /= x.shape[0]
                 return loss_per_class
 
@@ -321,14 +327,6 @@ class LineVectorizer(nn.Module):
             u = u[~unwanted_mask]
             v = v[~unwanted_mask]
 
-            #scalar_labels = scalar_labels[~unwanted_mask]
-
-            # for u_val, v_val in zip(u, v):
-            #     assert not (0 <= u_val < K_values[0] and K_values[0] <= v_val < sum(
-            #         K_values[:2])), "Unwanted connection found! after pairing matrix"
-            #     assert not (K_values[0] <= u_val < sum(K_values[:2]) and 0 <= v_val < K_values[
-            #         0]), "Unwanted connection found! after pairing matrix"
-
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
@@ -378,17 +376,6 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-
-            # for u_val, v_val in zip(u, v):
-            #     assert not (0 <= u_val < K_values[0] and K_values[0] <= v_val < sum(
-            #         K_values[:2])), "Unwanted connection found! after sampling"
-            #     assert not (K_values[0] <= u_val < sum(K_values[:2]) and 0 <= v_val < K_values[
-            #         0]), "Unwanted connection found! after sampling"
-
-
-            # print("u.shape:", u.shape, "v.shape:", v.shape)
-            # print("Max value in u:", u.max().item())
-            # print("Max value in v:", v.max().item())
             reshaped_xy = []
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
