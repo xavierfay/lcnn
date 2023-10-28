@@ -293,12 +293,13 @@ class LineVectorizer(nn.Module):
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    u_i, v_i = torch.meshgrid(
-                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                    )
-                    u.append(u_i.flatten())
-                    v.append(v_i.flatten())
+                    if j == 1 and i==0:
+                        u_i, v_i = torch.meshgrid(
+                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                        )
+                        u.append(u_i.flatten())
+                        v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
@@ -311,19 +312,19 @@ class LineVectorizer(nn.Module):
             #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
             # )
             #
-            # unwanted_mask = (
-            #         (u >= K_values[0]) & (u < sum(K_values[:2])) |  # u belongs to class 1
-            #         (v >= K_values[0]) & (v < sum(K_values[:2]))  # v belongs to class 1
-            # )
-            # # Filter out unwanted connections
-            # u = u[~unwanted_mask]
-            # v = v[~unwanted_mask]
+            unwanted_mask = (
+                    (u >= K_values[0]) & (u < sum(K_values[:2])) |  # u belongs to class 1
+                    (v >= K_values[0]) & (v < sum(K_values[:2]))  # v belongs to class 1
+            )
+            # Filter out unwanted connections
+            u = u[~unwanted_mask]
+            v = v[~unwanted_mask]
 
-            # Create a mask to only include lines between junctions of class 0
-            wanted_mask = (u < K_values[0]) & (v < K_values[0])
-
-            u = u[wanted_mask]
-            v = v[wanted_mask]
+            # # Create a mask to only include lines between junctions of class 0
+            # wanted_mask = (u < K_values[0]) & (v < K_values[0])
+            #
+            # u = u[wanted_mask]
+            # v = v[wanted_mask]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
