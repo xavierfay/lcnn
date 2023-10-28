@@ -154,6 +154,8 @@ class LineVectorizer(nn.Module):
             result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
             result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
 
+            print("length lines", result["preds"]["lines"].shape)
+
 
 
 
@@ -291,20 +293,9 @@ class LineVectorizer(nn.Module):
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            # if mode == "testing":
-            #     match = (match - 1).clamp(min=0)
-
-            # # paring matrix:
-            # pairing_matrix = np.ones((n_type, n_type), dtype=int)
-            # # Modify the matrix based on the described pattern
-            # pairing_matrix[0, 1] = 0
-            # pairing_matrix[1, :2] = 0
-
-
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    #if pairing_matrix[i][j]:  # Check if the pairing is allowed
                     u_i, v_i = torch.meshgrid(
                         torch.arange(i * K_values[i], (i + 1) * K_values[i]),
                         torch.arange(j * K_values[j], (j + 1) * K_values[j])
@@ -371,8 +362,8 @@ class LineVectorizer(nn.Module):
             else:
                 c = (u < v).flatten()
 
-            if mode == "training":
-                c = c.to(device).bool()
+            # if mode == "training":
+            #     c = c.to(device).bool()
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
@@ -380,8 +371,6 @@ class LineVectorizer(nn.Module):
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
-            # print("xy.shape:", xy.shape)
-
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
@@ -406,6 +395,8 @@ class LineVectorizer(nn.Module):
             # Create flattened jcs tensor and jtype tensor
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
+
+            print("length lines", line.shape)
 
 
             return line, label, jcs, jtype
