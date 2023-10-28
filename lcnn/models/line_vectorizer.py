@@ -291,8 +291,8 @@ class LineVectorizer(nn.Module):
             # paring matrix:
             pairing_matrix = np.ones((n_type, n_type), dtype=int)
             # Modify the matrix based on the described pattern
-            pairing_matrix[1, 2] = 0
-            pairing_matrix[2, :2] = 0
+            pairing_matrix[0, 1] = 0
+            pairing_matrix[1, :2] = 0
 
             # pairing_matrix = np.zeros((n_type, n_type), dtype=int)
             # # Second row
@@ -350,7 +350,7 @@ class LineVectorizer(nn.Module):
 
                 # Sample connection Lines (Class 3)
                 cdx = (scalar_labels == 3).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl1:
+                if len(cdx) > M.n_dyn_posl2:
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl2]
                     cdx = cdx[perm]
                 c[cdx] = 1
