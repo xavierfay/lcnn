@@ -104,9 +104,9 @@ class LineVectorizer(nn.Module):
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
             cond1 = s[:, 0] < 0.25
-            cond2 = s[:, 1] > 0.1
-            cond3 = s[:, 2] > 0.1
-            cond4 = s[:, 3] > 0.1
+            cond2 = s[:, 1] > 0.25
+            cond3 = s[:, 2] > 0.25
+            cond4 = s[:, 3] > 0.25
 
             # s_arg = torch.argmax(s, dim=1)
             #
