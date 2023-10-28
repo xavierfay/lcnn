@@ -296,6 +296,8 @@ class LineVectorizer(nn.Module):
 
             match[cost > 1.5 * 1.5] = N
 
+            print("match:", match.shape, match)
+
             # for t in range(n_type):
             #     match[t, jtyp[match[t]] != t] = N
             # match[cost > 1.5 * 1.5] = N
