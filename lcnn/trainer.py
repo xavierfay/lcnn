@@ -293,8 +293,8 @@ class Trainer(object):
 
 
         # Displaying the results using the updated imshow function
-        imshow(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        imshow(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
@@ -333,8 +333,8 @@ class Trainer(object):
                         break
                     if jtyp[i] == 1:
                         plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
-                    elif jtyp[i] == 2:
-                        plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
+                    # elif jtyp[i] == 2:
+                    #     plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
                     else:
                         # add plot with number from jtype
                         plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)

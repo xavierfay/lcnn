@@ -289,10 +289,10 @@ class LineVectorizer(nn.Module):
                 match = (match - 1).clamp(min=0)
 
             # paring matrix:
-            pairing_matrix = np.zeros((n_type, n_type), dtype=int)
+            pairing_matrix = np.ones((n_type, n_type), dtype=int)
             # Modify the matrix based on the described pattern
-            pairing_matrix[0, 0] = 1
-            #pairing_matrix[1, :2] = 0
+            pairing_matrix[0, 1] = 0
+            pairing_matrix[1, :2] = 0
 
             u, v = [], []
             for i in range(n_type):
