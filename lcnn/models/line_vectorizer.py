@@ -136,6 +136,7 @@ class LineVectorizer(nn.Module):
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
                     print("length lines", p0.shape)
+                    print("score", s0)
                 if len(jcs[i]) == 0:
                     jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
