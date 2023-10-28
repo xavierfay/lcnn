@@ -324,9 +324,11 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-
-            unwanted_mask = ((u >= K_values[0]) & (u < sum(K_values[:2]))) | \
-                            ((v >= K_values[0]) & (v < sum(K_values[:2])))
+            unwanted_mask = (
+                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
+                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
+                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
+            )
 
             # Filter out unwanted connections
             u = u[~unwanted_mask]
