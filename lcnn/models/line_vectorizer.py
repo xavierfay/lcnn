@@ -135,8 +135,6 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
-                    print("length lines", p0.shape)
-                    print("score", s0)
                 if len(jcs[i]) == 0:
                     jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
@@ -153,7 +151,7 @@ class LineVectorizer(nn.Module):
             result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
             result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
 
-            print("length lines", result["preds"]["lines"].shape)
+            #print("length lines", result["preds"]["lines"].shape)
 
 
 
@@ -395,7 +393,7 @@ class LineVectorizer(nn.Module):
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
 
-            print("length lines", line.shape)
+            # print("length lines", line.shape)
 
 
             return line, label, jcs, jtype
