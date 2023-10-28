@@ -178,7 +178,7 @@ class LineVectorizer(nn.Module):
                     loss_per_class[c] = loss_c.sum() * class_weights[c]
 
                 # Normalize by the total number of samples in the batch
-                misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=1) == 1).float()
+                misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=0) == 1).float()
                 misclass_loss = misclass_mask.sum() * misclass_penalty
 
                 loss_per_class[0] += misclass_loss
