@@ -295,6 +295,7 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, -1)
 
             match[cost > 1.5 * 1.5] = N
+            match = match.flatten()
 
             print("match:", match.shape, match)
 
