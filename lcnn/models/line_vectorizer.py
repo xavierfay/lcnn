@@ -296,7 +296,8 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            match[cost > 1.5 * 1.5] = N
+            #match[cost > 1.5 * 1.5] = N
+            match[cost > 0.5] = N
             match = match.flatten()
 
 
