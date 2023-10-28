@@ -292,7 +292,7 @@ class LineVectorizer(nn.Module):
             # paring matrix:
             pairing_matrix = np.ones((n_type, n_type), dtype=int)
             # Modify the matrix based on the described pattern
-            pairing_matrix[0, 1] = 0
+            pairing_matrix[0, :1] = 0
             pairing_matrix[1, :2] = 0
 
             u, v = [], []

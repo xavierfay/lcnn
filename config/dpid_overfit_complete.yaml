@@ -40,12 +40,12 @@ model:
   n_stc_negl: 40
 
   ## dynamic sampler
-  n_dyn_junc: 5000
-  n_dyn_posl0: 300
-  n_dyn_posl1: 200
-  n_dyn_posl2: 200
+  n_dyn_junc: 800
+  n_dyn_posl0: 400
+  n_dyn_posl1: 400
+  n_dyn_posl2: 400
   n_dyn_negl: 80
-  n_dyn_othr: 600
+  n_dyn_othr: 800
 
   # LOIPool layer parameters
   n_pts0: 32
