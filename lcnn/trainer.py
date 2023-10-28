@@ -316,7 +316,7 @@ class Trainer(object):
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
 
                     line_type = np.argmax(s)
-                    if i > 0 and (lines[i] == lines[0]).all():
+                    if i > 0 #and (lines[i] == lines[0]).all():
                         print("broken because double line")
                         print("printed count", printed_count)
                         break
