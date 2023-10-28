@@ -288,28 +288,27 @@ class LineVectorizer(nn.Module):
             # if mode == "testing":
             #     match = (match - 1).clamp(min=0)
 
-            # paring matrix:
-            pairing_matrix = np.ones((n_type, n_type), dtype=int)
-            # Modify the matrix based on the described pattern
-            pairing_matrix[0, 1] = 0
-            pairing_matrix[1, :2] = 0
+            # # paring matrix:
+            # pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            # # Modify the matrix based on the described pattern
+            # pairing_matrix[0, 1] = 0
+            # pairing_matrix[1, :2] = 0
 
 
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    if pairing_matrix[i][j]:  # Check if the pairing is allowed
-                        u_i, v_i = torch.meshgrid(
-                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                        )
-                        u.append(u_i.flatten())
-                        v.append(v_i.flatten())
+                    #if pairing_matrix[i][j]:  # Check if the pairing is allowed
+                    u_i, v_i = torch.meshgrid(
+                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                    )
+                    u.append(u_i.flatten())
+                    v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
-            print("length of u and v", len(u), len(v))
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
             unwanted_mask = (
@@ -321,7 +320,7 @@ class LineVectorizer(nn.Module):
             # Filter out unwanted connections
             u = u[~unwanted_mask]
             v = v[~unwanted_mask]
-            print("length of u and v", len(u), len(v))
+
             #scalar_labels = scalar_labels[~unwanted_mask]
 
             # for u_val, v_val in zip(u, v):
@@ -410,7 +409,7 @@ class LineVectorizer(nn.Module):
 
             for i, xy_i in enumerate(xy_splits):
                 score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.03
+                valid_indices = score_i > 0.05
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
