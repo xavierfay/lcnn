@@ -18,13 +18,13 @@ model:
   # jmap, lmap, joff
   head_size: [[68], [6], [68]]
   loss_weight:
-    jmap: 0.5
+    jmap: 0.01
     lmap: 0.5
     joff: 0.25
-    lpos0: 1
-    lpos1: 1
-    lpos2: 1
-    lneg: 1
+    lpos0: 10
+    lpos1: 10
+    lpos2: 10
+    lneg: 10
 
   # backbone parameters
   backbone: stacked_hourglass
