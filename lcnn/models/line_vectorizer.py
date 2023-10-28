@@ -92,8 +92,8 @@ class LineVectorizer(nn.Module):
             xp = self.pooling(xp)
             xs.append(xp)
             idx.append(idx[-1] + xp.shape[0])
-        x= torch.cat(xs)
 
+        x= torch.cat(xs)
         y = torch.cat(ys)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
         if M.use_half:
@@ -175,14 +175,13 @@ class LineVectorizer(nn.Module):
                     # Create a mask that selects only the samples of class c
                     mask = (y == c).float()
                     loss_c = -log_softmax[:, c] * mask
-                    loss_per_class[c] = loss_c.sum() * class_weights[
-                        c]  # Summing up the loss and adjusting by class weight
+                    loss_per_class[c] = loss_c.sum() * class_weights[c]
 
+                loss_per_class /= x.shape[0]
                 return loss_per_class
 
             class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
 
-            y = torch.cat(ys)
             y = torch.argmax(y, dim=1)
 
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
@@ -290,10 +289,10 @@ class LineVectorizer(nn.Module):
                 match = (match - 1).clamp(min=0)
 
             # paring matrix:
-            pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            pairing_matrix = np.zeros((n_type, n_type), dtype=int)
             # Modify the matrix based on the described pattern
-            pairing_matrix[0, :1] = 0
-            pairing_matrix[1, :2] = 0
+            pairing_matrix[0, 0] = 1
+            #pairing_matrix[1, :2] = 0
 
             u, v = [], []
             for i in range(n_type):

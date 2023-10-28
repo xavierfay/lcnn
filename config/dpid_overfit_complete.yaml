@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/overfit_complete
   datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_complete_2
-  resume_from:  #/content/drive/MyDrive/Xavier/logs/overfit_complete/231027-161441-ba11a89-baseline
+  resume_from:  /content/drive/MyDrive/Xavier/logs/overfit_complete/231028-084113-8a71f35-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -18,7 +18,7 @@ model:
   # jmap, lmap, joff
   head_size: [[68], [6], [68]]
   loss_weight:
-    jmap: 10
+    jmap: 0.5
     lmap: 0.5
     joff: 0.25
     lpos0: 1
