@@ -128,7 +128,6 @@ class LineVectorizer(nn.Module):
                 s0 = s0[mask]
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
-                    print("length lines", lines.shape)
                     score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
                 else:
                     max_score_indices = torch.argmax(s0, dim=1)
@@ -136,7 +135,7 @@ class LineVectorizer(nn.Module):
                     p0, s0 = p0[arg], s0[arg]
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
-
+                    print("length lines", p0.shape)
                 if len(jcs[i]) == 0:
                     jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
@@ -307,15 +306,15 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-            unwanted_mask = (
-                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
-                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
-                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
-            )
+            # unwanted_mask = (
+            #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
+            #         ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
+            #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
+            # )
 
-            # Filter out unwanted connections
-            u = u[~unwanted_mask]
-            v = v[~unwanted_mask]
+            # # Filter out unwanted connections
+            # u = u[~unwanted_mask]
+            # v = v[~unwanted_mask]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
