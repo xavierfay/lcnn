@@ -294,10 +294,12 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            for t in range(n_type):
-                match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
-            match = match.flatten()
+
+            # for t in range(n_type):
+            #     match[t, jtyp[match[t]] != t] = N
+            # match[cost > 1.5 * 1.5] = N
+            # match = match.flatten()
 
             u, v = [], []
             for i in range(n_type):
