@@ -189,7 +189,7 @@ class LineVectorizer(nn.Module):
 
             y = torch.argmax(y, dim=1)
 
-            if mode != "training":
+            if input_dict["mode"] != "training":
                 count = torch.bincount(y)
                 unique_values = torch.unique(y)
                 print("values of labels",unique_values, count)
