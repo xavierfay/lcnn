@@ -341,7 +341,7 @@ class LineVectorizer(nn.Module):
 
             if mode != "training":
                 unique_counts = torch.bincount(scalar_labels)
-                print("labels", scalar_labels.shape, unique_counts)
+                print("labels size and distrubution", scalar_labels.shape, unique_counts)
 
             # Initialize a tensor of zeros with shape [N, 3]
             if mode == "training":
@@ -396,7 +396,7 @@ class LineVectorizer(nn.Module):
 
             if mode != "training":
                 unique_counts = torch.bincount(scalar_labels)
-                print("labels", scalar_labels.shape, unique_counts)
+                print("labels size and distrubution", scalar_labels.shape, unique_counts)
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
             # Assign a "1" in the respective column according to the scalar label
