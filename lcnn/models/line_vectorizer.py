@@ -308,8 +308,8 @@ class LineVectorizer(nn.Module):
                 for j in range(n_type):
                     if pairing_matrix[i][j]:  # Check if the pairing is allowed
                         u_i, v_i = torch.meshgrid(
-                            torch.arange(i * K_values[i], j * K_values[j]),
-                            torch.arange(i * K_values[j], j * K_values[j])
+                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
                         )
                         u.append(u_i.flatten())
                         v.append(v_i.flatten())
@@ -324,6 +324,12 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
             up, vp = match[u].to(device), match[v].to(device)
+
+            for u_val, v_val in zip(u, v):
+                assert not (0 <= u_val < K_values[0] and K_values[0] <= v_val < sum(
+                    K_values[:2])), "Unwanted connection found! after pairing matrix"
+                assert not (K_values[0] <= u_val < sum(K_values[:2]) and 0 <= v_val < K_values[
+                    0]), "Unwanted connection found! after pairing matrix"
 
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
@@ -373,6 +379,14 @@ class LineVectorizer(nn.Module):
 
             #sample lines
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
+
+            for u_val, v_val in zip(u, v):
+                assert not (0 <= u_val < K_values[0] and K_values[0] <= v_val < sum(
+                    K_values[:2])), "Unwanted connection found! after sampling"
+                assert not (K_values[0] <= u_val < sum(K_values[:2]) and 0 <= v_val < K_values[
+                    0]), "Unwanted connection found! after sampling"
+
+
             # print("u.shape:", u.shape, "v.shape:", v.shape)
             # print("Max value in u:", u.max().item())
             # print("Max value in v:", v.max().item())
