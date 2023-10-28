@@ -236,7 +236,7 @@ class LineVectorizer(nn.Module):
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            K_values = [150, 150] + [10] * 32
+            K_values = [200, 200] + [15] * 32
             assert len(K_values) == n_type
             scores = []
             indices = []
@@ -412,21 +412,22 @@ class LineVectorizer(nn.Module):
             return line, label, jcs, jtype
 
 
-def non_maximum_suppression(a):
-    a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
-    ap = F.max_pool2d(a, 3, stride=1, padding=1)
-    keep = (a == ap).float()
-    a = a.view(a.shape[0], -1)  # Flatten it back after processing
-    return a * keep.view(keep.shape[0], -1)
 # def non_maximum_suppression(a):
-#     original_shape = a.shape
-#     # Reshape tensor to [1, n_type, 256, 256]
-#     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-#     # Apply 3D max pooling across the layers and spatial dimensions
-#     ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+#     a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
+#     ap = F.max_pool2d(a, 3, stride=1, padding=1)
 #     keep = (a == ap).float()
-#     a = a.view(original_shape[0], -1)  # Flatten it back after processing
-#     return a * keep.view(original_shape[0], -1)
+#     a = a.view(a.shape[0], -1)  # Flatten it back after processing
+#     return a * keep.view(keep.shape[0], -1)
+
+def non_maximum_suppression(a):
+    original_shape = a.shape
+    # Reshape tensor to [1, n_type, 256, 256]
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    # Apply 3D max pooling across the layers and spatial dimensions
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+    keep = (a == ap).float()
+    a = a.view(original_shape[0], -1)  # Flatten it back after processing
+    return a * keep.view(original_shape[0], -1)
 
 
 class Bottleneck1D(nn.Module):
