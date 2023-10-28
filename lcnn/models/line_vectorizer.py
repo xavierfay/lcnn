@@ -285,23 +285,23 @@ class LineVectorizer(nn.Module):
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
-            if mode == "testing":
-                match = (match - 1).clamp(min=0)
+            # if mode == "testing":
+            #     match = (match - 1).clamp(min=0)
 
-            # # paring matrix:
-            # pairing_matrix = np.ones((n_type, n_type), dtype=int)
-            # # Modify the matrix based on the described pattern
-            # pairing_matrix[1, 2] = 0
-            # pairing_matrix[2, :2] = 0
+            # paring matrix:
+            pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            # Modify the matrix based on the described pattern
+            pairing_matrix[1, 2] = 0
+            pairing_matrix[2, :2] = 0
 
-            pairing_matrix = np.zeros((n_type, n_type), dtype=int)
-            # Second row
-            pairing_matrix[1, 1] = 1
-            pairing_matrix[1, 3:] = 1
-            # Third row
-            pairing_matrix[2, 3:] = 1
-            # All other rows from fourth onwards
-            pairing_matrix[3:, 1:] = 1
+            # pairing_matrix = np.zeros((n_type, n_type), dtype=int)
+            # # Second row
+            # pairing_matrix[1, 1] = 1
+            # pairing_matrix[1, 3:] = 1
+            # # Third row
+            # pairing_matrix[2, 3:] = 1
+            # # All other rows from fourth onwards
+            # pairing_matrix[3:, 1:] = 1
 
             u, v = [], []
             for i in range(n_type):
