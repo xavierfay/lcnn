@@ -311,9 +311,10 @@ class Trainer(object):
             imshow(img)
 
             if len(lines) > 0 and not (lines[0] == 0).all():
+                printed_count = 0
                 # print("This is the shape of lines", lines.shape)
                 for i, ((a, b), s) in enumerate(zip(lines, sline)):
-                    printed_count = 0
+
                     line_type = np.argmax(s)
                     if i > 0 and (lines[i] == lines[0]).all():
                         print("broken because double line")
