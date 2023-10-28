@@ -365,6 +365,7 @@ class Trainer(object):
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("vecl target max", np.max(lpre_label), lpre_label)
         vecl_result = result["lines"][i].cpu().numpy() * 4
+        print("lines in trainer:",vecl_result.shape, vecl_result[1]
         #print("results for lines",vecl_result.shape, vecl_result[1])
         score = result["score"][i].cpu().numpy()
         #print("score =", np.max(score), score)
