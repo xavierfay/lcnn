@@ -338,9 +338,9 @@ class Trainer(object):
                 for i, j in enumerate(juncs):
                     if i > 0 and (i == juncs[0]).all():
                         break
-                    if jtyp[i] == 1:
+                    if jtyp[i] == 0:
                         plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
-                    elif jtyp[i] == 2:
+                    elif jtyp[i] == 1:
                         plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
                     else:
                         # add plot with number from jtype
