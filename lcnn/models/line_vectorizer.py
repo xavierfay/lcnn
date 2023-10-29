@@ -330,13 +330,13 @@ class LineVectorizer(nn.Module):
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    if i == 0 and j == 0:  # Only consider the first layer
-                        u_i, v_i = torch.meshgrid(
-                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                        )
-                        u.append(u_i.flatten())
-                        v.append(v_i.flatten())
+
+                    u_i, v_i = torch.meshgrid(
+                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                    )
+                    u.append(u_i.flatten())
+                    v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
