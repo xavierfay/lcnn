@@ -414,7 +414,7 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             # filter out small lines
-            THRESHOLD_VALUE = 10
+            THRESHOLD_VALUE = 3
             distances_squared = ((xyu - xyv) ** 2).sum(dim=-1)
             squared_distance_threshold = THRESHOLD_VALUE ** 2  # Set THRESHOLD_VALUE to your desired threshold
             valid_line_indices = (distances_squared > squared_distance_threshold).nonzero().squeeze()
