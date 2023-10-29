@@ -350,9 +350,9 @@ class LineVectorizer(nn.Module):
             # )
 
 
-            # Filter out unwanted connections
-            u = u[~unwanted_mask]
-            v = v[~unwanted_mask]
+            # # Filter out unwanted connections
+            # u = u[~unwanted_mask]
+            # v = v[~unwanted_mask]
 
             #u = u[u<xy.size(0)]
             #v = v[v<xy.size(0)]
