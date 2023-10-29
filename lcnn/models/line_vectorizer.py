@@ -335,10 +335,10 @@ class LineVectorizer(nn.Module):
             max_size = max([s.size(0) for s in scores])
 
             # Pad each tensor in scores and indices lists to match the max_size
-            # padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=-1) for s in scores]
-            # padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=-1) for idx in indices]
-            padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
-            padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
+            padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=-1) for s in scores]
+            padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=-1) for idx in indices]
+            # padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
+            # padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
 
             # Convert lists to tensors for further processing
             score = torch.stack(padded_scores)
@@ -417,7 +417,7 @@ class LineVectorizer(nn.Module):
             #v = v[v<xy.size(0)]
 
 
-
+            print( "match values", match.max(), match.min())
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
