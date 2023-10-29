@@ -255,7 +255,7 @@ class LineVectorizer(nn.Module):
                 # Calculate the number of values above the threshold for the current layer
                 above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 if mode != "training":
-                    K = min(int(above_threshold)+3, current_max_K)
+                    K = min(int(above_threshold)+4, current_max_K)
                 # if mode != "training":
                 #     K = current_max_K
                 else:
@@ -320,21 +320,21 @@ class LineVectorizer(nn.Module):
             # # match[cost > 0.5] = N
             # match = match.flatten()
 
-            pairing_matrix = np.ones((n_type, n_type), dtype=int)
-            # Modify the matrix based on the described pattern
-            pairing_matrix[0, 1] = 0
-            pairing_matrix[1, :2] = 0
+            # pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            # # Modify the matrix based on the described pattern
+            # pairing_matrix[0, 1] = 0
+            # pairing_matrix[1, :2] = 0
 
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    if pairing_matrix[i][j]:  # Check if the pairing is allowed
-                        u_i, v_i = torch.meshgrid(
-                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                        )
-                        u.append(u_i.flatten())
-                        v.append(v_i.flatten())
+
+                    u_i, v_i = torch.meshgrid(
+                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                    )
+                    u.append(u_i.flatten())
+                    v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
