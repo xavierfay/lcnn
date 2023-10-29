@@ -408,6 +408,9 @@ class LineVectorizer(nn.Module):
             #u = u[u<xy.size(0)]
             #v = v[v<xy.size(0)]
 
+            assert (u < xy.size(0)).all(), "Some values in 'u' are larger than the length of 'xy'"
+            assert (v < xy.size(0)).all(), "Some values in 'v' are larger than the length of 'xy'"
+
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
