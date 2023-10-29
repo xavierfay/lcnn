@@ -250,7 +250,7 @@ class LineVectorizer(nn.Module):
             jmap = combined_nms(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            K_values = [150, 150] + [15] * 32
+            K_values = [180, 180] + [15] * 32
             assert len(K_values) == n_type
             scores = []
             indices = []
@@ -283,7 +283,7 @@ class LineVectorizer(nn.Module):
 
             # Convert updated_K_values to the same type as K_values (assuming K_values is a list of integers)
             K_values = [int(k) for k in updated_K_values]
-            print(K_values)
+
 
             max_size = max([s.size(0) for s in scores])
 
@@ -308,17 +308,17 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, -1)
 
             # For the first two layers, match separately
-            # for t in range(n_type):
-            #     # For the first two layers, only match with the same layer
-            #     if t < 2:
-            #         mask = jtyp[match[t]] != t
-            #     # For the remaining layers, match with any layer from 2 to n_type
-            #     else:
-            #         mask = jtyp[match[t]] < 2
-            #     match[t, mask] = N
-
             for t in range(n_type):
-                match[t, jtyp[match[t]] != t] = N
+                # For the first two layers, only match with the same layer
+                if t < 2:
+                    mask = jtyp[match[t]] != t
+                # For the remaining layers, match with any layer from 2 to n_type
+                else:
+                    mask = jtyp[match[t]] < 2
+                match[t, mask] = N
+
+            # for t in range(n_type):
+            #     match[t, jtyp[match[t]] != t] = N
 
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
@@ -327,16 +327,21 @@ class LineVectorizer(nn.Module):
             # # match[cost > 0.5] = N
             # match = match.flatten()
 
+            pairing_matrix = np.ones((n_type, n_type), dtype=int)
+            # Modify the matrix based on the described pattern
+            pairing_matrix[0, 1] = 0
+            pairing_matrix[1, :2] = 0
+
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-
-                    u_i, v_i = torch.meshgrid(
-                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                    )
-                    u.append(u_i.flatten())
-                    v.append(v_i.flatten())
+                    if pairing_matrix[i][j]:  # Check if the pairing is allowed
+                        u_i, v_i = torch.meshgrid(
+                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                        )
+                        u.append(u_i.flatten())
+                        v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
@@ -440,7 +445,7 @@ class LineVectorizer(nn.Module):
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
                     jcs_list.append(subset)
-                    jtype_list.extend([i + 1] * len(subset))
+                    jtype_list.extend([i] * len(subset))
 
             # Create flattened jcs tensor and jtype tensor
             jcs = torch.cat(jcs_list, dim=0)
