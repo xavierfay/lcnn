@@ -103,15 +103,15 @@ class LineVectorizer(nn.Module):
         if input_dict["mode"] != "training":
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
-            cond1 = s[:, 0] < 0.25
-            cond2 = s[:, 1] > 0.25
-            cond3 = s[:, 2] > 0.25
-            cond4 = s[:, 3] > 0.25
+            # cond1 = s[:, 0] < 0.25
+            # cond2 = s[:, 1] > 0.25
+            # cond3 = s[:, 2] > 0.25
+            # cond4 = s[:, 3] > 0.25
+            #
+            # b = (cond2 | cond3 | cond4) & cond1
 
-            b = (cond2 | cond3 | cond4) & cond1
-
-            # cond1 = s[:, 0] > 0.99
-            # b = cond1
+            cond1 = s[:, 0] > 0.99
+            b = cond1
 
             lines = []
             score = []
