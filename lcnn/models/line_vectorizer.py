@@ -346,6 +346,7 @@ class LineVectorizer(nn.Module):
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
+
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
@@ -368,7 +369,9 @@ class LineVectorizer(nn.Module):
             #     match[t, jtyp[match[t]] != t] = N
 
             match[cost > 1.5 * 1.5] = N
+            print("match shape before flatten",match.shape)
             match = match.flatten()
+            print("match shape after flatten", match.shape)
 
             # match[cost > 1.5 * 1.5] = N
             # # match[cost > 0.5] = N
@@ -394,6 +397,8 @@ class LineVectorizer(nn.Module):
             u = [ui.to(device) for ui in u]
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
+
+            print("u shape", u.shape, "v shape", v.shape)
 
             # unwanted_mask = (
             #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
