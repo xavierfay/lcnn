@@ -136,15 +136,15 @@ class LineVectorizer(nn.Module):
 
                     print("shape p0", p0.shape)
                     # Assuming p0 is of shape [N, 4] with each row as [x_start, y_start, x_end, y_end]
-                    for i in range(p0.shape[0]):
-                        # For each line, check if the start point is greater than the end point
-                        if (p0[i, 0] > p0[i, 2]) or (p0[i, 0] == p0[i, 2] and p0[i, 1] > p0[i, 3]):
-                            # Swap start and end points
-                            p0[i, [0, 1, 2, 3]] = p0[i, [2, 3, 0, 1]]
+                    # Ensure start point is lexicographically smaller than end point
+                    mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
+                    p0[mask] = torch.flip(p0[mask], [1])
 
-                    # Sort the tensor based on the line representation
-                    _, indices = p0.sort(dim=0)
-                    p0 = p0[indices]
+                    # Sort the tensor
+                    p0_sorted, _ = p0.sort(dim=0)
+
+                    # Use torch.unique to get unique lines
+                    p0_unique = torch.unique(p0_sorted, dim=0)
 
                     # Use torch.unique to get unique lines
                     p0_unique = torch.unique(p0, dim=0)
