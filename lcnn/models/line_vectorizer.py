@@ -120,37 +120,34 @@ class LineVectorizer(nn.Module):
             lines = []
             score = []
 
+            # ... [previous code]
+
             for i in range(n_batch):
                 p0 = p[idx[i]: idx[i + 1]]
                 s0 = s[idx[i]: idx[i + 1]]
                 mask = b[idx[i]: idx[i + 1]]
                 p0 = p0[mask]
                 s0 = s0[mask]
+
                 if len(p0) == 0:
                     lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
                     score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
                 else:
-                    max_score_indices = torch.argmax(s0, dim=1)
-                    arg = torch.argsort(max_score_indices, descending=True)
-                    p0, s0 = p0[arg], s0[arg]
-
-                    # Assuming p0 is of shape [N, 4] with each row as [x_start, y_start, x_end, y_end]
                     # Ensure start point is lexicographically smaller than end point
                     mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
                     p0[mask] = torch.flip(p0[mask], [1])
 
-                    # Sort the tensor
-                    p0_sorted, _ = p0.sort(dim=0)
+                    # Get unique lines and their indices
+                    p0_unique, unique_indices = torch.unique(p0, dim=0, return_inverse=True)
 
-                    # Use torch.unique to get unique lines
-                    p0_unique = torch.unique(p0_sorted, dim=0)
+                    # Use the unique indices to gather the corresponding scores
+                    s0_unique = s0[unique_indices]
 
-                    # Use torch.unique to get unique lines
-                    p0_unique = torch.unique(p0, dim=0)
-
+                    # Now, both p0_unique and s0_unique are aligned and free of duplicates
                     print("shape p0", p0.shape, "unique shape", p0_unique.shape)
+
                     lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
-                    score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
+                    score.append(s0_unique[None, torch.arange(M.n_out_line) % len(s0_unique)])
                 if len(jcs[i]) == 0:
                     jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
                     jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
@@ -321,7 +318,7 @@ class LineVectorizer(nn.Module):
                 mask = jtyp[match[t]] != t  # Generate a mask for the current layer 't'
                 combined_match[t - 2, mask] = N  # Apply the mask to the corresponding slice of 'combined_match'
 
-            match [2:] = combined_match
+            match[2:] = combined_match
 
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
