@@ -104,9 +104,9 @@ class LineVectorizer(nn.Module):
             p = torch.cat(ps)
             s = torch.softmax(x, -1)
             cond1 = s[:, 0] < 0.25
-            cond2 = s[:, 1] > 0.5
-            cond3 = s[:, 2] > 0.5
-            cond4 = s[:, 3] > 0.5
+            cond2 = s[:, 1] > 0.25
+            cond3 = s[:, 2] > 0.25
+            cond4 = s[:, 3] > 0.25
 
             # s_arg = torch.argmax(s, dim=1)
             #
@@ -320,23 +320,23 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
 
-            match[cost > 4 * 4] = N
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             # match[cost > 1.5 * 1.5] = N
             # # match[cost > 0.5] = N
             # match = match.flatten()
 
-
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-                    u_i, v_i = torch.meshgrid(
-                        torch.arange(i * K_values[i], (i + 1) * K_values[i]),
-                        torch.arange(j * K_values[j], (j + 1) * K_values[j])
-                    )
-                    u.append(u_i.flatten())
-                    v.append(v_i.flatten())
+                    if i == 0 and j == 0:  # Only consider the first layer
+                        u_i, v_i = torch.meshgrid(
+                            torch.arange(i * K_values[i], (i + 1) * K_values[i]),
+                            torch.arange(j * K_values[j], (j + 1) * K_values[j])
+                        )
+                        u.append(u_i.flatten())
+                        v.append(v_i.flatten())
 
 
             u = [ui.to(device) for ui in u]
