@@ -270,6 +270,7 @@ class LineVectorizer(nn.Module):
                         continue  # Skip if no valid indices for this type
                     K = current_max_K
                 else:
+                    valid_indices = torch.arange(jmap[i].shape[0])  # Using all indices in training mode
                     K = min(int(N * 2 + 2), current_max_K)
 
                 # Ensure a minimum value for K
@@ -416,6 +417,16 @@ class LineVectorizer(nn.Module):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
             xyu, xyv = xy[u].to(device), xy[v].to(device)
+
+            # filter out small lines
+            THRESHOLD_VALUE = 2
+            distances_squared = ((xyu - xyv) ** 2).sum(dim=-1)
+            squared_distance_threshold = THRESHOLD_VALUE ** 2  # Set THRESHOLD_VALUE to your desired threshold
+            valid_line_indices = (distances_squared > squared_distance_threshold).nonzero().squeeze()
+
+            u, v = u[valid_line_indices], v[valid_line_indices]
+            scalar_labels = scalar_labels[valid_line_indices]
+            xyu, xyv = xyu[valid_line_indices], xyv[valid_line_indices]
 
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
