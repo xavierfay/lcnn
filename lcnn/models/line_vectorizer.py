@@ -195,15 +195,15 @@ class LineVectorizer(nn.Module):
 
             y = torch.argmax(y, dim=1)
 
-            if input_dict["mode"] != "training":
-                count = torch.bincount(y)
-                unique_values = torch.unique(y)
-                print("values of labels",unique_values, count)
+            # if input_dict["mode"] != "training":
+            count = torch.bincount(y)
+            unique_values = torch.unique(y)
+            print("values of labels",unique_values, count)
 
-                x_class = torch.argmax(x, dim=1)
-                count = torch.bincount(x_class)
-                unique_values = torch.unique(x_class)
-                print("values of pred", unique_values, count)
+            x_class = torch.argmax(x, dim=1)
+            count = torch.bincount(x_class)
+            unique_values = torch.unique(x_class)
+            print("values of pred", unique_values, count)
 
             loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
