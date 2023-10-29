@@ -262,7 +262,7 @@ class LineVectorizer(nn.Module):
                 # Calculate the number of values above the threshold for the current layer
                 above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 if mode != "training":
-                    K = min(int(above_threshold)+2, current_max_K)
+                    K = min(int(above_threshold)+3, current_max_K)
                 # if mode != "training":
                 #     K = current_max_K
                 else:
@@ -320,7 +320,7 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, jtyp[match[t]] != t] = N
 
-            match[cost > 3 * 3] = N
+            match[cost > 4 * 4] = N
             match = match.flatten()
 
             # match[cost > 1.5 * 1.5] = N
@@ -331,7 +331,6 @@ class LineVectorizer(nn.Module):
             u, v = [], []
             for i in range(n_type):
                 for j in range(n_type):
-
                     u_i, v_i = torch.meshgrid(
                         torch.arange(i * K_values[i], (i + 1) * K_values[i]),
                         torch.arange(j * K_values[j], (j + 1) * K_values[j])
@@ -344,14 +343,11 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-
-
             # unwanted_mask = (
             #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
             #         ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
             #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
             # )
-
 
             # # Filter out unwanted connections
             # u = u[~unwanted_mask]
@@ -422,7 +418,7 @@ class LineVectorizer(nn.Module):
             squared_distance_threshold = THRESHOLD_VALUE ** 2  # Set THRESHOLD_VALUE to your desired threshold
             valid_line_indices = (distances_squared > squared_distance_threshold).nonzero().squeeze()
 
-            u, v = u[valid_line_indices], v[valid_line_indices]
+            #u, v = u[valid_line_indices], v[valid_line_indices]
             scalar_labels = scalar_labels[valid_line_indices]
             xyu, xyv = xyu[valid_line_indices], xyv[valid_line_indices]
 
