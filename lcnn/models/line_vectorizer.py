@@ -262,7 +262,7 @@ class LineVectorizer(nn.Module):
                 # Calculate the number of values above the threshold for the current layer
                 above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 if mode != "training":
-                    K = min(int(above_threshold)+1, current_max_K)
+                    K = min(int(above_threshold)+2, current_max_K)
                 # if mode != "training":
                 #     K = current_max_K
                 else:
@@ -308,16 +308,19 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, -1)
 
             # For the first two layers, match separately
-            for t in range(n_type):
-                # For the first two layers, only match with the same layer
-                if t < 2:
-                    mask = jtyp[match[t]] != t
-                # For the remaining layers, match with any layer from 2 to n_type
-                else:
-                    mask = jtyp[match[t]] < 2
-                match[t, mask] = N
+            # for t in range(n_type):
+            #     # For the first two layers, only match with the same layer
+            #     if t < 2:
+            #         mask = jtyp[match[t]] != t
+            #     # For the remaining layers, match with any layer from 2 to n_type
+            #     else:
+            #         mask = jtyp[match[t]] < 2
+            #     match[t, mask] = N
 
-            match[cost > 1.5 * 1.5] = N
+            for t in range(n_type):
+                match[t, jtyp[match[t]] != t] = N
+
+            match[cost > 3 * 3] = N
             match = match.flatten()
 
             # match[cost > 1.5 * 1.5] = N
