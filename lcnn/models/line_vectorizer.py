@@ -260,11 +260,11 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
-                # if mode != "training":
-                #     K = min(int(above_threshold), current_max_K)
+                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 if mode != "training":
-                    K = current_max_K
+                    K = min(int(above_threshold)+3, current_max_K)
+                # if mode != "training":
+                #     K = current_max_K
                 else:
                     K = min(int(N * 2 + 2), current_max_K)
 
@@ -278,7 +278,6 @@ class LineVectorizer(nn.Module):
                 scores.append(score)
                 indices.append(index)
 
-            print("scores", len(scores))
             while len(updated_K_values) < len(K_values):
                 updated_K_values.append(K_values[len(updated_K_values)])
 
@@ -415,7 +414,7 @@ class LineVectorizer(nn.Module):
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             # filter out small lines
-            THRESHOLD_VALUE = 2
+            THRESHOLD_VALUE = 10
             distances_squared = ((xyu - xyv) ** 2).sum(dim=-1)
             squared_distance_threshold = THRESHOLD_VALUE ** 2  # Set THRESHOLD_VALUE to your desired threshold
             valid_line_indices = (distances_squared > squared_distance_threshold).nonzero().squeeze()
