@@ -137,7 +137,8 @@ def main():
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
-    scaler = GradScaler()
+    if M.use_half:
+        scaler = GradScaler()
 
     # 3. optimizer
     if C.optim.name == "Adam":
