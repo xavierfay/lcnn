@@ -468,7 +468,7 @@ def nms_3d(a):
 
     # For multiple layers, apply 3D NMS
     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 2, 2))
+    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
     keep = (a == ap).float()
     return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
 
