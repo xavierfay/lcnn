@@ -340,12 +340,12 @@ class Trainer(object):
                         break
                     if jtyp[i] == 1:
                         plt.scatter(j[1], j[0], c="red", s=64, zorder=100)
-                    elif jtyp[i] == 2:
-                        plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
-                    else:
-                        # add plot with number from jtype
-                        plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
-                        plt.text(j[1] + 10, j[0], str(jtyp[i]), color="black", fontsize=12, zorder=200)
+                    # elif jtyp[i] == 2:
+                    #     plt.scatter(j[1], j[0], c="yellow", s=64, zorder=100)
+                    # else:
+                    #     # add plot with number from jtype
+                    #     plt.scatter(j[1], j[0], c="blue", s=64, zorder=100)
+                    #     plt.text(j[1] + 10, j[0], str(jtyp[i]), color="black", fontsize=12, zorder=200)
 
             # Display a dummy colorbar for the line colors
             dummy_image = np.array([[0, 1]])  # 2D image with values 0 and 1
