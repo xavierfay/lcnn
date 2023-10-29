@@ -29,7 +29,8 @@ class Trainer(object):
             model = model.half()
         self.model = model
         self.optim = optimizer
-        self.scaler = GradScaler()
+        if M.use_half:
+            self.scaler = GradScaler()
 
         self.train_loader = train_loader
         self.val_loader = val_loader
@@ -147,7 +148,11 @@ class Trainer(object):
                         input_dict["target"] = input_dict["target"].half()
 
                 # Using autocast for the forward pass
-                with autocast():
+                if M.use_half:
+                    with autocast():
+                        result = self.model(input_dict)
+                        H = result["preds"]
+                else:
                     result = self.model(input_dict)
                     H = result["preds"]
 
@@ -212,7 +217,11 @@ class Trainer(object):
                 if torch.is_tensor(input_dict["target"]):
                     input_dict["target"] = input_dict["target"].half()
 
-            with autocast():
+            if M.use_half:
+                with autocast():
+                    result = self.model(input_dict)
+                    loss = self._loss(result)
+            else:
                 result = self.model(input_dict)
                 loss = self._loss(result)
 
