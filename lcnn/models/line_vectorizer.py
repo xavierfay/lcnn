@@ -408,8 +408,7 @@ class LineVectorizer(nn.Module):
             #u = u[u<xy.size(0)]
             #v = v[v<xy.size(0)]
 
-            assert (u > xy.size(0)).all(), "Some values in 'u' are larger than the length of 'xy'"
-            assert (v > xy.size(0)).all(), "Some values in 'v' are larger than the length of 'xy'"
+
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
@@ -465,6 +464,10 @@ class LineVectorizer(nn.Module):
             for i in range(n_type):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
+
+            assert (u > xy.size(0)).all(), "Some values in 'u' are larger than the length of 'xy'"
+            assert (v > xy.size(0)).all(), "Some values in 'v' are larger than the length of 'xy'"
+
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
             # filter out small lines
