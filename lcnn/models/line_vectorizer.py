@@ -110,7 +110,7 @@ class LineVectorizer(nn.Module):
             #
             # b = (cond2 | cond3 | cond4) & cond1
 
-            cond1 = s[:, 0] > 0.99
+            cond1 = s[:, 0] > 0.5
             b = cond1
 
             lines = []
