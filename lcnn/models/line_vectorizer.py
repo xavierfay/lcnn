@@ -133,7 +133,21 @@ class LineVectorizer(nn.Module):
                     max_score_indices = torch.argmax(s0, dim=1)
                     arg = torch.argsort(max_score_indices, descending=True)
                     p0, s0 = p0[arg], s0[arg]
-                    print("shape p0", p0.shape)
+                    # Assuming p0 is of shape [N, 4] with each row as [x_start, y_start, x_end, y_end]
+                    for i in range(p0.shape[0]):
+                        # For each line, check if the start point is greater than the end point
+                        if (p0[i, 0] > p0[i, 2]) or (p0[i, 0] == p0[i, 2] and p0[i, 1] > p0[i, 3]):
+                            # Swap start and end points
+                            p0[i, [0, 1, 2, 3]] = p0[i, [2, 3, 0, 1]]
+
+                    # Sort the tensor based on the line representation
+                    _, indices = p0.sort(dim=0)
+                    p0 = p0[indices]
+
+                    # Use torch.unique to get unique lines
+                    p0_unique = torch.unique(p0, dim=0)
+
+                    print("shape p0", p0.shape, p0_unique.shape)
                     lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
                 if len(jcs[i]) == 0:
@@ -345,8 +359,8 @@ class LineVectorizer(nn.Module):
             u = u[~unwanted_mask]
             v = v[~unwanted_mask]
 
-            u = u[u<xy.size(0)]
-            v = v[v<xy.size(0)]
+            #u = u[u<xy.size(0)]
+            #v = v[v<xy.size(0)]
 
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
