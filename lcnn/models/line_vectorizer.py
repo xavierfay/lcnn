@@ -335,8 +335,10 @@ class LineVectorizer(nn.Module):
             max_size = max([s.size(0) for s in scores])
 
             # Pad each tensor in scores and indices lists to match the max_size
-            padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=-1) for s in scores]
-            padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=-1) for idx in indices]
+            # padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=-1) for s in scores]
+            # padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=-1) for idx in indices]
+            padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
+            padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
 
             # Convert lists to tensors for further processing
             score = torch.stack(padded_scores)
@@ -370,9 +372,9 @@ class LineVectorizer(nn.Module):
 
             # match: [N_TYPE, K]
             match[cost > 1.5 * 1.5] = N
-            print("match shape before flatten",match.shape)
+            #print("match shape before flatten",match.shape)
             match = match.flatten()
-            print("match shape after flatten", match.shape)
+            #print("match shape after flatten", match.shape)
 
             # match[cost > 1.5 * 1.5] = N
             # # match[cost > 0.5] = N
@@ -399,7 +401,7 @@ class LineVectorizer(nn.Module):
             v = [vi.to(device) for vi in v]
             u, v = torch.cat(u).to(device), torch.cat(v).to(device)
 
-            print("u shape", u.shape, "v shape", v.shape)
+            #print("u shape", u.shape, "v shape", v.shape)
 
             # unwanted_mask = (
             #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
