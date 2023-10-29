@@ -366,8 +366,8 @@ class LineVectorizer(nn.Module):
                 c = torch.zeros_like(scalar_labels, dtype=torch.bool)
 
                 # Sample negative Lines (Class 0)
-                #cdx = Lneg[up, vp].nonzero().flatten()
-                cdx = (scalar_labels == 0).nonzero().flatten()
+                cdx = Lneg[up, vp].nonzero().flatten()
+                #cdx = (scalar_labels == 0).nonzero().flatten()
                 if len(cdx) > M.n_dyn_negl:
                     # print("too many negative lines")
                     perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]

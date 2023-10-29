@@ -37,7 +37,7 @@ model:
   n_stc_posl0: 100
   n_stc_posl1: 200
   n_stc_posl2: 200
-  n_stc_negl: 80
+  n_stc_negl: 200
 
   ## dynamic sampler
   n_dyn_junc: 800
