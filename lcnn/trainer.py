@@ -221,21 +221,21 @@ class Trainer(object):
                 with autocast():
                     result = self.model(input_dict)
                     loss = self._loss(result)
+                    self.scaler.scale(loss).backward()
+                    self.scaler.step(self.optim)
+                    self.scaler.update()
+                    self.optim.zero_grad()
             else:
                 result = self.model(input_dict)
                 loss = self._loss(result)
+                loss.backward()
+                self.optim.step()
 
             if np.isnan(loss.item()):
                 print("loss is nan while training")
 
             wandb.log({"grad_norm": torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1)},
                       step=self.iteration)
-
-            # Backward pass and optimizer step with scaler
-            self.scaler.scale(loss).backward()
-            self.scaler.step(self.optim)
-            self.scaler.update()
-            self.optim.zero_grad()
 
             if self.avg_metrics is None:
                 self.avg_metrics = self.metrics
