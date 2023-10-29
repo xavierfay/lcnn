@@ -67,7 +67,7 @@ model:
   use_half: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.1
 
 optim:
   name: Adam

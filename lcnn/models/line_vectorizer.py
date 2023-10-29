@@ -247,7 +247,7 @@ class LineVectorizer(nn.Module):
             n_type = jmap.shape[0]
             N = len(junc)
             device = jmap.device
-            jmap = apply_nms_across_layers(jmap).reshape(n_type, -1)
+            jmap = combined_nms(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
             K_values = [150, 150] + [15] * 32
@@ -262,7 +262,7 @@ class LineVectorizer(nn.Module):
                 # Calculate the number of values above the threshold for the current layer
                 above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 if mode != "training":
-                    K = min(int(above_threshold)+3, current_max_K)
+                    K = min(int(above_threshold)+1, current_max_K)
                 # if mode != "training":
                 #     K = current_max_K
                 else:
@@ -307,22 +307,22 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            # # For the first two layers, match separately
-            # for t in range(n_type):
-            #     # For the first two layers, only match with the same layer
-            #     if t < 2:
-            #         mask = jtyp[match[t]] != t
-            #     # For the remaining layers, match with any layer from 2 to n_type
-            #     else:
-            #         mask = jtyp[match[t]] < 2
-            #     match[t, mask] = N
-            #
-            # match[cost > 1.5 * 1.5] = N
-            # match = match.flatten()
+            # For the first two layers, match separately
+            for t in range(n_type):
+                # For the first two layers, only match with the same layer
+                if t < 2:
+                    mask = jtyp[match[t]] != t
+                # For the remaining layers, match with any layer from 2 to n_type
+                else:
+                    mask = jtyp[match[t]] < 2
+                match[t, mask] = N
 
             match[cost > 1.5 * 1.5] = N
-            # match[cost > 0.5] = N
             match = match.flatten()
+
+            # match[cost > 1.5 * 1.5] = N
+            # # match[cost > 0.5] = N
+            # match = match.flatten()
 
 
             u, v = [], []
@@ -343,11 +343,11 @@ class LineVectorizer(nn.Module):
 
 
 
-            unwanted_mask = (
-                    ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
-                    ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
-                    ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
-            )
+            # unwanted_mask = (
+            #         ((u < K_values[0]) & (v >= K_values[0]) & (v < sum(K_values[:2]))) |
+            #         ((v < K_values[0]) & (u >= K_values[0]) & (u < sum(K_values[:2]))) |
+            #         ((u >= K_values[0]) & (u < sum(K_values[:2])) & (v >= K_values[0]) & (v < sum(K_values[:2])))
+            # )
 
 
             # Filter out unwanted connections
@@ -458,43 +458,43 @@ def nms_2d(a):
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
     keep = (a == ap).float()
     return (a * keep).squeeze(1)  # Ensure it's [number_of_layers, 256, 256]
-#
-# def nms_3d(a):
-#     original_shape = a.shape
-#     # If there's only one layer, just apply 2D NMS
-#     if original_shape[0] == 1:
-#         return nms_2d(a)
-#
-#     # For multiple layers, apply 3D NMS
-#     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-#     ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
-#     keep = (a == ap).float()
-#     return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
-#
-#
-#
-# def combined_nms(jmap):
-#     # Split the tensor into two parts
-#     first_two_layers = jmap[:2]
-#     rest_layers = jmap[2:]
-#
-#     # Apply NMS
-#     nms_first_two = nms_2d(first_two_layers)
-#     nms_rest = nms_3d(rest_layers)
-#
-#     # Concatenate the results
-#     return torch.cat([nms_first_two, nms_rest], dim=0)
 
-def apply_nms_across_layers(jmap):
-    # 1. Apply 2D NMS to each layer
-    nms_layers = torch.stack([nms_2d(layer.unsqueeze(0)) for layer in jmap])
+def nms_3d(a):
+    original_shape = a.shape
+    # If there's only one layer, just apply 2D NMS
+    if original_shape[0] == 1:
+        return nms_2d(a)
 
-    # 2. For each spatial location (i, j) keep only the maximum value point
-    max_values, _ = torch.max(nms_layers, dim=0, keepdim=True)  # Find max values across layers
-    mask = (nms_layers == max_values).float()  # Create a mask where the layer has the max value
-    nms_result = nms_layers * mask  # Zero out all values except the max ones
+    # For multiple layers, apply 3D NMS
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
+    keep = (a == ap).float()
+    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
 
-    return nms_result.squeeze()
+
+
+def combined_nms(jmap):
+    # Split the tensor into two parts
+    first_two_layers = jmap[:2]
+    rest_layers = jmap[2:]
+
+    # Apply NMS
+    nms_first_two = nms_2d(first_two_layers)
+    nms_rest = nms_3d(rest_layers)
+
+    # Concatenate the results
+    return torch.cat([nms_first_two, nms_rest], dim=0)
+
+# def apply_nms_across_layers(jmap):
+#     # 1. Apply 2D NMS to each layer
+#     nms_layers = torch.stack([nms_2d(layer.unsqueeze(0)) for layer in jmap])
+#
+#     # 2. For each spatial location (i, j) keep only the maximum value point
+#     max_values, _ = torch.max(nms_layers, dim=0, keepdim=True)  # Find max values across layers
+#     mask = (nms_layers == max_values).float()  # Create a mask where the layer has the max value
+#     nms_result = nms_layers * mask  # Zero out all values except the max ones
+#
+#     return nms_result.squeeze()
 
 
 
