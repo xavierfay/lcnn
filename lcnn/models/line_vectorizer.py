@@ -303,7 +303,8 @@ class LineVectorizer(nn.Module):
             # For subsequent layers, match them together
             combined_match = match[2:].clone()
             for t in range(2, n_type):
-                combined_match[jtyp[match[t]] != t] = N
+                mask = (jtyp[match[t]] != t).unsqueeze(0)  # Extend the mask's dimension
+                combined_match[mask] = N
 
             match [2:] = combined_match
 
