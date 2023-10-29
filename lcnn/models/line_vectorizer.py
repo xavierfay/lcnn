@@ -277,6 +277,7 @@ class LineVectorizer(nn.Module):
                 if K < 2:
                     K = 2
 
+                valid_indices = valid_indices.to(device)
                 updated_K_values.append(K)
                 # Get top K values and their indices for the current layer
                 score, index = torch.topk(jmap[i][valid_indices], k=K)
