@@ -260,29 +260,23 @@ class LineVectorizer(nn.Module):
                 current_max_K = K_values[i]
 
                 # Calculate the number of values above the threshold for the current layer
-                above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
-                #
+                # above_threshold = (jmap[i] > M.eval_junc_thres).float().sum().item()
                 # if mode != "training":
                 #     K = min(int(above_threshold), current_max_K)
                 if mode != "training":
-                    valid_indices = (jmap[i] > M.eval_junc_thres).nonzero().squeeze()
-                    if valid_indices.numel() == 0:
-                        continue  # Skip if no valid indices for this type
                     K = current_max_K
                 else:
-                    valid_indices = torch.arange(jmap[i].shape[0])  # Using all indices in training mode
                     K = min(int(N * 2 + 2), current_max_K)
 
                 # Ensure a minimum value for K
                 if K < 2:
                     K = 2
 
-                valid_indices = valid_indices.to(device)
                 updated_K_values.append(K)
                 # Get top K values and their indices for the current layer
-                score, index = torch.topk(jmap[i][valid_indices], k=K)
+                score, index = torch.topk(jmap[i], k=K)
                 scores.append(score)
-                indices.append(valid_indices[index])
+                indices.append(index)
 
             print("scores", len(scores))
             while len(updated_K_values) < len(K_values):
