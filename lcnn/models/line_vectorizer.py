@@ -133,6 +133,8 @@ class LineVectorizer(nn.Module):
                     max_score_indices = torch.argmax(s0, dim=1)
                     arg = torch.argsort(max_score_indices, descending=True)
                     p0, s0 = p0[arg], s0[arg]
+
+                    print("shape p0", p0.shape)
                     # Assuming p0 is of shape [N, 4] with each row as [x_start, y_start, x_end, y_end]
                     for i in range(p0.shape[0]):
                         # For each line, check if the start point is greater than the end point
