@@ -134,7 +134,6 @@ class LineVectorizer(nn.Module):
                     arg = torch.argsort(max_score_indices, descending=True)
                     p0, s0 = p0[arg], s0[arg]
 
-                    print("shape p0", p0.shape)
                     # Assuming p0 is of shape [N, 4] with each row as [x_start, y_start, x_end, y_end]
                     # Ensure start point is lexicographically smaller than end point
                     mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
@@ -149,8 +148,8 @@ class LineVectorizer(nn.Module):
                     # Use torch.unique to get unique lines
                     p0_unique = torch.unique(p0, dim=0)
 
-                    print("shape p0", p0.shape, p0_unique.shape)
-                    lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
+                    print("shape p0", p0.shape, "unique shape", p0_unique.shape)
+                    lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
                     score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
                 if len(jcs[i]) == 0:
                     jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
