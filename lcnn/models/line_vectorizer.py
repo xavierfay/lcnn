@@ -465,8 +465,8 @@ class LineVectorizer(nn.Module):
                 reshaped_xy.append(xy[i, :K_values[i]])
             xy = torch.cat(reshaped_xy, dim=0).to(device)
 
-            assert (u > xy.size(0)).all(), "Some values in 'u' are larger than the length of 'xy'"
-            assert (v > xy.size(0)).all(), "Some values in 'v' are larger than the length of 'xy'"
+            # assert (u > xy.size(0)).all(), "Some values in 'u' are larger than the length of 'xy'"
+            # assert (v > xy.size(0)).all(), "Some values in 'v' are larger than the length of 'xy'"
 
             xyu, xyv = xy[u].to(device), xy[v].to(device)
 
