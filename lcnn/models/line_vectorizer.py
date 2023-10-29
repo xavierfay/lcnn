@@ -297,7 +297,7 @@ class LineVectorizer(nn.Module):
             jmap = combined_nms(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
-            K_values = [180, 180] + [15] * 32
+            K_values = [100, 100] + [10] * 32
             assert len(K_values) == n_type
             scores = []
             indices = []
