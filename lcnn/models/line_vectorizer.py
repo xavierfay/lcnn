@@ -247,6 +247,7 @@ class LineVectorizer(nn.Module):
             n_type = jmap.shape[0]
             N = len(junc)
             device = jmap.device
+            print(jmap.shape)
             jmap = combined_nms(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
             #max_K = M.n_dyn_junc // n_type
@@ -461,10 +462,16 @@ def nms_2d(a):
 
 def nms_3d(a):
     original_shape = a.shape
+    # If there's only one layer, just apply 2D NMS
+    if original_shape[0] == 1:
+        return nms_2d(a)
+
+    # For multiple layers, apply 3D NMS
     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
     ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
     keep = (a == ap).float()
     return a * keep
+
 
 def combined_nms(jmap):
     # Split the tensor into two parts
