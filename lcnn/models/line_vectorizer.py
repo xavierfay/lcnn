@@ -281,6 +281,10 @@ class LineVectorizer(nn.Module):
                 updated_K_values.append(K)
                 # Get top K values and their indices for the current layer
                 score, index = torch.topk(jmap[i][valid_indices], k=K)
+                print("score shape", score.shape)
+                score, index = torch.topk(jmap[i], k=K)
+                print("score shape", score.shape
+
                 scores.append(score)
                 indices.append(valid_indices[index])
 
