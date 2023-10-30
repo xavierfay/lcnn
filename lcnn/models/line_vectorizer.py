@@ -504,7 +504,7 @@ class LineVectorizer(nn.Module):
 
             for i, xy_i in enumerate(xy_splits):
                 score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.00
+                valid_indices = score_i > 0.05
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
@@ -515,19 +515,20 @@ class LineVectorizer(nn.Module):
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
 
-            print(f"Max value in 'u': {u.max()}")
-            print(f"Max value in 'v': {v.max()}")
-            print(f"Size of 'jtype': {jtype.size(0)}")
+            if M.use_jtyp:
+                print(f"Max value in 'u': {u.max()}")
+                print(f"Max value in 'v': {v.max()}")
+                print(f"Size of 'jtype': {jtype.size(0)}")
 
-            # Get the jtype values for the two endpoints of each line
-            jtype_u = jtype[u]
-            jtype_v = jtype[v]
+                # Get the jtype values for the two endpoints of each line
+                jtype_u = jtype[u]
+                jtype_v = jtype[v]
 
-            # Stack the jtype values to have shape (num_chosen_line, 2)
-            jtype_line = torch.stack([jtype_u, jtype_v], dim=1).float()  # Convert to float for consistency with feat
+                # Stack the jtype values to have shape (num_chosen_line, 2)
+                jtype_line = torch.stack([jtype_u, jtype_v], dim=1).float()  # Convert to float for consistency with feat
 
-            u2v = xyu - xyv
-            u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
+                u2v = xyu - xyv
+                u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
 
             feat = torch.cat(
                 [
