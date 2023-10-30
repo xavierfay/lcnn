@@ -120,7 +120,7 @@ class Trainer(object):
 
     def validate(self):
         # tprint("Running validation...", " " * 75)
-        # training = self.model.training
+        training = self.model.training
         # self.model.eval()
         #
         # viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
