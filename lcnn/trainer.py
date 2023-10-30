@@ -199,8 +199,6 @@ class Trainer(object):
     def train_epoch(self):
         self.model.train()
 
-        viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
-        osp.exists(viz) or os.makedirs(viz)
 
 
         time = timer()
@@ -260,6 +258,8 @@ class Trainer(object):
 
 
             if self.iteration % 10 == 0:  # e.g., every 100 iterations
+                viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
+                osp.exists(viz) or os.makedirs(viz)
                 print("plot the results")
                 for i in range(result["preds"]["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i

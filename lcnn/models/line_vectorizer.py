@@ -136,8 +136,8 @@ class LineVectorizer(nn.Module):
                 # Use the unique indices to gather the corresponding scores
                 s0_unique = s0[unique_indices]
 
-                # Now, both p0_unique and s0_unique are aligned and free of duplicates
-                print("shape p0", p0.shape, "unique shape", p0_unique.shape)
+                # # Now, both p0_unique and s0_unique are aligned and free of duplicates
+                # print("shape p0", p0.shape, "unique shape", p0_unique.shape)
 
                 lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
                 score.append(s0_unique[None, torch.arange(M.n_out_line) % len(s0_unique)])
@@ -252,12 +252,12 @@ class LineVectorizer(nn.Module):
             # Print the distribution of labels and predictions
             count = torch.bincount(y)
             unique_values = torch.unique(y)
-            print("values of labels", unique_values, count)
+            #print("values of labels", unique_values, count)
 
             x_class = torch.argmax(x, dim=1)
             count = torch.bincount(x_class)
             unique_values = torch.unique(x_class)
-            print("values of pred", unique_values, count)
+            #print("values of pred", unique_values, count)
 
             loss_per_class = focal_loss_per_class(x, y, class_weights)
 
@@ -417,7 +417,7 @@ class LineVectorizer(nn.Module):
             #v = v[v<xy.size(0)]
 
 
-            print( "match values", match.max(), match.min())
+            #print( "match values", match.max(), match.min())
             up, vp = match[u].to(device), match[v].to(device)
             scalar_labels = Lpos[up, vp]
             scalar_labels = scalar_labels.to(device).long()
