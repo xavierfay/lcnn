@@ -161,7 +161,8 @@ class Trainer(object):
                 for i in range(H["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i
                     np.savez(
-                        f"{npz}/{index:06}.npz",
+                        #f"{npz}/{index:06}.npz",
+                        f"{npz}.npz",
                         **{k: v[i].cpu().numpy() for k, v in H.items()},
                     )
 
