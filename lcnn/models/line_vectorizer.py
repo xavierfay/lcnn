@@ -272,6 +272,8 @@ class LineVectorizer(nn.Module):
                 else:
                     mask = jtyp[match[t]] < 2
                 match[t, mask] = N
+
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             # if mode == "testing":
