@@ -252,6 +252,13 @@ class Trainer(object):
                     + f"| {4 * self.batch_size / (timer() - time):04.1f} "
                 )
                 time = timer()
+
+            if self.iteration % 10 == 0:  # e.g., every 100 iterations
+                for i in range(result["preds"]["jmap"].shape[0]):
+                    index = batch_idx * M.batch_size_eval + i
+                    self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
+
+
             # num_images = self.batch_size * self.iteration
             # if num_images % self.validation_interval == 0 or num_images == 600:
             #     self.validate()
@@ -397,7 +404,7 @@ class Trainer(object):
             if self.epoch == self.lr_decay_epoch:
                 self.optim.param_groups[0]["lr"] /= 10
             self.train_epoch()
-            self.validate()
+            #self.validate()
 
 
 
