@@ -264,8 +264,17 @@ class Trainer(object):
                 for i in range(result["preds"]["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i
                     self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
+                    np.savez(
+                        f"{npz}.npz",
+                        **{k: v[i].cpu().numpy() for k, v in result["preds"].items()},
+                    )
 
                 self._write_metrics(1, loss.item(), "training", do_print=True)
+
+
+
+
+
 
 
             # num_images = self.batch_size * self.iteration

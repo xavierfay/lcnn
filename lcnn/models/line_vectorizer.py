@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 from lcnn.config import M
 
-FEATURE_DIM = 0
+FEATURE_DIM = 8
 
 
 class LineVectorizer(nn.Module):
@@ -52,7 +52,7 @@ class LineVectorizer(nn.Module):
         xs, ys, fs, ps, idx, jcs, jtypes = [], [], [], [], [0], [], []
         for i, meta in enumerate(input_dict["meta"]):
 
-            p, label, jc, jtype = self.sample_lines(
+            p, label, jc, feat, jtype = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
@@ -512,10 +512,30 @@ class LineVectorizer(nn.Module):
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
 
+            # Get the jtype values for the two endpoints of each line
+            jtype_u = jtype[u]
+            jtype_v = jtype[v]
+
+            # Stack the jtype values to have shape (num_chosen_line, 2)
+            jtype_line = torch.stack([jtype_u, jtype_v], dim=1).float()  # Convert to float for consistency with feat
+
+            u2v = xyu - xyv
+            u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
+            feat = torch.cat(
+                [
+                    xyu / 128 * M.use_cood,
+                    # uv coordinate of endpoint 1 of the chosen lines, shape of (num_chosen_line, 2)
+                    xyv / 128 * M.use_cood,
+                    # uv coordinate of endpoint 2 of the chosen lines, shape of (num_chosen_line, 2)
+                    u2v * M.use_slop,  # Inclination degree(tan)  , shape of (num_chosen_line, 2)
+                    jtype_line * M.use_jtyp,  # Joint type, shape of (num_chosen_line, 2)
+                ],
+                dim=1, )  # feat.shape = (num_chosen_line, 8)
+
             # print("length lines", line.shape)
 
 
-            return line, label, jcs, jtype
+            return line, label, feat, jcs, jtype
 
 
 def nms_2d(a):
