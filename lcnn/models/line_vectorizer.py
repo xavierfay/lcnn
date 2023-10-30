@@ -526,7 +526,7 @@ class LineVectorizer(nn.Module):
                 u2v = xyu - xyv
                 u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
                 print("jtype_u shape:", jtype_u.shape)
-                print(jtype_u[1])
+                print(jtype_u[1], jtype[2], jtype[3])
                 print("jtype_v shape:", jtype_v.shape)
                 print("u2v shape:", u2v.shape)
                 print("xyu shape:", xyu.shape)
