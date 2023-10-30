@@ -527,9 +527,9 @@ class LineVectorizer(nn.Module):
 
             feat = torch.cat(
                 [
-                    xyu / 128 * M.use_cood,
+                    xyu / 256 * M.use_cood,
                     # uv coordinate of endpoint 1 of the chosen lines, shape of (num_chosen_line, 2)
-                    xyv / 128 * M.use_cood,
+                    xyv / 256 * M.use_cood,
                     # uv coordinate of endpoint 2 of the chosen lines, shape of (num_chosen_line, 2)
                     u2v * M.use_slop,  # Inclination degree(tan)  , shape of (num_chosen_line, 2)
                     jtype_line * M.use_jtyp,  # Joint type, shape of (num_chosen_line, 2)
