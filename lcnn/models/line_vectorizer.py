@@ -62,10 +62,10 @@ class LineVectorizer(nn.Module):
                 #feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 del jc
-            else:
-                jcs.append(jc)
-                ps.append(p)
-                jtypes.append(jtype)
+            #else:
+            jcs.append(jc)
+            ps.append(p)
+            jtypes.append(jtype)
             #fs.append(feat)
 
 
