@@ -516,11 +516,12 @@ class LineVectorizer(nn.Module):
             jtype = torch.tensor(jtype_list, device=xy.device)
 
             if M.use_jtyp:
-                jtype_u = u // torch.cat(
-                    [torch.tensor([K_values[i]]).repeat(K_values[i] * len(K_values)) for i in range(len(K_values))])
-                jtype_v = v // torch.cat(
-                    [torch.tensor([K_values[j]]).repeat(K_values[j] * len(K_values)) for j in range(len(K_values))])
-
+                jtype_u = (u.unsqueeze(-1) // torch.cumsum(
+                    torch.cat([torch.tensor([0], device=u.device), torch.tensor(K_values[:-1], device=u.device)]),
+                    dim=0)).squeeze()
+                jtype_v = (v.unsqueeze(-1) // torch.cumsum(
+                    torch.cat([torch.tensor([0], device=v.device), torch.tensor(K_values[:-1], device=v.device)]),
+                    dim=0)).squeeze()
 
                 u2v = xyu - xyv
                 u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
