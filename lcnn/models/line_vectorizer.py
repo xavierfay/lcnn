@@ -273,6 +273,8 @@ class LineVectorizer(nn.Module):
                     mask = jtyp[match[t]] < 2
                 match[t, mask] = N
 
+            if mode == "testing":
+                match = (match - 1).clamp(min=0)
 
             _ = torch.arange(n_type * K, device=device)
             u, v = torch.meshgrid(_, _)
