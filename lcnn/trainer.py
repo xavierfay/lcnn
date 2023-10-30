@@ -260,6 +260,8 @@ class Trainer(object):
             if self.iteration % 100 == 0:  # e.g., every 100 iterations
                 viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
                 osp.exists(viz) or os.makedirs(viz)
+                npz = osp.join(self.out, "npz", f"{self.iteration * M.batch_size_eval:09d}")
+                osp.exists(npz) or os.makedirs(npz)
                 print("plot the results")
                 for i in range(result["preds"]["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i

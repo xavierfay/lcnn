@@ -133,7 +133,7 @@ class LineVectorizer(nn.Module):
                 max_score_indices = torch.argmax(s0, dim=1)
                 arg = torch.argsort(max_score_indices, descending=True)
                 p0, s0 = p0[arg], s0[arg]
-                print("shape p0", p0.shape)
+                #print("shape p0", p0.shape)
                 lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
                 score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
             if len(jcs[i]) == 0:
