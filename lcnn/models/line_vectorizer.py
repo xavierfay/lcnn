@@ -59,6 +59,8 @@ class LineVectorizer(nn.Module):
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
                 p = torch.cat([p, meta["lpre"]])
+                print(feat.shape)
+                print(meta["lpre_feat"].shape)
                 feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 #del jc
