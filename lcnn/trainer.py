@@ -265,6 +265,8 @@ class Trainer(object):
                     index = batch_idx * M.batch_size_eval + i
                     self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
 
+                self._write_metrics(1, loss.item(), "training", do_print=True)
+
 
             # num_images = self.batch_size * self.iteration
             # if num_images % self.validation_interval == 0 or num_images == 600:

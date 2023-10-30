@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/overfit_smaller
   datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_smaller
-  resume_from:  #/content/drive/MyDrive/Xavier/logs/overfit_complete/231029-183607-e95f39e-baseline
+  resume_from:  /content/drive/MyDrive/Xavier/logs/overfit_smaller/231030-145130-c926a85-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
