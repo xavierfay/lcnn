@@ -260,16 +260,19 @@ class Trainer(object):
             if self.iteration % 100 == 0:  # e.g., every 100 iterations
                 viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
                 osp.exists(viz) or os.makedirs(viz)
-                npz = osp.join(self.out, "npz", f"{self.iteration * M.batch_size_eval:09d}")
-                osp.exists(npz) or os.makedirs(npz)
                 print("plot the results")
                 for i in range(result["preds"]["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i
                     self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
-                    np.savez(
-                        f"{npz}.npz",
-                        **{k: v[i].cpu().detach().numpy() for k, v in result["preds"].items()},
-                    )
+
+                checkpoint_path = osp.join(self.out, "checkpoint_latest.pth")
+                torch.save({
+                    "iteration": self.iteration,
+                    "arch": self.model.__class__.__name__,
+                    "optim_state_dict": self.optim.state_dict(),
+                    "model_state_dict": self.model.state_dict(),
+                    "best_mean_loss": self.best_mean_loss,
+                }, checkpoint_path)
 
                 self._write_metrics(1, loss.item(), "training", do_print=True)
 
