@@ -61,7 +61,7 @@ class LineVectorizer(nn.Module):
                 p = torch.cat([p, meta["lpre"]])
                 #feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
-                del jc
+                #del jc
 
             jcs.append(jc)
             ps.append(p)
@@ -104,9 +104,9 @@ class LineVectorizer(nn.Module):
         p = torch.cat(ps)
         s = torch.softmax(x, -1)
         cond1 = s[:, 0] < 0.25
-        cond2 = s[:, 1] > 0.5
-        cond3 = s[:, 2] > 0.5
-        cond4 = s[:, 3] > 0.5
+        cond2 = s[:, 1] > 0.25
+        cond3 = s[:, 2] > 0.25
+        cond4 = s[:, 3] > 0.25
 
         # s_arg = torch.argmax(s, dim=1)
         #
@@ -212,8 +212,6 @@ class LineVectorizer(nn.Module):
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
 
-        if input_dict["mode"] == "training":
-            del result["preds"]
 
         # print(input_dict["mode"])
         # print("lines result:", len(lines))#, torch.max(lines))
