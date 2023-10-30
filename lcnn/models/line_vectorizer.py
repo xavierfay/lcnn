@@ -100,57 +100,57 @@ class LineVectorizer(nn.Module):
             x = x.half()
         x = self.fc2(x)
 
-        if input_dict["mode"] != "training":
-            p = torch.cat(ps)
-            s = torch.softmax(x, -1)
-            cond1 = s[:, 0] < 0.25
-            cond2 = s[:, 1] > 0.25
-            cond3 = s[:, 2] > 0.25
-            cond4 = s[:, 3] > 0.25
+        #if input_dict["mode"] != "training":
+        p = torch.cat(ps)
+        s = torch.softmax(x, -1)
+        cond1 = s[:, 0] < 0.25
+        cond2 = s[:, 1] > 0.25
+        cond3 = s[:, 2] > 0.25
+        cond4 = s[:, 3] > 0.25
 
-            b = (cond2 | cond3 | cond4) & cond1
+        b = (cond2 | cond3 | cond4) & cond1
 
-            # cond1 = s[:, 0] > 0.5
-            # b = cond1
+        # cond1 = s[:, 0] > 0.5
+        # b = cond1
 
-            lines = []
-            score = []
-            for i in range(n_batch):
-                p0 = p[idx[i]: idx[i + 1]]
-                s0 = s[idx[i]: idx[i + 1]]
-                mask = b[idx[i]: idx[i + 1]]
-                p0 = p0[mask]
-                s0 = s0[mask]
+        lines = []
+        score = []
+        for i in range(n_batch):
+            p0 = p[idx[i]: idx[i + 1]]
+            s0 = s[idx[i]: idx[i + 1]]
+            mask = b[idx[i]: idx[i + 1]]
+            p0 = p0[mask]
+            s0 = s0[mask]
 
-                if len(p0) == 0:
-                    lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
-                    score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
-                else:
-                    # Ensure start point is lexicographically smaller than end point
-                    mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
-                    p0[mask] = torch.flip(p0[mask], [1])
+            if len(p0) == 0:
+                lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
+                score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
+            else:
+                # Ensure start point is lexicographically smaller than end point
+                mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
+                p0[mask] = torch.flip(p0[mask], [1])
 
-                    # Get unique lines and their indices
-                    p0_unique, unique_indices = torch.unique(p0, dim=0, return_inverse=True)
+                # Get unique lines and their indices
+                p0_unique, unique_indices = torch.unique(p0, dim=0, return_inverse=True)
 
-                    # Use the unique indices to gather the corresponding scores
-                    s0_unique = s0[unique_indices]
+                # Use the unique indices to gather the corresponding scores
+                s0_unique = s0[unique_indices]
 
-                    # Now, both p0_unique and s0_unique are aligned and free of duplicates
-                    print("shape p0", p0.shape, "unique shape", p0_unique.shape)
+                # Now, both p0_unique and s0_unique are aligned and free of duplicates
+                print("shape p0", p0.shape, "unique shape", p0_unique.shape)
 
-                    lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
-                    score.append(s0_unique[None, torch.arange(M.n_out_line) % len(s0_unique)])
-                if len(jcs[i]) == 0:
-                    jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
-                    jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
+                lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
+                score.append(s0_unique[None, torch.arange(M.n_out_line) % len(s0_unique)])
+            if len(jcs[i]) == 0:
+                jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
+                jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
 
-                jcs[i] = jcs[i][
-                    None, torch.arange(M.n_out_junc) % len(jcs[i])
-                ]
-                jtypes[i] = jtypes[i][
-                    None, torch.arange(M.n_out_junc) % len(jtypes[i])
-                ]
+            jcs[i] = jcs[i][
+                None, torch.arange(M.n_out_junc) % len(jcs[i])
+            ]
+            jtypes[i] = jtypes[i][
+                None, torch.arange(M.n_out_junc) % len(jtypes[i])
+            ]
 
             result["preds"]["lines"] = torch.cat(lines)
             result["preds"]["score"] = torch.cat(score)
