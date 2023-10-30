@@ -59,14 +59,14 @@ class LineVectorizer(nn.Module):
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
                 p = torch.cat([p, meta["lpre"]])
-                #feat = torch.cat([feat, meta["lpre_feat"]])
+                feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 #del jc
             #else:
             jcs.append(jc)
             ps.append(p)
             jtypes.append(jtype)
-            #fs.append(feat)
+            fs.append(feat)
 
 
             p = p[:, 0:1, :] * self.lambda_ + p[:, 1:2, :] * (1 - self.lambda_) - 0.5
@@ -95,9 +95,12 @@ class LineVectorizer(nn.Module):
 
         x= torch.cat(xs)
         y = torch.cat(ys)
+        f = torch.cat(fs)
         x = x.reshape(-1, M.n_pts1 * M.dim_loi)
         if M.use_half:
             x = x.half()
+
+        x = torch.cat([x, f], 1)
         x = self.fc2(x)
 
         #if input_dict["mode"] != "training":
