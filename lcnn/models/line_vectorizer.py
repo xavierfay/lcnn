@@ -271,8 +271,8 @@ class LineVectorizer(nn.Module):
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
 
-        if input_dict["mode"] == "training":
-            del result["preds"]
+        # if input_dict["mode"] == "training":
+        #     del result["preds"]
 
         # print(input_dict["mode"])
         # print("lines result:", len(lines))#, torch.max(lines))
