@@ -308,7 +308,8 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu().numpy()
+        mask_result = result["jmap"][i].cpu().detach().numpy()
+
         mask_result = np.sum(mask_result, axis=0)
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
@@ -381,17 +382,17 @@ class Trainer(object):
         jtyp = meta[i]["jtyp"].cpu().numpy()
 
 
-        rjuncs = result["juncs"][i].cpu().numpy() * 4
-        rjtyp = result["jtype"][i].cpu().numpy()
+        rjuncs = result["juncs"][i].cpu().detach().numpy() * 4
+        rjtyp = result["jtype"][i].cpu().detach().numpy()
 
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("vecl target max", np.max(lpre_label), lpre_label)
-        vecl_result = result["lines"][i].cpu().numpy() * 4
+        vecl_result = result["lines"][i].cpu().detach().numpy() * 4
         print("lines in trainer:",vecl_result.shape, vecl_result[1])
         #print("results for lines",vecl_result.shape, vecl_result[1])
-        score = result["score"][i].cpu().numpy()
+        score = result["score"][i].cpu().detach().numpy()
         #print("score =", np.max(score), score)
 
         # for i in range(1,2):
