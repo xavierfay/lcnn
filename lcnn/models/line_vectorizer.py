@@ -515,6 +515,10 @@ class LineVectorizer(nn.Module):
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
 
+            print(f"Max value in 'u': {u.max()}")
+            print(f"Max value in 'v': {v.max()}")
+            print(f"Size of 'jtype': {jtype.size(0)}")
+
             # Get the jtype values for the two endpoints of each line
             jtype_u = jtype[u]
             jtype_v = jtype[v]
