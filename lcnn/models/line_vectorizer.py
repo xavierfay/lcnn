@@ -484,9 +484,15 @@ class LineVectorizer(nn.Module):
             squared_distance_threshold = THRESHOLD_VALUE ** 2  # Set THRESHOLD_VALUE to your desired threshold
             valid_line_indices = (distances_squared > squared_distance_threshold).nonzero().squeeze()
 
-            #u, v = u[valid_line_indices], v[valid_line_indices]
+            u, v = u[valid_line_indices], v[valid_line_indices]
             scalar_labels = scalar_labels[valid_line_indices]
             xyu, xyv = xyu[valid_line_indices], xyv[valid_line_indices]
+
+            # Filter xy tensor
+            filtered_u = u.unique()
+            filtered_v = v.unique()
+            filtered_indices = torch.cat([filtered_u, filtered_v]).unique()
+            xy = xy[filtered_indices]
 
 
             label = torch.zeros(scalar_labels.shape[0], 4, device=device)
