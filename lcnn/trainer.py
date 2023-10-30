@@ -304,7 +304,7 @@ class Trainer(object):
         #     else:
         #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
-        fn = self.val_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
+        fn = self.train_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
