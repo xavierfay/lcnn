@@ -99,7 +99,7 @@ def main():
     }
     train_loader = torch.utils.data.DataLoader(
         WireframeDataset(datadir, split="train"),
-        shuffle=True,
+        shuffle=False,
         batch_size=M.batch_size,
         **kwargs,
     )
