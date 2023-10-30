@@ -516,16 +516,11 @@ class LineVectorizer(nn.Module):
             jtype = torch.tensor(jtype_list, device=xy.device)
 
             if M.use_jtyp:
-                print(f"Max value in 'u': {u.max()}")
-                print(f"Max value in 'v': {v.max()}")
-                print(f"Size of 'jtype': {jtype.size(0)}")
+                jtype_u = u // torch.cat(
+                    [torch.tensor([K_values[i]]).repeat(K_values[i] * len(K_values)) for i in range(len(K_values))])
+                jtype_v = v // torch.cat(
+                    [torch.tensor([K_values[j]]).repeat(K_values[j] * len(K_values)) for j in range(len(K_values))])
 
-                # Get the jtype values for the two endpoints of each line
-                jtype_u = jtype[u]
-                jtype_v = jtype[v]
-
-                # Stack the jtype values to have shape (num_chosen_line, 2)
-                jtype_line = torch.stack([jtype_u, jtype_v], dim=1).float()  # Convert to float for consistency with feat
 
                 u2v = xyu - xyv
                 u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
@@ -537,7 +532,8 @@ class LineVectorizer(nn.Module):
                     xyv / 256 * M.use_cood,
                     # uv coordinate of endpoint 2 of the chosen lines, shape of (num_chosen_line, 2)
                     u2v * M.use_slop,  # Inclination degree(tan)  , shape of (num_chosen_line, 2)
-                    jtype_line * M.use_jtyp,  # Joint type, shape of (num_chosen_line, 2)
+                    jtype_u[:, None] * M.use_jtyp,
+                    jtype_v[:, None] * M.use_jtyp,  # Joint type, shape of (num_chosen_line, 2)
                 ],
                 dim=1, )  # feat.shape = (num_chosen_line, 8)
 
