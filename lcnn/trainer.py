@@ -260,6 +260,7 @@ class Trainer(object):
 
 
             if self.iteration % 10 == 0:  # e.g., every 100 iterations
+                print("plot the results")
                 for i in range(result["preds"]["jmap"].shape[0]):
                     index = batch_idx * M.batch_size_eval + i
                     self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
