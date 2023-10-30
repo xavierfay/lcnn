@@ -152,10 +152,10 @@ class LineVectorizer(nn.Module):
                 None, torch.arange(M.n_out_junc) % len(jtypes[i])
             ]
 
-            result["preds"]["lines"] = torch.cat(lines)
-            result["preds"]["score"] = torch.cat(score)
-            result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
-            result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
+        result["preds"]["lines"] = torch.cat(lines)
+        result["preds"]["score"] = torch.cat(score)
+        result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
+        result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
 
             #print("length lines", result["preds"]["lines"].shape)
 
