@@ -504,7 +504,7 @@ class LineVectorizer(nn.Module):
 
             for i, xy_i in enumerate(xy_splits):
                 score_i = score[i, :K_values[i]]
-                valid_indices = score_i > 0.05
+                valid_indices = score_i > 0.00
                 subset = xy_i[valid_indices]
 
                 if len(subset) > 0:  # Only append/extend when subset is non-empty
