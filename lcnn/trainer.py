@@ -324,7 +324,7 @@ class Trainer(object):
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
-            line_result = results.cpu().numpy()
+            line_result = results.cpu().detach().numpy()
             imshow(line_result, cmap="hot"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
