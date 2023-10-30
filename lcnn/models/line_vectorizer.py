@@ -52,7 +52,7 @@ class LineVectorizer(nn.Module):
         xs, ys, fs, ps, idx, jcs, jtypes = [], [], [], [], [0], [], []
         for i, meta in enumerate(input_dict["meta"]):
 
-            p, label, jc, feat, jtype = self.sample_lines(
+            p, label, feat, jc, jtype = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
