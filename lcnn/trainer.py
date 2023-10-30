@@ -268,7 +268,7 @@ class Trainer(object):
                     self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
                     np.savez(
                         f"{npz}.npz",
-                        **{k: v[i].cpu().numpy() for k, v in result["preds"].items()},
+                        **{k: v[i].cpu().detach().numpy() for k, v in result["preds"].items()},
                     )
 
                 self._write_metrics(1, loss.item(), "training", do_print=True)
