@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete
   datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
-  resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231029-192142-93ab662-baseline
+  resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231029-192142-93ab662-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -63,7 +63,7 @@ model:
   use_cood: 0
   use_slop: 0
   use_conv: 0
-  use_wandb: 0
+  use_wandb: 1
   use_half: 0
 
   # junction threashold for evaluation (See #5)

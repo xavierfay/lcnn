@@ -335,8 +335,8 @@ class LineVectorizer(nn.Module):
             max_size = max([s.size(0) for s in scores])
 
             # Pad each tensor in scores and indices lists to match the max_size
-            padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=-1) for s in scores]
-            padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=-1) for idx in indices]
+            padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=0) for s in scores]
+            padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=0) for idx in indices]
             # padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
             # padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
 
