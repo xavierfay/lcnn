@@ -88,11 +88,15 @@ class WireframeDataset(Dataset):
             # feat = np.concatenate(feat, 1)
             jtyp = npz["junc"][:, 2]-1
 
+            Lpos = npz["Lpos"]
+            Lneg = np.where(Lpos == 0, 1, 0)
+            np.fill_diagonal(Lneg, 0)
+
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
                 "jtyp": torch.from_numpy(jtyp).byte(),
-                "Lpos": torch.from_numpy(npz["Lpos"]),
-                "Lneg": torch.from_numpy(npz["Lneg"]),
+                "Lpos": torch.from_numpy(Lpos),
+                "Lneg": torch.from_numpy(Lneg),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": torch.from_numpy(lpre_label),
                 # "lpre_feat": torch.from_numpy(feat),
