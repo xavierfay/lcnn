@@ -59,8 +59,6 @@ class LineVectorizer(nn.Module):
             ys.append(label)
             if input_dict["mode"] == "training" and self.do_static_sampling:
                 p = torch.cat([p, meta["lpre"]])
-                print(feat.shape)
-                print(meta["lpre_feat"].shape)
                 feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
                 #del jc
@@ -527,10 +525,6 @@ class LineVectorizer(nn.Module):
             u2v = xyu - xyv
             u2v /= torch.sqrt((u2v ** 2).sum(-1, keepdim=True)).clamp(min=1e-6)
 
-            print("xyu shape:", xyu.shape)
-            print("xyv shape:", xyv.shape)
-            print("u2v shape:", u2v.shape)
-            print("jtype_line shape:", jtype_line.shape)
             feat = torch.cat(
                 [
                     xyu / 128 * M.use_cood,
