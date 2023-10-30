@@ -199,6 +199,10 @@ class Trainer(object):
     def train_epoch(self):
         self.model.train()
 
+        viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
+        osp.exists(viz) or os.makedirs(viz)
+
+
         time = timer()
         for batch_idx, (image, meta, target) in enumerate(self.train_loader):
 
@@ -252,6 +256,8 @@ class Trainer(object):
                     + f"| {4 * self.batch_size / (timer() - time):04.1f} "
                 )
                 time = timer()
+
+
 
             if self.iteration % 10 == 0:  # e.g., every 100 iterations
                 for i in range(result["preds"]["jmap"].shape[0]):
