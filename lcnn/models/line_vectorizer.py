@@ -235,13 +235,13 @@ class LineVectorizer(nn.Module):
             second_layer_jmap = jmap[1].reshape(-1)
             concatenated_layer_jmap = jmap[2:].reshape(-1)
             new_jmap = torch.cat([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
-
+            print("new_jmap.shape", new_jmap.shape)
             # Separate the layers for joff
             first_layer_joff = joff[0].reshape(-1, 2)
             second_layer_joff = joff[1].reshape(-1, 2)
             concatenated_layer_joff = joff[2:].reshape(-1, 2)
             new_joff = torch.cat([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
-
+            print("new_joff.shape", new_joff.shape)
             # Create new_jtyp
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
@@ -255,8 +255,8 @@ class LineVectorizer(nn.Module):
 
             # Get top K scores and their indices
             score, index = torch.topk(new_jmap, k=K)
-            y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
+            y = (index // 256).float() + torch.gather(new_joff[:, 0], 0, index) + 0.5
+            x = (index % 256).float() + torch.gather(new_joff[:, 1], 0, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
