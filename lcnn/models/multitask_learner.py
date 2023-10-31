@@ -60,21 +60,20 @@ class MultitaskLearner(nn.Module):
         losses = []
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
-            jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
-            #jmap = jmap.permute(2, 0, 1, 3, 4)
-            #jmap = nms_3d(jmap.softmax(0))
+            jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
+            jmap.permute(1, 0, 2, 3)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
-            joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
+            joff = output[offset[1]: offset[2]].reshape(n_jtyp, batch, row, col)
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
+                    "jmap": jmap[1:],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
+                    "joff": joff[1:].permute(1, 0, 2, 3).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
                     return result
@@ -85,9 +84,10 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
-            print("jmap shape", jmap.shape)
-            print("T[jmap] shape", T["jmap"].shape)
-            L["jmap"] = multi_class_focal_loss(jmap, T["jmap"], alpha)
+
+            L["jmap"] = sum(
+                multi_class_focal_loss(jmap, T["jmap"], alpha)
+            )
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -108,47 +108,32 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
+def multi_class_focal_loss(logits, labels, alpha=None, gamma=2.0):
     """
-    Compute the adjusted focal loss for multiple classes.
+    Compute the multi-class focal loss.
     Args:
-    - logits (torch.Tensor): raw logits, shape [n_jtyp, 2, batch_size, H, W]
-    - labels (torch.Tensor): ground truth labels, shape [n_jtyp, 2, H, W]
-    - alpha (torch.Tensor): class weights, shape [n_jtyp]
+    - logits (torch.Tensor): raw logits, shape [batch_size, n_classes, H, W]
+    - labels (torch.Tensor): ground truth labels, shape [batch_size, H, W]
+    - alpha (torch.Tensor or list): class weights, shape [n_classes]
     - gamma (float): focusing parameter
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
-    # Loop over n_jtyp
-    losses = []
-    for j in range(logits.shape[0]):
-        probas = F.softmax(logits[j], dim=0)
-        p_t = (labels[j] * probas).sum(dim=0)
+    # Convert labels to one-hot format
+    labels_one_hot = F.one_hot(labels, num_classes=logits.shape[1]).permute(0, 3, 1, 2).float()
 
-        alpha_t = alpha[j].unsqueeze(-1).unsqueeze(-1).expand_as(probas)
+    # Compute softmax probabilities
+    probas = F.softmax(logits, dim=1)
 
-        epsilon = 1e-7
-        focal_term = (1 - p_t) ** gamma
-        cross_entropy_term = -labels[j] * torch.log(probas + epsilon)
+    # Compute the focal loss
+    focal_weight = (1. - probas).pow(gamma)
+    focal_loss = -alpha * focal_weight * torch.log(probas + 1e-6)
 
-        loss = (alpha_t * focal_term * cross_entropy_term).sum(dim=0)
-        losses.append(loss)
+    # Multiply with one-hot labels and sum over classes
+    loss = (labels_one_hot * focal_loss).sum(dim=1)
 
-    return torch.stack(losses).mean()
+    return loss.mean()
 
-
-def nms_3d(a):
-    n_jtyp, two, batch, row, col = a.shape
-
-    result = torch.zeros_like(a)
-    for i in range(n_jtyp):
-        for j in range(two):
-            slice_3d = a[i, j].unsqueeze(0)  # Add a dimension for max_pool3d
-            ap = F.max_pool3d(slice_3d, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
-            keep = (slice_3d == ap).float()
-            result[i, j] = (slice_3d * keep).squeeze(0)  # Remove the added dimension
-
-    return result
 
 
 def l2loss(input, target):
@@ -160,56 +145,21 @@ def cross_entropy_loss(logits, positive):
     return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
 
-def focal_loss(logits, positive, alpha, gamma=2.0):
-    # Get the probability of the positive class
-    probas = F.softmax(logits, dim=1)  # Assuming logits shape: [batch, 2, height, width]
-
-    mask = (positive == 1).float()
-    p_t = mask * probas[:, 1, :, :] + (1.0 - mask) * probas[:, 0, :, :]
-
-    # Extend alpha to have the same shape as logits
-    alpha_t = alpha[None, :, None, None].expand_as(logits)
-
-    epsilon = 1e-7
-    loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
-    return loss.mean()
-
-def combined_loss(preds, targets, alpha):
-    """
-    preds: Predictions tensor of shape [batch, n_jtyp, height, width]
-    targets: Ground truth tensor of shape [batch, n_jtyp, height, width]
-    alpha: alpha values computed from compute_alpha function
-    """
-    n_jtyp = preds.shape[1]
-
-    # Step 1: Compute Individual Focal Losses
-    focal_losses = [focal_loss(preds[:, i, :, :], targets[:, i, :, :], alpha[i]) for i in range(n_jtyp)]
-    individual_loss = sum(focal_losses)
-
-    # Step 2: Enforce Exclusive Class Assignment
-    max_vals, _ = preds.max(dim=1, keepdim=True)  # Find the maximum value among heatmaps for each pixel
-    exclusive_preds = preds.clone() - max_vals  # Use clone() to avoid in-place operations
-
-    # Step 3: Softmax Normalization
-    normalized_preds = F.softmax(exclusive_preds, dim=1)
-
-    # Combine the losses
-    # Here, I'm combining the individual focal loss with a possible loss based on normalized_preds.
-    # You might want to define what this second loss is. For now, I'm returning just the individual loss.
-    return individual_loss  # or combine with another loss if desired
 
 def compute_alpha(labels):
     """
-    Compute the frequency of each class and channel in the dataset.
+    Compute the frequency of each class in the dataset.
+
     Args:
-    - labels (torch.Tensor): a tensor of shape [n_jtyp, 2, H, W]
+    - labels (torch.Tensor): a tensor of shape [num_samples, n_classes, 256, 256]
+
     Returns:
-    - alpha (torch.Tensor): a tensor of shape [n_jtyp, 2]
+    - alpha (torch.Tensor): a tensor of shape [n_classes]
     """
-    # Count the number of positive activations for each class and channel
-    class_counts = labels.sum(dim=(2, 3))
+    # Count the number of positive activations for each class
+    class_counts = labels.sum(dim=(0, 2, 3))
     # Compute the frequency
-    total_counts = labels.numel() / (labels.shape[0] * labels.shape[1])
+    total_counts = labels.numel() / labels.shape[1]
     class_frequencies = class_counts / total_counts
 
     alpha = 1.0 / (class_frequencies + 1e-6)  # Adding a small constant to avoid division by zero

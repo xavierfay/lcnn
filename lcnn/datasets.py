@@ -53,6 +53,36 @@ class WireframeDataset(Dataset):
                 for name in ["lmap", "joff", "jmap"]
             }
 
+            jmap = target["jmap"]
+
+            # Create a new layer initialized with ones
+            new_layer = np.ones((256, 256), dtype=np.float32)
+
+            # Iterate over the existing jmap layers
+            for i in range(jmap.shape[0]):
+                non_zero_positions = (jmap[i] != 0)
+                new_layer[non_zero_positions] = 0
+            jmap = np.concatenate([new_layer[np.newaxis, ...], jmap], axis=0)
+            summed_jmap = jmap.sum(axis=0)
+            error_positions = np.argwhere(summed_jmap > 1)
+            for spatial_pos in error_positions:
+                x, y = spatial_pos
+                layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
+
+                # Keep the 1 in the layer with the highest layer number
+                highest_layer = np.max(layers_with_ones)
+
+                # Set 0 in the other layers
+                for layer in layers_with_ones:
+                    if layer != highest_layer:
+                        jmap[layer, x, y] = 0
+            target["jmap"] = torch.from_numpy(jmap).float()
+
+            # Extract joff
+            joff = target["joff"]
+            zero_layer = np.zeros((2, 256, 256),dtype=np.float32)
+            joff = np.concatenate([zero_layer[np.newaxis, ...], joff], axis=0)
+            target["joff"] = torch.from_numpy(joff).float()
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
