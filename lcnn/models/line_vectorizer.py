@@ -250,6 +250,9 @@ class LineVectorizer(nn.Module):
 
             # Rest of the code remains largely similar
             n_type = new_jmap.shape[0]
+
+            new_joff = new_joff.reshape(n_type, 2, -1)
+            new_jmap = new_jmap.reshape(n_type, -1)
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
             K = min(int((new_jmap > M.eval_junc_thres).float().sum().item()), max_K) if mode != "training" else min(
