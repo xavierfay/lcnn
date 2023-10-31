@@ -234,13 +234,13 @@ class LineVectorizer(nn.Module):
             first_layer_jmap = jmap[0].reshape(-1)
             second_layer_jmap = jmap[1].reshape(-1)
             concatenated_layer_jmap = jmap[2:].reshape(-1)
-            new_jmap = torch.cat([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
+            new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
             print("new_jmap.shape", new_jmap.shape)
             # Separate the layers for joff
             first_layer_joff = joff[0].reshape(-1, 2)
             second_layer_joff = joff[1].reshape(-1, 2)
             concatenated_layer_joff = joff[2:].reshape(-1, 2)
-            new_joff = torch.cat([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
+            new_joff = torch.stack([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
             print("new_joff.shape", new_joff.shape)
             # Create new_jtyp
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
