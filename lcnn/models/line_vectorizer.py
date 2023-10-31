@@ -314,7 +314,7 @@ class LineVectorizer(nn.Module):
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
 
         # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.03
+        valid_indices = score > 0.00001
         jcs = xy[valid_indices]
 
         filtered_jtype = jtype[valid_indices]
