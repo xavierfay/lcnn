@@ -224,165 +224,75 @@ class LineVectorizer(nn.Module):
 
     def sample_lines(self, meta, jmap, joff, mode):
         with torch.no_grad():
-            junc = meta["junc"]  # [N, 2]
-            jtyp = meta["jtyp"]  # [N]
-            Lpos = meta["Lpos"]  # [N+1, N+1]
-            Lneg = meta["Lneg"]  # [N+1, N+1]
-            lpre_label = meta["lpre_label"]  # [N, 3]
+            junc, jtyp = meta["junc"], meta["jtyp"]
+            Lpos, Lneg = meta["Lpos"], meta["Lneg"]
 
             n_type = jmap.shape[0]
             jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
             joff = joff.reshape(n_type, 2, -1)
+
             max_K = M.n_dyn_junc // n_type
             N = len(junc)
-            if mode != "training":
-                K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
-            else:
-                K = min(int(N * 2 + 2), max_K)
-            if K < 2:
-                K = 2
+            K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K) if mode != "training" else min(
+                int(N * 2 + 2), max_K)
+            K = max(K, 2)
             device = jmap.device
 
-            # jmap_first_two = jmap[:2].reshape(2, -1)
-            # jmap_last = jmap[2:].reshape(1, -1)
-            # joff_first_two = joff[:2].reshape(2, 2, -1)
-            # joff_last = joff[2:].reshape(1, 2, -1)
-            #
-            # # Extract top K junctions for the first two layers
-            # score_first_two, index_first_two = torch.topk(jmap_first_two, k=K)
-            # y_first_two = (index_first_two // 256).float() + torch.gather(joff_first_two[:, 0], 1,
-            #                                                               index_first_two) + 0.5
-            # x_first_two = (index_first_two % 256).float() + torch.gather(joff_first_two[:, 1], 1, index_first_two) + 0.5
-            # xy_first_two = torch.cat([y_first_two[..., None], x_first_two[..., None]], dim=-1)
-            #
-            # # Extract top K junctions for the last layer
-            # score_last, index_last = torch.topk(jmap_last, k=K)
-            # y_last = (index_last // 256).float() + torch.gather(joff_last[:, 0], 1, index_last) + 0.5
-            # x_last = (index_last % 256).float() + torch.gather(joff_last[:, 1], 1, index_last) + 0.5
-            # xy_last = torch.cat([y_last[..., None], x_last[..., None]], dim=-1)
-            #
-            # # If you want to combine them:
-            # xy = torch.cat([xy_first_two, xy_last], dim=0)
-
-            # index: [N_TYPE, K]
+            # Get top K scores and their indices
             score, index = torch.topk(jmap, k=K)
             y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            xy = torch.stack([y, x], dim=-1)
 
-            # xy: [N_TYPE, K, 2]
-            xy = torch.cat([y[..., None], x[..., None]], dim=-1)
-
-            xy_ = xy[..., None, :]
-            del x, y, index
-
-            #del x_first_two, xy_first_two, y_first_two, index_first_two, x_last, xy_last, y_last, index_last
-
-            # dist: [N_TYPE, K, N]
-            dist = torch.sum((xy_ - junc) ** 2, -1)
+            # Calculate distance and get matches
+            dist = torch.sum((xy[..., None, :] - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
-
-
-            # for t in range(3):
-            #     match[t, jtyp[match[t]] != t] = N
-            # match[cost > 1.5 * 1.5] = N
-            # # match[cost > 0.5 ] = N
-            # match = match.flatten()
-
             for t in range(n_type):
-                # For the first two layers, only match with the same layer
-                if t < 2:
-                    mask = jtyp[match[t]] != t
-                # For the remaining layers, match with any layer from 2 to n_type
-                else:
-                    mask = jtyp[match[t]] < 2
+                mask = (jtyp[match[t]] != t) if t < 2 else (jtyp[match[t]] < 2)
                 match[t, mask] = N
-
-            match[cost > 1.5 * 1.5] = N
+            match[(cost > 0.25).flatten()] = N
             match = match.flatten()
 
-            # if mode == "testing":
-            #     match = (match - 1).clamp(min=0)
-
-            _ = torch.arange(n_type * K, device=device)
-            u, v = torch.meshgrid(_, _)
+            # Create mesh grid and filter based on conditions
+            u, v = torch.meshgrid(torch.arange(n_type * K, device=device), torch.arange(n_type * K, device=device))
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
+            scalar_labels = Lpos[up, vp].long()
 
+            c = (u < v).flatten() if mode != "training" else self.sample_training_labels(scalar_labels, Lneg, up, vp,
+                                                                                         device)
 
-            scalar_labels = Lpos[up, vp]
-            scalar_labels = scalar_labels.long()
-            # Initialize a tensor of zeros with shape [N, 3]
-            if mode == "training":
-                c = torch.zeros_like(scalar_labels, dtype=torch.bool)
-
-                # Sample negative Lines (Class 0)
-                cdx = Lneg[up, vp].nonzero().flatten()
-                if len(cdx) > M.n_dyn_negl:
-                    # print("too many negative lines")
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_negl]
-                    cdx = cdx[perm]
-                c[cdx] = 1
-
-                # Sample dashed Lines (Class 1)
-                cdx = (scalar_labels == 1).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl0:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl0]
-                    cdx = cdx[perm]
-                c[cdx] = 1
-
-                # Sample continous Lines (Class 2)
-                cdx = (scalar_labels == 2).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl1:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl1]
-                    cdx = cdx[perm]
-                c[cdx] = 1
-
-                # Sample connection Lines (Class 3)
-                cdx = (scalar_labels == 3).nonzero().flatten()
-                if len(cdx) > M.n_dyn_posl1:
-                    perm = torch.randperm(len(cdx), device=device)[: M.n_dyn_posl2]
-                    cdx = cdx[perm]
-                c[cdx] = 1
-
-                # sample other (unmatched) lines
-                cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
-                c[cdx] = 1
-
-            else:
-                c = (u < v).flatten()
-
-            #sample lines
+            # Create line and label tensors
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            xy = xy.reshape(n_type * K, 2)
-            xyu, xyv = xy[u], xy[v]
-
-
+            xy = xy.reshape(-1, 2)
+            line = torch.stack([xy[u], xy[v]], dim=1)
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
-
-            # Assign a "1" in the respective column according to the scalar label
             label[torch.arange(label.shape[0]), scalar_labels] = 1
-            line = torch.cat([xyu[:, None], xyv[:, None]], 1)
-            # xy = xy.reshape(n_type, K, 2)
-            # #jcs = [xy[i, score[i].long()] for i in range(n_type)]
-            # jcs = [xy[i, score[i] > 0.0001] for i in range(n_type)]
 
-            jcs_list = []
-            jtype_list = []
+            # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
+            jcs_list, jtype_list = [], []
             for i in range(n_type):
-                valid_indices = score[i] > 0.0001
+                valid_indices = score[i] > 0.03
                 subset = xy[i][valid_indices]
-
-                if len(subset) > 0:  # Only append/extend when subset is non-empty
+                if len(subset) > 0:
                     jcs_list.append(subset)
-                    jtype_list.extend([i+1] * len(subset))
-
-            # Create flattened jcs tensor and jtype tensor
+                    jtype_list.extend([i + 1] * len(subset))
             jcs = torch.cat(jcs_list, dim=0)
             jtype = torch.tensor(jtype_list, device=xy.device)
 
-
             return line, label, jcs, jtype
+
+    def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
+        c = torch.zeros_like(scalar_labels, dtype=torch.bool)
+        for class_idx, max_samples in enumerate([M.n_dyn_negl, M.n_dyn_posl0, M.n_dyn_posl1, M.n_dyn_posl2]):
+            cdx = (scalar_labels == class_idx).nonzero().flatten()
+            if len(cdx) > max_samples:
+                cdx = torch.randperm(len(cdx), device=device)[:max_samples]
+            c[cdx] = 1
+        cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+        c[cdx] = 1
+        return c
 
 
 # def non_maximum_suppression(a):
