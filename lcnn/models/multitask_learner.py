@@ -61,6 +61,7 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
+            jmap = nms_3d(jmap)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
@@ -70,7 +71,7 @@ class MultitaskLearner(nn.Module):
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
+                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(1),
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
@@ -174,3 +175,14 @@ def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
         loss = loss * (mask / w)
 
     return loss.mean(2).mean(1)
+
+
+def nms_3d(a):
+    original_shape = a.shape
+
+    # For multiple layers, apply 3D NMS
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+    keep = (a == ap).float()
+    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
+

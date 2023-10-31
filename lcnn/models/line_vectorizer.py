@@ -229,8 +229,6 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
-            jmap = nms_3d(jmap)
-
             # Separate the layers for jmap
             first_layer_jmap = jmap[0]
             second_layer_jmap = jmap[1]
@@ -312,7 +310,7 @@ class LineVectorizer(nn.Module):
         # Combine jtypes
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
         # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.3
+        valid_indices = score > 0.8
         jcs = xy[valid_indices]
 
         filtered_jtype = jtype[valid_indices]
@@ -331,52 +329,8 @@ class LineVectorizer(nn.Module):
         return c
 
 
-# def non_maximum_suppression(a):
-#     a = a.view(a.shape[0], 1, 256, 256)  # Reshape it to [n_type, 1, 256, 256]
-#     ap = F.max_pool2d(a, 3, stride=1, padding=1)
-#     keep = (a == ap).float()
-#     a = a.view(a.shape[0], -1)  # Flatten it back after processing
-#     return a * keep.view(keep.shape[0], -1)
 
-def non_maximum_suppression(a):
-    original_shape = a.shape
-    # Reshape tensor to [1, n_type, 256, 256]
-    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    # Apply 3D max pooling across the layers and spatial dimensions
-    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
-    keep = (a == ap).float()
-    a = a.view(original_shape[0], -1)  # Flatten it back after processing
-    return a * keep.view(original_shape[0], -1)
 
-def nms_2d(a):
-    a = a.view(a.shape[0], 1, 256, 256)
-    ap = F.max_pool2d(a, 3, stride=1, padding=1)
-    keep = (a == ap).float()
-    return (a * keep).squeeze(1)  # Ensure it's [number_of_layers, 256, 256]
-
-def nms_3d(a):
-    original_shape = a.shape
-    # If there's only one layer, just apply 2D NMS
-    if original_shape[0] == 1:
-        return nms_2d(a)
-
-    # For multiple layers, apply 3D NMS
-    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
-    keep = (a == ap).float()
-    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
-
-def combined_nms(jmap):
-    # Split the tensor into two parts
-    first_two_layers = jmap[:2]
-    rest_layers = jmap[2:]
-
-    # Apply NMS
-    nms_first_two = nms_2d(first_two_layers)
-    nms_rest = nms_3d(rest_layers)
-
-    # Concatenate the results
-    return torch.cat([nms_first_two, nms_rest], dim=0)
 class Bottleneck1D(nn.Module):
     def __init__(self, inplanes, outplanes):
         super(Bottleneck1D, self).__init__()
