@@ -296,6 +296,12 @@ class LineVectorizer(nn.Module):
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
+        print("jmap shape", jmap.shape)
+        print("xy shape", xy.shape)
+        for i, layer in enumerate(jmap):
+            layer_sum = layer.sum().item()  # Sum the layer and convert to a Python scalar
+            print(f"Sum of layer {i}: {layer_sum}")
+
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
