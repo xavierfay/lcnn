@@ -273,7 +273,7 @@ class LineVectorizer(nn.Module):
             # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
 
             xy_ = xy[..., None, :]
-            del x, y, index
+            #del x, y, index
 
             del x_first_two, xy_first_two, y_first_two, index_first_two, x_last, xy_last, y_last, index_last
 
