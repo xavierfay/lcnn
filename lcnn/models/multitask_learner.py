@@ -200,16 +200,16 @@ def combined_loss(preds, targets, alpha):
 
 def compute_alpha(labels):
     """
-    Compute the frequency of each class in the dataset.
+    Compute the frequency of each class and channel in the dataset.
     Args:
-    - labels (torch.Tensor): a tensor of shape [batch_size, n_classes, H, W]
+    - labels (torch.Tensor): a tensor of shape [n_jtyp, 2, H, W]
     Returns:
-    - alpha (torch.Tensor): a tensor of shape [n_classes]
+    - alpha (torch.Tensor): a tensor of shape [n_jtyp, 2]
     """
-    # Count the number of positive activations for each class
-    class_counts = labels.sum(dim=(0, 2, 3))
+    # Count the number of positive activations for each class and channel
+    class_counts = labels.sum(dim=(2, 3))
     # Compute the frequency
-    total_counts = labels.numel() / labels.shape[1]
+    total_counts = labels.numel() / (labels.shape[0] * labels.shape[1])
     class_frequencies = class_counts / total_counts
 
     alpha = 1.0 / (class_frequencies + 1e-6)  # Adding a small constant to avoid division by zero
