@@ -325,10 +325,10 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        print("jmap shape", result["jmap"].shape)
+
         mask_result = result["jmap"][i].cpu().detach().numpy()
 
-        mask_result = np.sum(mask_result, axis=0)
+        #mask_result = np.sum(mask_result, axis=0)
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target[1:])
