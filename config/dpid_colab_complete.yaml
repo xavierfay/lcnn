@@ -16,7 +16,7 @@ model:
 
   # backbone multi-task parameters
   # jmap, lmap, joff
-  head_size: [[68], [6], [68]]
+  head_size: [[35], [6], [68]]
   loss_weight:
     jmap: 0.01
     lmap: 0.5
@@ -56,8 +56,8 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 500
-  n_out_line: 3000
+  n_out_junc: 300
+  n_out_line: 500
 
   # additional ablation study parameters
   use_cood: 0

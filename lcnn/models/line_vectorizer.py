@@ -306,7 +306,6 @@ class LineVectorizer(nn.Module):
     def matching_algorithm(self, xy, jmap, score):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
-
         # The first two layers of xy always correspond to the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
