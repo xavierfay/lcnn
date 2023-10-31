@@ -159,11 +159,13 @@ def focal_loss(logits, positive, alpha, gamma=2.0):
     p_t = mask * probas[:, 1, :, :] + (1.0 - mask) * probas[:, 0, :, :]
 
     # Extend alpha to have the same shape as logits
-    alpha_t = alpha[:, None, None].expand_as(logits[:, 0, :, :])  # Adjusted for batch size
+    batch_size = logits.shape[0]
+    alpha_t = alpha[None, :, None, None].expand(batch_size, -1, logits.shape[2], logits.shape[3])
 
     epsilon = 1e-7
     loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
     return loss.mean()
+
 
 
 def compute_alpha(labels):
