@@ -329,9 +329,8 @@ class Trainer(object):
 
         mask_result = np.sum(mask_result, axis=0)
         #mask_result = plt_heatmaps(mask_result)
-        mask_target = target["jmap"][i].cpu() #.numpy()
-        print("shape mask target", mask_target.shape)
-        mask_target = plt_heatmaps(mask_target)
+        mask_target = target["jmap"][i].cpu().numpy()
+        mask_target = plt_heatmaps(mask_target[1:])
 
 
         # Displaying the results using the updated imshow function
