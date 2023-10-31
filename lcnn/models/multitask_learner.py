@@ -61,7 +61,7 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
-            jmap = nms_3d(jmap.softmax(0))
+            #jmap = nms_3d(jmap.softmax(0))
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
@@ -82,7 +82,7 @@ class MultitaskLearner(nn.Module):
 
             alpha = compute_alpha(T["jmap"])
             L["jmap"] = sum(
-                focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
+                combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
@@ -103,7 +103,30 @@ class MultitaskLearner(nn.Module):
         result["losses"] = losses
         return result
 
+def combined_loss(preds, targets, alpha):
+    """
+    preds: Predictions tensor of shape [batch, n_jtyp, height, width]
+    targets: Ground truth tensor of shape [batch, n_jtyp, height, width]
+    alpha: alpha values computed from compute_alpha function
+    """
+    n_jtyp = preds.shape[1]
 
+    # Step 1: Compute Individual Focal Losses
+    focal_losses = [focal_loss(preds[:, i], targets[:, i], alpha) for i in range(n_jtyp)]
+    individual_loss = sum(focal_losses)
+
+    # Step 2: Enforce Exclusive Class Assignment
+    max_vals, _ = preds.max(dim=1, keepdim=True)  # Find the maximum value among heatmaps for each pixel
+    exclusive_preds = preds - max_vals
+
+    # Step 3: Softmax Normalization
+    normalized_preds = F.softmax(exclusive_preds, dim=1)
+
+    # Combine the losses
+    # You can either sum the individual_loss with another loss based on normalized_preds,
+    # or use individual_loss directly as your loss depending on your preference.
+    # Here, I'm returning the individual_loss directly.
+    return individual_loss
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
 
