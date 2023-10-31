@@ -66,7 +66,7 @@ class LineVectorizer(nn.Module):
             jcs.append(jc)
             ps.append(p)
             jtypes.append(jtype)
-            print("jtypes.shape", jtypes.shape, jtypes.max(), jtypes.min())
+            print("jtypes.shape", len(jtypes), jtypes.max(), jtypes.min())
             #fs.append(feat)
 
 
