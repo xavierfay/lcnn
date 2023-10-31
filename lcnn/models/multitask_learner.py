@@ -61,9 +61,7 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
-            jmap = nms_3d(jmap)
-
-            print("jmap shape", jmap.shape)
+            jmap = nms_3d(jmap.softmax(0))
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
@@ -73,7 +71,7 @@ class MultitaskLearner(nn.Module):
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(1)[:, :, 1],
+                    "jmap": jmap.permute(2, 0, 1, 3, 4)[:, :, 1],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
@@ -113,7 +111,7 @@ def nms_3d(a):
     for i in range(n_jtyp):
         for j in range(two):
             slice_3d = a[i, j].unsqueeze(0)  # Add a dimension for max_pool3d
-            ap = F.max_pool3d(slice_3d, (1, 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+            ap = F.max_pool3d(slice_3d, (1, 3, 3), stride=(1, 1, 1), padding=(0, 2, 2))
             keep = (slice_3d == ap).float()
             result[i, j] = (slice_3d * keep).squeeze(0)  # Remove the added dimension
 

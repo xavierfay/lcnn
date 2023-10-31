@@ -229,8 +229,6 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
-            print("jmap shape", jmap.shape)
-
             # Separate the layers for jmap
             first_layer_jmap = jmap[0]
             second_layer_jmap = jmap[1]
