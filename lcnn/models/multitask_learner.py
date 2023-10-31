@@ -111,7 +111,7 @@ def nms_3d(a):
     for i in range(n_jtyp):
         for j in range(two):
             slice_3d = a[i, j].unsqueeze(0)  # Add a dimension for max_pool3d
-            ap = F.max_pool3d(slice_3d, (1, 3, 3), stride=(1, 1, 1), padding=(0, 2, 2))
+            ap = F.max_pool3d(slice_3d, (1, 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
             keep = (slice_3d == ap).float()
             result[i, j] = (slice_3d * keep).squeeze(0)  # Remove the added dimension
 
