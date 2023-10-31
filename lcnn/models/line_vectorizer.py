@@ -231,21 +231,17 @@ class LineVectorizer(nn.Module):
 
             jmap = combined_nms(jmap)
 
-            n_type = jmap.shape[0]
             # Separate the layers for jmap
             first_layer_jmap = jmap[0]
             second_layer_jmap = jmap[1]
             concatenated_layer_jmap = jmap[2:].sum(dim=0)
-            print("max of concatenated_layer_jmap", concatenated_layer_jmap.max())
             new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
-            print("new_jmap.shape", new_jmap.shape)
-            # Separate the layers for joff
+
             first_layer_joff = joff[0]
             second_layer_joff = joff[1]
             concatenated_layer_joff = joff[2:].sum(dim=0)
             new_joff = torch.stack([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
-            print("new_joff.shape", new_joff.shape)
-            # Create new_jtyp
+
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
             # Rest of the code remains largely similar
@@ -272,8 +268,6 @@ class LineVectorizer(nn.Module):
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
-
-            print("xy.shape", xy.shape)
 
             for t in range(n_type):
                 match[t, new_jtyp[match[t]] != t] = N
@@ -302,32 +296,24 @@ class LineVectorizer(nn.Module):
 
             return line, label, jcs, jtype
 
-
     def matching_algorithm(self, xy, jmap, score):
-        print("shape jmap", jmap.shape)
-        print("shape xy", xy.shape)
-        print("shape score", score.shape)
         n_type, K, _ = xy.shape
-
-        # Convert xy to integer coordinates for indexing
         xy_int = xy.long()
 
-        # Prepare a list to collect intensities for each xy point across all layers of jmap
-        intensities_list = []
+        # The first two layers of xy always correspond to the first two layers of jmap
+        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-        for i in range(n_type):
-            # Get the intensities for each point in the current layer of xy across all layers of jmap
-            intensities = jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]]
-            intensities_list.append(intensities)
+        # For the third layer of xy, get its intensity across jmap[2:]
+        intensities_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
 
-        # Stack intensities
-        intensities = torch.stack(intensities_list, dim=1)  # Shape: [34, 3, 200]
+        # Determine the jtype for the third layer of xy based on the maximum intensity
+        jtype_2 = torch.argmax(intensities_2, dim=0).add(2)  # Add 2 to offset for the first two layers
 
-        # Get the jtype based on the maximum intensity
-        jtype = torch.argmax(intensities, dim=0)  # Shape: [3, 200]
+        # Combine jtypes
+        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
 
         # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.0001
+        valid_indices = score > 0.03
         jcs = xy[valid_indices]
 
         filtered_jtype = jtype[valid_indices]
