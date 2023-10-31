@@ -227,6 +227,7 @@ class LineVectorizer(nn.Module):
         with torch.no_grad():
             junc, jtyp = meta["junc"], meta["jtyp"]
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
+            device = jmap.device
 
             n_type = jmap.shape[0]
             # Separate the first two layers for jmap
@@ -242,8 +243,8 @@ class LineVectorizer(nn.Module):
             new_joff = [first_layer_joff, second_layer_joff, concatenated_layer_joff]
 
             # For the sake of simplicity, we will continue using the concatenated layers for the subsequent operations
-            concatenated_jmap = new_jmap
-            concatenated_joff = new_joff
+            concatenated_jmap = torch.tensor(new_jmap).to(device)
+            concatenated_joff = torch.tensor(new_joff).to(device)
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
             # Rest of the code remains largely similar
@@ -253,7 +254,7 @@ class LineVectorizer(nn.Module):
             K = min(int((concatenated_jmap > M.eval_junc_thres).float().sum().item()),
                     max_K) if mode != "training" else min(int(N * 2 + 2), max_K)
             K = max(K, 2)
-            device = jmap.device
+
 
             # Get top K scores and their indices
             score, index = torch.topk(concatenated_jmap, k=K)
