@@ -108,7 +108,7 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
+def adjusted_focal_loss(logits, labels, alpha, gamma=2.0):
     """
     Compute the adjusted focal loss for multiple classes.
     Args:
@@ -125,7 +125,7 @@ def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
         probas = F.softmax(logits[j], dim=0)
         p_t = (labels[j] * probas).sum(dim=0)
 
-        alpha_t = alpha[j].expand_as(probas)
+        alpha_t = alpha[j].unsqueeze(-1).unsqueeze(-1).expand_as(probas)
 
         epsilon = 1e-7
         focal_term = (1 - p_t) ** gamma
@@ -135,6 +135,7 @@ def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
         losses.append(loss)
 
     return torch.stack(losses).mean()
+
 
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
