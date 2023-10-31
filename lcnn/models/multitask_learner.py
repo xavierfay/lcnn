@@ -85,6 +85,8 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
+            print("jmap shape", jmap.shape)
+            print("T[jmap] shape", T["jmap"].shape)
             L["jmap"] = multi_class_focal_loss(jmap, T["jmap"], alpha)
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
