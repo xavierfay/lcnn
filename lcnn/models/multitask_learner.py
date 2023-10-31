@@ -84,7 +84,7 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
-            L["jmap"] = combined_loss(jmap, T["jmap"], alpha)
+            L["jmap"] = multi_class_focal_loss(jmap, T["jmap"], alpha)
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -104,7 +104,27 @@ class MultitaskLearner(nn.Module):
         result["losses"] = losses
         return result
 
+def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
+    """
+    Compute the multi-class focal loss.
+    Args:
+    - logits (torch.Tensor): raw logits, shape [batch_size, n_classes, H, W]
+    - labels (torch.Tensor): ground truth labels, shape [batch_size, n_classes, H, W]
+    - alpha (torch.Tensor): class weights, shape [n_classes]
+    - gamma (float): focusing parameter
+    Returns:
+    - loss (torch.Tensor): scalar tensor representing the loss
+    """
+    probas = F.softmax(logits, dim=1)
+    p_t = (labels * probas).sum(dim=1)
 
+    alpha_t = alpha[None, :, None, None].expand_as(logits)
+    epsilon = 1e-7
+    focal_term = (1 - p_t) ** gamma
+    cross_entropy_term = -labels * torch.log(probas + epsilon)
+
+    loss = (alpha_t * focal_term * cross_entropy_term).sum(dim=1)
+    return loss.mean()
 
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
@@ -167,15 +187,11 @@ def combined_loss(preds, targets, alpha):
     # You might want to define what this second loss is. For now, I'm returning just the individual loss.
     return individual_loss  # or combine with another loss if desired
 
-
-
 def compute_alpha(labels):
     """
     Compute the frequency of each class in the dataset.
-
     Args:
-    - labels (torch.Tensor): a tensor of shape [num_samples, n_classes, 256, 256]
-
+    - labels (torch.Tensor): a tensor of shape [batch_size, n_classes, H, W]
     Returns:
     - alpha (torch.Tensor): a tensor of shape [n_classes]
     """
@@ -187,6 +203,7 @@ def compute_alpha(labels):
 
     alpha = 1.0 / (class_frequencies + 1e-6)  # Adding a small constant to avoid division by zero
     return alpha
+
 
 def weighted_cross_entropy_loss(logits, positive):
     # Calculate class frequencies
