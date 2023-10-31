@@ -124,11 +124,13 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     print("labels shape", labels_one_hot.shape)
     print("alpha shape", alpha.shape)
 
+    labels_one_hot = labels_one_hot.permute(1, 0, 2, 3)
+
     # Reshape alpha to be broadcastable
-    alpha = alpha.view(1, alpha.shape[0], alpha.shape[1], 1, 1)
+    alpha = alpha.permute(1, 0).unsqueeze(2).unsqueeze(3)
 
     # Compute softmax probabilities
-    probas = F.softmax(logits, dim=1)
+    probas = F.softmax(logits, dim=0)
 
     # Compute the focal loss
     focal_weight = (1. - probas).pow(gamma)
