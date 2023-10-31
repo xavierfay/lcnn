@@ -104,26 +104,7 @@ class MultitaskLearner(nn.Module):
         result["losses"] = losses
         return result
 
-def combined_loss(preds, targets, alpha):
-    """
-    preds: Predictions tensor of shape [batch, n_jtyp, height, width]
-    targets: Ground truth tensor of shape [batch, n_jtyp, height, width]
-    alpha: alpha values computed from compute_alpha function
-    """
-    n_jtyp = preds.shape[1]
 
-    # Step 1: Compute Individual Focal Losses
-    focal_losses = [focal_loss(preds[i], targets[i], alpha) for i in range(n_jtyp)]
-    individual_loss = sum(focal_losses)
-
-    # Step 2: Enforce Exclusive Class Assignment
-    max_vals, _ = preds.max(dim=1, keepdim=True)  # Find the maximum value among heatmaps for each pixel
-    exclusive_preds = preds - max_vals
-
-    # Step 3: Softmax Normalization
-    normalized_preds = F.softmax(exclusive_preds, dim=1)
-
-    return normalized_preds
 
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
@@ -150,17 +131,42 @@ def cross_entropy_loss(logits, positive):
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
-    probas = F.softmax(logits, dim=0)
+    probas = F.softmax(logits, dim=1)  # Assuming logits shape: [batch, 2, height, width]
 
     mask = (positive == 1).float()
-    p_t = mask * probas[1] + (1.0 - mask) * probas[0]
+    p_t = mask * probas[:, 1, :, :] + (1.0 - mask) * probas[:, 0, :, :]
 
     # Extend alpha to have the same shape as logits
     alpha_t = alpha[None, :, None, None].expand_as(logits)
 
     epsilon = 1e-7
     loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
-    return loss.mean(2).mean(1)
+    return loss.mean()
+
+def combined_loss(preds, targets, alpha):
+    """
+    preds: Predictions tensor of shape [batch, n_jtyp, height, width]
+    targets: Ground truth tensor of shape [batch, n_jtyp, height, width]
+    alpha: alpha values computed from compute_alpha function
+    """
+    n_jtyp = preds.shape[1]
+
+    # Step 1: Compute Individual Focal Losses
+    focal_losses = [focal_loss(preds[:, i, :, :], targets[:, i, :, :], alpha[i]) for i in range(n_jtyp)]
+    individual_loss = sum(focal_losses)
+
+    # Step 2: Enforce Exclusive Class Assignment
+    max_vals, _ = preds.max(dim=1, keepdim=True)  # Find the maximum value among heatmaps for each pixel
+    exclusive_preds = preds.clone() - max_vals  # Use clone() to avoid in-place operations
+
+    # Step 3: Softmax Normalization
+    normalized_preds = F.softmax(exclusive_preds, dim=1)
+
+    # Combine the losses
+    # Here, I'm combining the individual focal loss with a possible loss based on normalized_preds.
+    # You might want to define what this second loss is. For now, I'm returning just the individual loss.
+    return individual_loss  # or combine with another loss if desired
+
 
 
 def compute_alpha(labels):
