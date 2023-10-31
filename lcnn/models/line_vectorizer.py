@@ -229,6 +229,7 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
+            jmap = nms_3d(jmap)
             # Separate the layers for jm
             first_layer_jmap = jmap[0]
             second_layer_jmap = jmap[1]
@@ -330,7 +331,14 @@ class LineVectorizer(nn.Module):
         return c
 
 
+def nms_3d(a):
+    original_shape = a.shape
 
+    # For multiple layers, apply 3D NMS
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+    keep = (a == ap).float()
+    return (a * keep).squeeze(0)
 
 class Bottleneck1D(nn.Module):
     def __init__(self, inplanes, outplanes):
