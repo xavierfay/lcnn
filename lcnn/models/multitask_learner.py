@@ -113,14 +113,17 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     Args:
     - logits (torch.Tensor): raw logits, shape [batch_size, n_classes, H, W]
     - labels (torch.Tensor): ground truth labels, shape [batch_size,n_ classes H, W]
-    - alpha (torch.Tensor or list): class weights, shape [n_classes]
+    - alpha (torch.Tensor or list): class weights, shape [n_classes, batch_size]
     - gamma (float): focusing parameter
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
     print("logits shape", logits.shape)
     print("labels shape", labels_one_hot.shape)
-    print("alpha shape", alpha)
+    print("alpha shape", alpha.shape)
+
+    # Reshape alpha to be broadcastable
+    alpha = alpha.view(1, alpha.shape[0], alpha.shape[1], 1, 1)
 
     # Compute softmax probabilities
     probas = F.softmax(logits, dim=1)
@@ -130,10 +133,9 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     focal_loss = -alpha * focal_weight * torch.log(probas + 1e-6)
 
     # Multiply with one-hot labels and sum over classes
-    loss = (labels_one_hot * focal_loss).sum(dim=1)
+    loss = (labels_one_hot * focal_loss).sum(dim=(1, 2, 3))
 
     return loss.mean()
-
 
 
 def l2loss(input, target):
@@ -153,7 +155,7 @@ def compute_alpha(labels):
     - labels (torch.Tensor): a tensor of shape [n_classes, batch_size, H, W]
 
     Returns:
-    - alpha (torch.Tensor): a tensor of shape [n_classes, batch_size
+    - alpha (torch.Tensor): a tensor of shape [n_classes, batch_size]
     """
     # Count the number of positive activations for each class-channel pair
     class_counts = labels.sum(dim=(2, 3))
