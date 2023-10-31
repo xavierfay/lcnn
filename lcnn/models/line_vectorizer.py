@@ -277,7 +277,7 @@ class LineVectorizer(nn.Module):
 
             for t in range(n_type):
                 match[t, new_jtyp[match[t]] != t] = N
-            match[(cost > 0.25).flatten()] = N
+            match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             # Create mesh grid and filter based on conditions
