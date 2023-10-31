@@ -304,6 +304,7 @@ class LineVectorizer(nn.Module):
 
         # For the third layer of xy, get its intensity across jmap[2:]
         intensities_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        print(intensities_2.shape)
 
         # Determine the jtype for the third layer of xy based on the maximum intensity
         jtype_2 = torch.argmax(intensities_2, dim=0).add(2)  # Add 2 to offset for the first two layers
