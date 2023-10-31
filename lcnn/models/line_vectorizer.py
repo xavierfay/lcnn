@@ -229,7 +229,7 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
-            # Separate the layers for jmap
+            # Separate the layers for jm
             first_layer_jmap = jmap[0]
             second_layer_jmap = jmap[1]
             concatenated_layer_jmap = jmap[2:].sum(dim=0)
