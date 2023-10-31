@@ -240,9 +240,9 @@ class LineVectorizer(nn.Module):
             new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
             print("new_jmap.shape", new_jmap.shape)
             # Separate the layers for joff
-            first_layer_joff = joff[0].reshape(-1, 2)
-            second_layer_joff = joff[1].reshape(-1, 2)
-            concatenated_layer_joff = joff[2:].reshape(-1, 2)
+            first_layer_joff = joff[0]
+            second_layer_joff = joff[1]
+            concatenated_layer_joff = joff[2:].sum(dim=0)
             new_joff = torch.stack([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
             print("new_joff.shape", new_joff.shape)
             # Create new_jtyp
