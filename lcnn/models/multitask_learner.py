@@ -64,7 +64,7 @@ class MultitaskLearner(nn.Module):
             jmap.permute(1, 0, 2, 3)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
-            joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2,  batch, row, col)
+            joff = output[offset[1]: offset[2]].reshape(n_jtyp-1, 2,  batch, row, col)
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
