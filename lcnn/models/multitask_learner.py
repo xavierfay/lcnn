@@ -104,6 +104,22 @@ class MultitaskLearner(nn.Module):
         return result
 
 
+def nms_3d(a):
+    n_jtyp, two, batch, row, col = a.shape
+
+    result = torch.zeros_like(a)
+    for i in range(n_jtyp):
+        for j in range(two):
+            slice_3d = a[i, j]
+            original_shape = slice_3d.shape
+            slice_3d = slice_3d.view(1, original_shape[0], original_shape[1], original_shape[2])
+            ap = F.max_pool3d(slice_3d, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+            keep = (slice_3d == ap).float()
+            result[i, j] = (slice_3d * keep).squeeze(0)
+
+    return result
+
+
 def l2loss(input, target):
     return ((target - input) ** 2).mean(2).mean(1)
 
@@ -177,12 +193,4 @@ def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
     return loss.mean(2).mean(1)
 
 
-def nms_3d(a):
-    original_shape = a.shape
-
-    # For multiple layers, apply 3D NMS
-    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
-    keep = (a == ap).float()
-    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
 
