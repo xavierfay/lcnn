@@ -243,15 +243,39 @@ class LineVectorizer(nn.Module):
                 K = 2
             device = jmap.device
 
-            # index: [N_TYPE, K]
-            score, index = torch.topk(jmap, k=K)
-            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            jmap_first_two = jmap[:2].reshape(2, -1)
+            jmap_last = jmap[2:].reshape(1, -1)
+            joff_first_two = joff[:2].reshape(2, 2, -1)
+            joff_last = joff[2:].reshape(1, 2, -1)
 
-            # xy: [N_TYPE, K, 2]
-            xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+            # Extract top K junctions for the first two layers
+            score_first_two, index_first_two = torch.topk(jmap_first_two, k=K)
+            y_first_two = (index_first_two // 256).float() + torch.gather(joff_first_two[:, 0], 1,
+                                                                          index_first_two) + 0.5
+            x_first_two = (index_first_two % 256).float() + torch.gather(joff_first_two[:, 1], 1, index_first_two) + 0.5
+            xy_first_two = torch.cat([y_first_two[..., None], x_first_two[..., None]], dim=-1)
+
+            # Extract top K junctions for the last layer
+            score_last, index_last = torch.topk(jmap_last, k=K)
+            y_last = (index_last // 256).float() + torch.gather(joff_last[:, 0], 1, index_last) + 0.5
+            x_last = (index_last % 256).float() + torch.gather(joff_last[:, 1], 1, index_last) + 0.5
+            xy_last = torch.cat([y_last[..., None], x_last[..., None]], dim=-1)
+
+            # If you want to combine them:
+            xy = torch.cat([xy_first_two, xy_last], dim=0)
+
+            # # index: [N_TYPE, K]
+            # score, index = torch.topk(jmap, k=K)
+            # y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            # x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
+            #
+            # # xy: [N_TYPE, K, 2]
+            # xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+
             xy_ = xy[..., None, :]
             del x, y, index
+
+            del x_first_two, xy_first_two, y_first_two, index_first_two, x_last, xy_last, y_last, index_last
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
