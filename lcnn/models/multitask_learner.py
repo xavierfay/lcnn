@@ -153,17 +153,17 @@ def cross_entropy_loss(logits, positive):
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
-    probas = F.softmax(logits, dim=0)
+    probas = F.softmax(logits, dim=1)  # Assuming logits shape: [batch, 2, height, width]
 
-    mask = (positive == 1).float()
-    p_t = mask * probas[1] + (1.0 - mask) * probas[0]
+    mask = (positive == 1).float()  # Convert positive to a float mask
+    p_t = mask * probas[:, 1, :, :] + (1.0 - mask) * probas[:, 0, :, :]
 
     # Extend alpha to have the same shape as logits
-    alpha_t = alpha[None, :, None, None].expand_as(logits)
+    alpha_t = alpha[:, None, None].expand_as(logits[:, 0, :, :])  # Adjusted for batch size
 
     epsilon = 1e-7
     loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
-    return loss.mean(2).mean(1)
+    return loss.mean()
 
 
 def compute_alpha(labels):
