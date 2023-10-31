@@ -282,7 +282,7 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, -1)
 
 
-            for t in range(n_type):
+            for t in range(3):
                 match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             # match[cost > 0.5 ] = N
