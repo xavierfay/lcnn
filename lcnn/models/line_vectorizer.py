@@ -230,36 +230,33 @@ class LineVectorizer(nn.Module):
             device = jmap.device
 
             n_type = jmap.shape[0]
-            # Separate the first two layers for jmap
+            # Separate the layers for jmap
             first_layer_jmap = jmap[0].reshape(-1)
             second_layer_jmap = jmap[1].reshape(-1)
             concatenated_layer_jmap = jmap[2:].reshape(-1)
-            new_jmap = [first_layer_jmap, second_layer_jmap, concatenated_layer_jmap]
+            new_jmap = torch.cat([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
 
-            # Separate the first two layers for joff
+            # Separate the layers for joff
             first_layer_joff = joff[0].reshape(-1, 2)
             second_layer_joff = joff[1].reshape(-1, 2)
             concatenated_layer_joff = joff[2:].reshape(-1, 2)
-            new_joff = [first_layer_joff, second_layer_joff, concatenated_layer_joff]
+            new_joff = torch.cat([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
 
-            # For the sake of simplicity, we will continue using the concatenated layers for the subsequent operations
-            concatenated_jmap = torch.tensor(new_jmap).to(device)
-            concatenated_joff = torch.tensor(new_joff).to(device)
+            # Create new_jtyp
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
             # Rest of the code remains largely similar
-            n_type = len(new_jmap)
-            max_K = M.n_dyn_junc // len(concatenated_jmap)
+            n_type = new_jmap.shape[0]
+            max_K = M.n_dyn_junc // n_type
             N = len(junc)
-            K = min(int((concatenated_jmap > M.eval_junc_thres).float().sum().item()),
-                    max_K) if mode != "training" else min(int(N * 2 + 2), max_K)
+            K = min(int((new_jmap > M.eval_junc_thres).float().sum().item()), max_K) if mode != "training" else min(
+                int(N * 2 + 2), max_K)
             K = max(K, 2)
 
-
             # Get top K scores and their indices
-            score, index = torch.topk(concatenated_jmap, k=K)
-            y = (index // 256).float() + torch.gather(concatenated_joff[:, 0], 0, index) + 0.5
-            x = (index % 256).float() + torch.gather(concatenated_joff[:, 1], 0, index) + 0.5
+            score, index = torch.topk(new_jmap, k=K)
+            y = (index // 256).float() + torch.gather(new_joff[:, 0], 0, index) + 0.5
+            x = (index % 256).float() + torch.gather(new_joff[:, 1], 0, index) + 0.5
             xy = torch.stack([y, x], dim=-1)
 
             # Calculate distance and get matches
