@@ -302,27 +302,37 @@ class LineVectorizer(nn.Module):
 
             return line, label, jcs, jtype
 
+
     def matching_algorithm(self, xy, jmap, score):
         print("shape jmap", jmap.shape)
         print("shape xy", xy.shape)
         print("shape score", score.shape)
-        xy_int = xy.long()  # Convert to integer for indexing
-        intensities = []
+        n_type, K, _ = xy.shape
 
-        # Extract intensity values from each layer of jmap for the given xy coordinates
-        for i in range(jmap.shape[0]):
-            intensities.append(jmap[i, xy_int[:, :, 1], xy_int[:, :, 0]])
+        # Convert xy to integer coordinates for indexing
+        xy_int = xy.long()
 
-        intensities = torch.stack(intensities, dim=-1)  # Shape: [n_type, K]
+        # Prepare a list to collect intensities for each xy point across all layers of jmap
+        intensities_list = []
+
+        for i in range(n_type):
+            # Get the intensities for each point in the current layer of xy across all layers of jmap
+            intensities = jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]]
+            intensities_list.append(intensities)
+
+        # Stack intensities
+        intensities = torch.stack(intensities_list, dim=1)  # Shape: [34, 3, 200]
 
         # Get the jtype based on the maximum intensity
-        jtype = torch.argmax(intensities, dim=0) + 1  # Add 1 to match the original 1-based jtype
+        jtype = torch.argmax(intensities, dim=0)  # Shape: [3, 200]
 
-        # Filter xy based on the score threshold
+        # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.0001
         jcs = xy[valid_indices]
 
-        return jcs, jtype[valid_indices]
+        filtered_jtype = jtype[valid_indices]
+
+        return jcs, filtered_jtype
 
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
