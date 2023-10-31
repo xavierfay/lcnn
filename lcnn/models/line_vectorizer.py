@@ -293,6 +293,7 @@ class LineVectorizer(nn.Module):
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
+            print("jtype.shape", jtype.shape, jtype.max(), jtype.min()
 
             return line, label, jcs, jtype
 
@@ -312,7 +313,7 @@ class LineVectorizer(nn.Module):
         print("jtype_2.shape", jtype_2.shape, jtype_2.max(), jtype_2.min())
         # Combine jtypes
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
-
+        print("jtype.shape", jtype.shape)
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.00001
         jcs = xy[valid_indices]
