@@ -303,6 +303,9 @@ class LineVectorizer(nn.Module):
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
+        print("shape jmap", jmap.shape)
+        print("shape xy", xy.shape)
+        print("shape score", score.shape)
         xy_int = xy.long()  # Convert to integer for indexing
         intensities = []
 
