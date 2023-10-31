@@ -61,7 +61,6 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
-            jmap = F.softmax(jmap, dim=0)
             jmap = jmap.permute(1, 0, 2, 3)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
