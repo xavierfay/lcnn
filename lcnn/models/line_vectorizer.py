@@ -257,13 +257,18 @@ class LineVectorizer(nn.Module):
             score, index = torch.topk(new_jmap, k=K)
             y = (index // 256).float() + torch.gather(new_joff[:, 0], 0, index) + 0.5
             x = (index % 256).float() + torch.gather(new_joff[:, 1], 0, index) + 0.5
-            xy = torch.stack([y, x], dim=-1)
+
+            # xy: [N_TYPE, K, 2]
+            xy = torch.cat([y[..., None], x[..., None]], dim=-1)
+            xy_ = xy[..., None, :]
+            del x, y, index
+
+            # dist: [N_TYPE, K, N]
+            dist = torch.sum((xy_ - junc) ** 2, -1)
+            cost, match = torch.min(dist, -1)
 
             print("xy.shape", xy.shape)
 
-            # Calculate distance and get matches
-            dist = torch.sum((xy[..., None, :] - junc) ** 2, -1)
-            cost, match = torch.min(dist, -1)
             for t in range(n_type):
                 match[t, new_jtyp[match[t]] != t] = N
             match[(cost > 0.25).flatten()] = N
