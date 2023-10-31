@@ -104,7 +104,7 @@ class MultitaskLearner(nn.Module):
 
             # for key, value in L.items():
             #     print(f"{key} loss when in results forward: {value}")
-
+            T["jmap"] = T["jmap"][:, 1:]
         result["losses"] = losses
         return result
 
@@ -120,10 +120,6 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
-    print("logits shape", logits.shape)
-    print("labels shape", labels_one_hot.shape)
-    print("alpha shape", alpha.shape)
-
     labels_one_hot = labels_one_hot.permute(1, 0, 2, 3)
 
     # Reshape alpha to be broadcastable
