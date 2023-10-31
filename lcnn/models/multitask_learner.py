@@ -85,9 +85,8 @@ class MultitaskLearner(nn.Module):
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
 
-            L["jmap"] = sum(
-                multi_class_focal_loss(jmap, T["jmap"], alpha)
-            )
+            L["jmap"] = multi_class_focal_loss(jmap, T["jmap"], alpha)
+
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -108,19 +107,17 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def multi_class_focal_loss(logits, labels, alpha=None, gamma=2.0):
+def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     """
     Compute the multi-class focal loss.
     Args:
     - logits (torch.Tensor): raw logits, shape [batch_size, n_classes, H, W]
-    - labels (torch.Tensor): ground truth labels, shape [batch_size, H, W]
+    - labels (torch.Tensor): ground truth labels, shape [batch_size,n_ classes H, W]
     - alpha (torch.Tensor or list): class weights, shape [n_classes]
     - gamma (float): focusing parameter
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
-    # Convert labels to one-hot format
-    labels_one_hot = F.one_hot(labels, num_classes=logits.shape[1]).permute(0, 3, 1, 2).float()
 
     # Compute softmax probabilities
     probas = F.softmax(logits, dim=1)
