@@ -119,87 +119,85 @@ class Trainer(object):
         return total_loss
 
     def validate(self):
-        # tprint("Running validation...", " " * 75)
+        tprint("Running validation...", " " * 75)
         training = self.model.training
-        # self.model.eval()
-        #
-        # viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
-        # npz = osp.join(self.out, "npz", f"{self.iteration * M.batch_size_eval:09d}")
-        # osp.exists(viz) or os.makedirs(viz)
-        # osp.exists(npz) or os.makedirs(npz)
-        #
-        # total_loss = 0
-        # self.metrics[...] = 0
-        # with torch.no_grad():
-        #     for batch_idx, (image, meta, target) in enumerate(self.val_loader):
-        #         input_dict = {
-        #             "image": recursive_to(image, self.device),
-        #             "meta": recursive_to(meta, self.device),
-        #             "target": recursive_to(target, self.device),
-        #             "mode": "validation",
-        #         }
-        #
-        #         if M.use_half and self.device == torch.device("cuda"):
-        #             input_dict["image"] = input_dict["image"].half()
-        #             if isinstance(input_dict["meta"], list):
-        #                 input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in
-        #                                       input_dict["meta"]]
-        #             if torch.is_tensor(input_dict["target"]):
-        #                 input_dict["target"] = input_dict["target"].half()
-        #
-        #         # Using autocast for the forward pass
-        #         if M.use_half:
-        #             with autocast():
-        #                 result = self.model(input_dict)
-        #                 H = result["preds"]
-        #         else:
-        #             result = self.model(input_dict)
-        #             H = result["preds"]
-        #
-        #         total_loss += self._loss(result)
-        #
-        #         for i in range(H["jmap"].shape[0]):
-        #             index = batch_idx * M.batch_size_eval + i
-        #             np.savez(
-        #                 #f"{npz}/{index:06}.npz",
-        #                 f"{npz}.npz",
-        #                 **{k: v[i].cpu().numpy() for k, v in H.items()},
-        #             )
-        #
-        #             if index >= 20:
-        #                 continue
-        #             self._plot_samples(i, index, H, meta, target, f"{viz}/{index:06}")
-        #
-        # self._write_metrics(len(self.val_loader), total_loss, "validation", True)
-        # self.mean_loss = total_loss / len(self.val_loader)
-        #
-        # checkpoint_path = osp.join(self.out, "checkpoint_latest.pth")
-        # torch.save({
-        #     "iteration": self.iteration,
-        #     "arch": self.model.__class__.__name__,
-        #     "optim_state_dict": self.optim.state_dict(),
-        #     "model_state_dict": self.model.state_dict(),
-        #     "best_mean_loss": self.best_mean_loss,
-        # }, checkpoint_path)
-        # wandb.save(checkpoint_path)
-        # shutil.copy(
-        #     osp.join(self.out, "checkpoint_latest.pth"),
-        #     osp.join(npz, "checkpoint.pth"),
-        # )
-        # if self.mean_loss < self.best_mean_loss:
-        #     self.best_mean_loss = self.mean_loss
-        #     shutil.copy(
-        #         osp.join(self.out, "checkpoint_latest.pth"),
-        #         osp.join(self.out, "checkpoint_best.pth"),
-        #     )
+        self.model.eval()
+
+        viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
+        npz = osp.join(self.out, "npz", f"{self.iteration * M.batch_size_eval:09d}")
+        osp.exists(viz) or os.makedirs(viz)
+        osp.exists(npz) or os.makedirs(npz)
+
+        total_loss = 0
+        self.metrics[...] = 0
+        with torch.no_grad():
+            for batch_idx, (image, meta, target) in enumerate(self.val_loader):
+                input_dict = {
+                    "image": recursive_to(image, self.device),
+                    "meta": recursive_to(meta, self.device),
+                    "target": recursive_to(target, self.device),
+                    "mode": "validation",
+                }
+
+                if M.use_half and self.device == torch.device("cuda"):
+                    input_dict["image"] = input_dict["image"].half()
+                    if isinstance(input_dict["meta"], list):
+                        input_dict["meta"] = [item.half() if torch.is_tensor(item) else item for item in
+                                              input_dict["meta"]]
+                    if torch.is_tensor(input_dict["target"]):
+                        input_dict["target"] = input_dict["target"].half()
+
+                # Using autocast for the forward pass
+                if M.use_half:
+                    with autocast():
+                        result = self.model(input_dict)
+                        H = result["preds"]
+                else:
+                    result = self.model(input_dict)
+                    H = result["preds"]
+
+                total_loss += self._loss(result)
+
+                for i in range(H["jmap"].shape[0]):
+                    index = batch_idx * M.batch_size_eval + i
+                    np.savez(
+                        #f"{npz}/{index:06}.npz",
+                        f"{npz}.npz",
+                        **{k: v[i].cpu().numpy() for k, v in H.items()},
+                    )
+
+                    if index >= 20:
+                        continue
+                    self._plot_samples(i, index, H, meta, target, f"{viz}/{index:06}")
+
+        self._write_metrics(len(self.val_loader), total_loss, "validation", True)
+        self.mean_loss = total_loss / len(self.val_loader)
+
+        checkpoint_path = osp.join(self.out, "checkpoint_latest.pth")
+        torch.save({
+            "iteration": self.iteration,
+            "arch": self.model.__class__.__name__,
+            "optim_state_dict": self.optim.state_dict(),
+            "model_state_dict": self.model.state_dict(),
+            "best_mean_loss": self.best_mean_loss,
+        }, checkpoint_path)
+        wandb.save(checkpoint_path)
+        shutil.copy(
+            osp.join(self.out, "checkpoint_latest.pth"),
+            osp.join(npz, "checkpoint.pth"),
+        )
+        if self.mean_loss < self.best_mean_loss:
+            self.best_mean_loss = self.mean_loss
+            shutil.copy(
+                osp.join(self.out, "checkpoint_latest.pth"),
+                osp.join(self.out, "checkpoint_best.pth"),
+            )
 
         if training:
             self.model.train()
 
     def train_epoch(self):
         self.model.train()
-
-
 
         time = timer()
         for batch_idx, (image, meta, target) in enumerate(self.train_loader):
@@ -254,34 +252,6 @@ class Trainer(object):
                     + f"| {4 * self.batch_size / (timer() - time):04.1f} "
                 )
                 time = timer()
-
-
-
-            if self.iteration % 100 == 0:  # e.g., every 100 iterations
-                viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
-                osp.exists(viz) or os.makedirs(viz)
-                print("plot the results")
-                for i in range(result["preds"]["jmap"].shape[0]):
-                    index = batch_idx * M.batch_size_eval + i
-                    self._plot_samples(i, index, result["preds"], meta, target, f"{viz}/{index:06}")
-
-                checkpoint_path = osp.join(self.out, "checkpoint_latest.pth")
-                torch.save({
-                    "iteration": self.iteration,
-                    "arch": self.model.__class__.__name__,
-                    "optim_state_dict": self.optim.state_dict(),
-                    "model_state_dict": self.model.state_dict(),
-                    "best_mean_loss": self.best_mean_loss,
-                }, checkpoint_path)
-
-                self._write_metrics(1, loss.item(), "training", do_print=True)
-
-
-
-
-
-
-
             # num_images = self.batch_size * self.iteration
             # if num_images % self.validation_interval == 0 or num_images == 600:
             #     self.validate()
@@ -321,13 +291,11 @@ class Trainer(object):
         #     else:
         #         print(f"{key} is a {type(value)}, so it doesn't have a shape attribute")
 
-        fn = self.train_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
+        fn = self.val_loader.dataset.filelist[index][:-10].replace("_a0", "") + ".png"
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-
-        mask_result = result["jmap"][i].cpu().detach().numpy()
-
+        mask_result = result["jmap"][i].cpu().numpy()
         mask_result = np.sum(mask_result, axis=0)
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
@@ -342,7 +310,7 @@ class Trainer(object):
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
-            line_result = results.cpu().detach().numpy()
+            line_result = results.cpu().numpy()
             imshow(line_result, cmap="hot"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
 
         for j, target in enumerate(target["lmap"][i]):
@@ -400,18 +368,17 @@ class Trainer(object):
         jtyp = meta[i]["jtyp"].cpu().numpy()
 
 
-        rjuncs = result["juncs"][i].cpu().detach().numpy() * 4
-        rjtyp = result["jtype"][i].cpu().detach().numpy()
-        #print("jtype",rjtyp)
+        rjuncs = result["juncs"][i].cpu().numpy() * 4
+        rjtyp = result["jtype"][i].cpu().numpy()
 
 
         lpre = meta[i]["lpre"].cpu().numpy() * 4
         lpre_label = meta[i]["lpre_label"].cpu().numpy()
         #print("vecl target max", np.max(lpre_label), lpre_label)
-        vecl_result = result["lines"][i].cpu().detach().numpy() * 4
+        vecl_result = result["lines"][i].cpu().numpy() * 4
         print("lines in trainer:",vecl_result.shape, vecl_result[1])
         #print("results for lines",vecl_result.shape, vecl_result[1])
-        score = result["score"][i].cpu().detach().numpy()
+        score = result["score"][i].cpu().numpy()
         #print("score =", np.max(score), score)
 
         # for i in range(1,2):
