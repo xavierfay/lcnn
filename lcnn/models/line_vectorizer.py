@@ -259,6 +259,8 @@ class LineVectorizer(nn.Module):
             x = (index % 256).float() + torch.gather(new_joff[:, 1], 0, index) + 0.5
             xy = torch.stack([y, x], dim=-1)
 
+            print("xy.shape", xy.shape)
+
             # Calculate distance and get matches
             dist = torch.sum((xy[..., None, :] - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
