@@ -291,7 +291,7 @@ class LineVectorizer(nn.Module):
 
             # Create line and label tensors
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            xy = xy.reshape(-1, 2)
+            xy = xy.reshape(n_type * K, 2)
             line = torch.stack([xy[u], xy[v]], dim=1)
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
             label[torch.arange(label.shape[0]), scalar_labels] = 1
@@ -302,16 +302,18 @@ class LineVectorizer(nn.Module):
 
             return line, label, jcs, jtype
 
-
     def matching_algorithm(self, xy, jmap, score):
-        jcs_list, jtype_list = [], []
+        xy_int = xy.long()  # Convert to integer for indexing
+        intensities = []
 
-        # Calculate the distance between each xy and each layer in jmap
-        distances = [torch.norm(xy[:, None] - layer, dim=-1) for layer in jmap]
-        distances = torch.stack(distances, dim=-1)  # Shape: [len(xy), n_type]
+        # Extract intensity values from each layer of jmap for the given xy coordinates
+        for i in range(jmap.shape[0]):
+            intensities.append(jmap[i, xy_int[:, :, 1], xy_int[:, :, 0]])
 
-        # Get the jtype based on the minimum distance
-        jtype = torch.argmin(distances, dim=-1) + 1  # Add 1 to match the original 1-based jtype
+        intensities = torch.stack(intensities, dim=-1)  # Shape: [n_type, K]
+
+        # Get the jtype based on the maximum intensity
+        jtype = torch.argmax(intensities, dim=0) + 1  # Add 1 to match the original 1-based jtype
 
         # Filter xy based on the score threshold
         valid_indices = score > 0.0001
