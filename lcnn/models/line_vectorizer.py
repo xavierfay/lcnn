@@ -146,7 +146,7 @@ class LineVectorizer(nn.Module):
             jtypes[i] = jtypes[i][
                 None, torch.arange(M.n_out_junc) % len(jtypes[i])
             ]
-        for i in range(n_batch):
+
         result["preds"]["lines"] = torch.cat(lines)
         result["preds"]["score"] = torch.cat(score)
         result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])

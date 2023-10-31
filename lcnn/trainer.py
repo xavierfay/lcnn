@@ -257,7 +257,7 @@ class Trainer(object):
 
 
 
-            if self.iteration % 100 == 0:  # e.g., every 100 iterations
+            if self.iteration % 10 == 0:  # e.g., every 100 iterations
                 viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
                 osp.exists(viz) or os.makedirs(viz)
                 print("plot the results")
