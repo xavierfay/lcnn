@@ -242,8 +242,9 @@ class LineVectorizer(nn.Module):
             new_joff = [first_layer_joff, second_layer_joff, concatenated_layer_joff]
 
             # For the sake of simplicity, we will continue using the concatenated layers for the subsequent operations
-            concatenated_jmap = concatenated_layer_jmap
-            concatenated_joff = concatenated_layer_joff
+            concatenated_jmap = new_jmap
+            concatenated_joff = new_joff
+            new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
             # Rest of the code remains largely similar
             n_type = len(new_jmap)
@@ -264,7 +265,7 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy[..., None, :] - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
             for t in range(n_type):
-                match[t, jtyp[match[t]] != t] = N
+                match[t, new_jtyp[match[t]] != t] = N
             match[(cost > 0.25).flatten()] = N
             match = match.flatten()
 
