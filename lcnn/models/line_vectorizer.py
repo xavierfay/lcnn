@@ -275,7 +275,7 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y, index
 
-            del x_first_two, xy_first_two, y_first_two, index_first_two, x_last, xy_last, y_last, index_last
+            #del x_first_two, xy_first_two, y_first_two, index_first_two, x_last, xy_last, y_last, index_last
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
