@@ -108,7 +108,7 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def adjusted_focal_loss(logits, labels, alpha, gamma=2.0):
+def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
     """
     Compute the adjusted focal loss for multiple classes.
     Args:
