@@ -229,11 +229,14 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
+            jmap = combined_nms(jmap)
+
             n_type = jmap.shape[0]
             # Separate the layers for jmap
-            first_layer_jmap = jmap[0].reshape(-1)
-            second_layer_jmap = jmap[1].reshape(-1)
-            concatenated_layer_jmap = jmap[2:].reshape(-1)
+            first_layer_jmap = jmap[0]
+            second_layer_jmap = jmap[1]
+            concatenated_layer_jmap = jmap[2:].sum(dim=0)
+            print("max of concatenated_layer_jmap", concatenated_layer_jmap.max())
             new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
             print("new_jmap.shape", new_jmap.shape)
             # Separate the layers for joff
@@ -342,7 +345,37 @@ def non_maximum_suppression(a):
     a = a.view(original_shape[0], -1)  # Flatten it back after processing
     return a * keep.view(original_shape[0], -1)
 
+def nms_2d(a):
+    a = a.view(a.shape[0], 1, 256, 256)
+    ap = F.max_pool2d(a, 3, stride=1, padding=1)
+    keep = (a == ap).float()
+    return (a * keep).squeeze(1)  # Ensure it's [number_of_layers, 256, 256]
 
+def nms_3d(a):
+    original_shape = a.shape
+    # If there's only one layer, just apply 2D NMS
+    if original_shape[0] == 1:
+        return nms_2d(a)
+
+    # For multiple layers, apply 3D NMS
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
+    keep = (a == ap).float()
+    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
+
+
+
+def combined_nms(jmap):
+    # Split the tensor into two parts
+    first_two_layers = jmap[:2]
+    rest_layers = jmap[2:]
+
+    # Apply NMS
+    nms_first_two = nms_2d(first_two_layers)
+    nms_rest = nms_3d(rest_layers)
+
+    # Concatenate the results
+    return torch.cat([nms_first_two, nms_rest], dim=0)
 class Bottleneck1D(nn.Module):
     def __init__(self, inplanes, outplanes):
         super(Bottleneck1D, self).__init__()
