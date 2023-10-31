@@ -252,8 +252,7 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy[..., None, :] - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
             for t in range(n_type):
-                mask = (jtyp[match[t]] != t) if t < 2 else (jtyp[match[t]] < 2)
-                match[t, mask] = N
+                match[t, jtyp[match[t]] != t] = N
             match[(cost > 0.25).flatten()] = N
             match = match.flatten()
 
