@@ -66,7 +66,6 @@ class LineVectorizer(nn.Module):
             jcs.append(jc)
             ps.append(p)
             jtypes.append(jtype)
-            print("jtype.shape", len(jtypes), jtype.max(), jtype.min())
             #fs.append(feat)
 
 
@@ -148,7 +147,6 @@ class LineVectorizer(nn.Module):
                 None, torch.arange(M.n_out_junc) % len(jtypes[i])
             ]
         for i in range(n_batch):
-            print("jtypes.shape", jtypes[i].shape, jtypes[i].max(), jtypes[i].min())
         result["preds"]["lines"] = torch.cat(lines)
         result["preds"]["score"] = torch.cat(score)
         result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
@@ -308,14 +306,11 @@ class LineVectorizer(nn.Module):
 
         # For the third layer of xy, get its intensity across jmap[2:]
         intensities_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
-        print("intensities_2.shape", intensities_2.shape)
 
         # Determine the jtype for the third layer of xy based on the maximum intensity
         jtype_2 = torch.argmax(intensities_2, dim=0).add(2)  # Add 2 to offset for the first two layers
-        print("jtype_2.shape", jtype_2.shape, jtype_2.max(), jtype_2.min())
         # Combine jtypes
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
-        print("jtype.shape", jtype.shape)
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.03
         jcs = xy[valid_indices]
