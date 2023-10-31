@@ -63,6 +63,8 @@ class MultitaskLearner(nn.Module):
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
             jmap = nms_3d(jmap).softmax(0)
 
+            print("jmap shape", jmap.shape)
+
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
 
