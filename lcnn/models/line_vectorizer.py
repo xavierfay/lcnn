@@ -293,7 +293,6 @@ class LineVectorizer(nn.Module):
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
-            print("jtype.shape", jtype.shape, jtype.max(), jtype.min())
 
             return line, label, jcs, jtype
 
