@@ -293,7 +293,7 @@ class LineVectorizer(nn.Module):
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
-            print("jtype.shape", jtype.shape, jtype.max(), jtype.min())
+
 
             return line, label, jcs, jtype
 
@@ -312,7 +312,7 @@ class LineVectorizer(nn.Module):
         # Combine jtypes
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
         # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.03
+        valid_indices = score > 0.3
         jcs = xy[valid_indices]
 
         filtered_jtype = jtype[valid_indices]
@@ -362,7 +362,7 @@ def nms_3d(a):
 
     # For multiple layers, apply 3D NMS
     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 1, 1))
     keep = (a == ap).float()
     return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
 
