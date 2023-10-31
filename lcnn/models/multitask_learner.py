@@ -82,7 +82,7 @@ class MultitaskLearner(nn.Module):
 
             alpha = compute_alpha(T["jmap"])
             # L["jmap"] = sum(
-            #     focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
+            #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
             L["jmap"] = combined_loss(jmap, T["jmap"], alpha)
             L["lmap"] = sum(
@@ -113,7 +113,7 @@ def combined_loss(preds, targets, alpha):
     n_jtyp = preds.shape[1]
 
     # Step 1: Compute Individual Focal Losses
-    focal_losses = [focal_loss(preds[:, i], targets[:, i], alpha) for i in range(n_jtyp)]
+    focal_losses = [focal_loss(preds[i], targets[i], alpha) for i in range(n_jtyp)]
     individual_loss = sum(focal_losses)
 
     # Step 2: Enforce Exclusive Class Assignment
@@ -123,11 +123,8 @@ def combined_loss(preds, targets, alpha):
     # Step 3: Softmax Normalization
     normalized_preds = F.softmax(exclusive_preds, dim=1)
 
-    # Combine the losses
-    # You can either sum the individual_loss with another loss based on normalized_preds,
-    # or use individual_loss directly as your loss depending on your preference.
-    # Here, I'm returning the individual_loss directly.
-    return individual_loss
+    return normalized_preds
+
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
 
@@ -153,19 +150,17 @@ def cross_entropy_loss(logits, positive):
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
-    probas = F.softmax(logits, dim=1)  # Assuming logits shape: [batch, 2, height, width]
+    probas = F.softmax(logits, dim=0)
 
-    mask = (positive == 1).float()  # Convert positive to a float mask
-    p_t = mask * probas[:, 1, :, :] + (1.0 - mask) * probas[:, 0, :, :]
+    mask = (positive == 1).float()
+    p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Extend alpha to have the same shape as logits
-    batch_size = logits.shape[0]
-    alpha_t = alpha[None, :, None, None].expand(batch_size, -1, logits.shape[2], logits.shape[3])
+    alpha_t = alpha[None, :, None, None].expand_as(logits)
 
     epsilon = 1e-7
     loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
-    return loss.mean()
-
+    return loss.mean(2).mean(1)
 
 
 def compute_alpha(labels):
