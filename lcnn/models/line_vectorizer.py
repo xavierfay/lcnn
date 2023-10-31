@@ -229,12 +229,24 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
 
             n_type = jmap.shape[0]
-            jmap = non_maximum_suppression(jmap).reshape(n_type, -1)
-            concatenated_jmap = jmap[2:].reshape(-1)
-            concatenated_joff = joff[2:].reshape(-1, 2)
+            # Separate the first two layers for jmap
+            first_layer_jmap = jmap[0].reshape(-1)
+            second_layer_jmap = jmap[1].reshape(-1)
+            concatenated_layer_jmap = jmap[2:].reshape(-1)
+            new_jmap = [first_layer_jmap, second_layer_jmap, concatenated_layer_jmap]
 
-            n_type = concatenated_jmap.shape[0]
+            # Separate the first two layers for joff
+            first_layer_joff = joff[0].reshape(-1, 2)
+            second_layer_joff = joff[1].reshape(-1, 2)
+            concatenated_layer_joff = joff[2:].reshape(-1, 2)
+            new_joff = [first_layer_joff, second_layer_joff, concatenated_layer_joff]
 
+            # For the sake of simplicity, we will continue using the concatenated layers for the subsequent operations
+            concatenated_jmap = concatenated_layer_jmap
+            concatenated_joff = concatenated_layer_joff
+
+            # Rest of the code remains largely similar
+            n_type = len(new_jmap)
             max_K = M.n_dyn_junc // len(concatenated_jmap)
             N = len(junc)
             K = min(int((concatenated_jmap > M.eval_junc_thres).float().sum().item()),
