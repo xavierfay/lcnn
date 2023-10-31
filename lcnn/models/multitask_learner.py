@@ -94,7 +94,7 @@ class MultitaskLearner(nn.Module):
 
             L["joff"] = sum(
                 sigmoid_l1_loss(joff[i, j], T["joff"][i, j], -0.5, T["jmap"][i])
-                for i in range(n_jtyp)
+                for i in range(n_jtyp-1)
                 for j in range(2)
             )
             for loss_name in L:
