@@ -145,24 +145,27 @@ def cross_entropy_loss(logits, positive):
     return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
 
 
-
 def compute_alpha(labels):
     """
-    Compute the frequency of each class in the dataset.
+    Compute the frequency of the positive class for each class-channel pair.
 
     Args:
-    - labels (torch.Tensor): a tensor of shape [num_samples, n_classes, 256, 256]
+    - labels (torch.Tensor): a tensor of shape [n_classes, batch_size, H, W]
 
     Returns:
-    - alpha (torch.Tensor): a tensor of shape [n_classes]
+    - alpha (torch.Tensor): a tensor of shape [n_classes, batch_size
     """
-    # Count the number of positive activations for each class
-    class_counts = labels.sum(dim=(0, 2, 3))
-    # Compute the frequency
-    total_counts = labels.numel() / labels.shape[1]
+    # Count the number of positive activations for each class-channel pair
+    class_counts = labels.sum(dim=(2, 3))
+
+    # Compute the total number of pixels for each channel
+    total_counts = labels.shape[2] * labels.shape[3]
+
+    # Compute the frequency for each class-channel pair
     class_frequencies = class_counts / total_counts
 
     alpha = 1.0 / (class_frequencies + 1e-6)  # Adding a small constant to avoid division by zero
+
     return alpha
 
 
