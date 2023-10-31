@@ -282,23 +282,23 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, -1)
 
 
-            # for t in range(n_type):
-            #     match[t, jtyp[match[t]] != t] = N
-            # match[cost > 1.5 * 1.5] = N
-            # match[cost > 0.5 ] = N
-            # match = match.flatten()
-
             for t in range(n_type):
-                # For the first two layers, only match with the same layer
-                if t < 2:
-                    mask = jtyp[match[t]] != t
-                # For the remaining layers, match with any layer from 2 to n_type
-                else:
-                    mask = jtyp[match[t]] < 2
-                match[t, mask] = N
-
+                match[t, jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
+            # match[cost > 0.5 ] = N
             match = match.flatten()
+
+            # for t in range(n_type):
+            #     # For the first two layers, only match with the same layer
+            #     if t < 2:
+            #         mask = jtyp[match[t]] != t
+            #     # For the remaining layers, match with any layer from 2 to n_type
+            #     else:
+            #         mask = jtyp[match[t]] < 2
+            #     match[t, mask] = N
+
+            # match[cost > 1.5 * 1.5] = N
+            # match = match.flatten()
 
             # if mode == "testing":
             #     match = (match - 1).clamp(min=0)
