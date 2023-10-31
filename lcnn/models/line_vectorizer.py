@@ -229,7 +229,7 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
-            jmap = combined_nms(jmap)
+            jmap = nms_3d(jmap)
 
             # Separate the layers for jmap
             first_layer_jmap = jmap[0]
@@ -365,8 +365,6 @@ def nms_3d(a):
     ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
     keep = (a == ap).float()
     return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
-
-
 
 def combined_nms(jmap):
     # Split the tensor into two parts
