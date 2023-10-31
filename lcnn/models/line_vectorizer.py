@@ -255,8 +255,8 @@ class LineVectorizer(nn.Module):
 
             # Get top K scores and their indices
             score, index = torch.topk(new_jmap, k=K)
-            y = (index // 256).float() + torch.gather(new_joff[:, 0], 0, index) + 0.5
-            x = (index % 256).float() + torch.gather(new_joff[:, 1], 0, index) + 0.5
+            y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
