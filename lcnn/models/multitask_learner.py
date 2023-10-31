@@ -61,7 +61,7 @@ class MultitaskLearner(nn.Module):
         for stack, output in enumerate(outputs):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
-            jmap = jmap.permute(2, 0, 1, 3, 4)
+            #jmap = jmap.permute(2, 0, 1, 3, 4)
             #jmap = nms_3d(jmap.softmax(0))
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
@@ -107,27 +107,34 @@ class MultitaskLearner(nn.Module):
         result["losses"] = losses
         return result
 
-def multi_class_focal_loss(logits, labels, alpha, gamma=2.0):
+
+def adjusted_focal_loss(logits, labels, alpha, gamma=2.0):
     """
-    Compute the multi-class focal loss.
+    Compute the adjusted focal loss for multiple classes.
     Args:
-    - logits (torch.Tensor): raw logits, shape [batch_size, n_classes, H, W]
-    - labels (torch.Tensor): ground truth labels, shape [batch_size, n_classes, H, W]
-    - alpha (torch.Tensor): class weights, shape [n_classes]
+    - logits (torch.Tensor): raw logits, shape [n_jtyp, 2, batch_size, H, W]
+    - labels (torch.Tensor): ground truth labels, shape [n_jtyp, 2, H, W]
+    - alpha (torch.Tensor): class weights, shape [n_jtyp]
     - gamma (float): focusing parameter
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
-    probas = F.softmax(logits, dim=1)
-    p_t = (labels * probas).sum(dim=1)
+    # Loop over n_jtyp
+    losses = []
+    for j in range(logits.shape[0]):
+        probas = F.softmax(logits[j], dim=0)
+        p_t = (labels[j] * probas).sum(dim=0)
 
-    alpha_t = alpha[None, :, None, None].expand_as(logits)
-    epsilon = 1e-7
-    focal_term = (1 - p_t) ** gamma
-    cross_entropy_term = -labels * torch.log(probas + epsilon)
+        alpha_t = alpha[j].expand_as(probas)
 
-    loss = (alpha_t * focal_term * cross_entropy_term).sum(dim=1)
-    return loss.mean()
+        epsilon = 1e-7
+        focal_term = (1 - p_t) ** gamma
+        cross_entropy_term = -labels[j] * torch.log(probas + epsilon)
+
+        loss = (alpha_t * focal_term * cross_entropy_term).sum(dim=0)
+        losses.append(loss)
+
+    return torch.stack(losses).mean()
 
 def nms_3d(a):
     n_jtyp, two, batch, row, col = a.shape
