@@ -78,11 +78,11 @@ class WireframeDataset(Dataset):
                         jmap[layer, x, y] = 0
             target["jmap"] = torch.from_numpy(jmap).float()
 
-            # Extract joff
-            joff = target["joff"]
-            zero_layer = np.zeros((2, 256, 256),dtype=np.float32)
-            joff = np.concatenate([zero_layer[np.newaxis, ...], joff], axis=0)
-            target["joff"] = torch.from_numpy(joff).float()
+            # # Extract joff
+            # joff = target["joff"]
+            # zero_layer = np.zeros((2, 256, 256),dtype=np.float32)
+            # joff = np.concatenate([zero_layer[np.newaxis, ...], joff], axis=0)
+            # target["joff"] = torch.from_numpy(joff).float()
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]

@@ -64,8 +64,7 @@ class MultitaskLearner(nn.Module):
             jmap.permute(1, 0, 2, 3)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
-            joff = output[offset[1]: offset[2]].reshape(n_jtyp, batch, row, col)
-            joff  = joff[1:]
+            joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2,  batch, row, col)
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
@@ -74,7 +73,8 @@ class MultitaskLearner(nn.Module):
                 result["preds"] = {
                     "jmap": jmap[1:],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "joff": joff.permute(1, 0, 2, 3).sigmoid() - 0.5,
+                     #"joff": joff[1:].permute(1, 0, 2, 3).sigmoid() - 0.5,
+                    "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
                     return result
