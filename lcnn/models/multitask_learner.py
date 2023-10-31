@@ -71,7 +71,7 @@ class MultitaskLearner(nn.Module):
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": jmap.permute(2, 0, 1, 3, 4)[:, :, 1],
+                    "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
