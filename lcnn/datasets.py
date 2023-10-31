@@ -53,6 +53,36 @@ class WireframeDataset(Dataset):
                 for name in ["lmap", "joff", "jmap"]
             }
 
+            jmap = target["jmap"]
+
+            # Create a new layer initialized with ones
+            new_layer = np.ones((256, 256), dtype=np.float32)
+
+            # Iterate over the existing jmap layers
+            for i in range(jmap.shape[0]):
+                non_zero_positions = (jmap[i] != 0)
+                new_layer[non_zero_positions] = 0
+            jmap = np.concatenate([new_layer[np.newaxis, ...], jmap], axis=0)
+            summed_jmap = jmap.sum(axis=0)
+            error_positions = np.argwhere(summed_jmap > 1)
+            for spatial_pos in error_positions:
+                x, y = spatial_pos
+                layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
+
+                # Keep the 1 in the layer with the highest layer number
+                highest_layer = np.max(layers_with_ones)
+
+                # Set 0 in the other layers
+                for layer in layers_with_ones:
+                    if layer != highest_layer:
+                        jmap[layer, x, y] = 0
+            target["jmap"] = torch.from_numpy(jmap).float()
+
+            # # Extract joff
+            # joff = target["joff"]
+            # zero_layer = np.zeros((2, 256, 256),dtype=np.float32)
+            # joff = np.concatenate([zero_layer[np.newaxis, ...], joff], axis=0)
+            # target["joff"] = torch.from_numpy(joff).float()
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
@@ -71,26 +101,35 @@ class WireframeDataset(Dataset):
 
             num_classes = int(np.max(lpre_label)) + 1
             lpre_label = np.eye(num_classes)[lpre_label.astype(int)]
-
-            # Concatenate to get lpre
-            lpre = np.concatenate([lpos, lneg], 0)
-
-            for i in range(len(lpre)):
-                if random.random() > 0.5:
-                    lpre[i] = lpre[i, ::-1]
-            # ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
-            # ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
-            # feat = [
-            #     lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
-            #     ldir * M.use_slop,
-            #     lpre[:, :, 2],
-            # ]
-            # feat = np.concatenate(feat, 1)
-            jtyp = npz["junc"][:, 2]-1
+            jtyp = npz["junc"][:, 2] - 1
 
             Lpos = npz["Lpos"]
             Lneg = np.where(Lpos == 0, 1, 0)
             np.fill_diagonal(Lneg, 0)
+
+            # Concatenate to get lpre
+            lpre = np.concatenate([lpos, lneg], 0)
+
+            endpoints_indices = lpre[:, :, 2].astype(int)  # Convert to integer for indexing
+
+            # Fetch the jtype values for the two endpoints
+            jtypes_endpoints = jtyp[endpoints_indices]
+
+            # Replace the third column of lpre
+            lpre[:, :, 2] = jtypes_endpoints
+
+            for i in range(len(lpre)):
+                if random.random() > 0.5:
+                    lpre[i] = lpre[i, ::-1]
+            ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
+            ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
+            feat = [
+                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
+                ldir * M.use_slop,
+                jtypes_endpoints.reshape(-1, 2) * M.use_jtyp,
+            ]
+            feat = np.concatenate(feat, 1)
+
 
             meta = {
                 "junc": torch.from_numpy(npz["junc"][:, :2]),
@@ -99,7 +138,7 @@ class WireframeDataset(Dataset):
                 "Lneg": torch.from_numpy(Lneg),
                 "lpre": torch.from_numpy(lpre[:, :, :2]),
                 "lpre_label": torch.from_numpy(lpre_label),
-                # "lpre_feat": torch.from_numpy(feat),
+                "lpre_feat": torch.from_numpy(feat),
             }
             # for key, value in meta.items():
             #     print(f"{key}: {value.shape}")

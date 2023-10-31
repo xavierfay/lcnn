@@ -61,11 +61,11 @@ class LineVectorizer(nn.Module):
                 p = torch.cat([p, meta["lpre"]])
                 #feat = torch.cat([feat, meta["lpre_feat"]])
                 ys.append(meta["lpre_label"])
-                #del jc
-
-            jcs.append(jc)
-            ps.append(p)
-            jtypes.append(jtype)
+                del jc
+            else:
+                jcs.append(jc)
+                ps.append(p)
+                jtypes.append(jtype)
             #fs.append(feat)
 
 
@@ -100,62 +100,128 @@ class LineVectorizer(nn.Module):
             x = x.half()
         x = self.fc2(x)
 
-        #if input_dict["mode"] != "training":
-        p = torch.cat(ps)
-        s = torch.softmax(x, -1)
-        cond1 = s[:, 0] < 0.25
-        cond2 = s[:, 1] > 0.25
-        cond3 = s[:, 2] > 0.25
-        cond4 = s[:, 3] > 0.25
+        if input_dict["mode"] != "training":
+            p = torch.cat(ps)
+            s = torch.softmax(x, -1)
+            cond1 = s[:, 0] < 0.25
+            cond2 = s[:, 1] > 0.25
+            cond3 = s[:, 2] > 0.25
+            cond4 = s[:, 3] > 0.25
 
-        # s_arg = torch.argmax(s, dim=1)
-        #
-        # cond1 = s_arg != 0
-        # cond2 = s[:, 1] > 0.1
-        # cond3 = s[:, 2] > 0.1
-        # cond4 = s[:, 3] > 0.1
+            b = (cond2 | cond3 | cond4) & cond1
 
-        # Combine the conditions using logical OR
-        b = (cond2 | cond3 | cond4) & cond1
-        lines = []
-        score = []
+            # cond1 = s[:, 0] > 0.5
+            # b = cond1
 
-        for i in range(n_batch):
-            p0 = p[idx[i]: idx[i + 1]]
-            s0 = s[idx[i]: idx[i + 1]]
-            mask = b[idx[i]: idx[i + 1]]
-            p0 = p0[mask]
-            s0 = s0[mask]
-            if len(p0) == 0:
-                lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
-                score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
-            else:
-                max_score_indices = torch.argmax(s0, dim=1)
-                arg = torch.argsort(max_score_indices, descending=True)
-                p0, s0 = p0[arg], s0[arg]
-                #print("shape p0", p0.shape)
-                lines.append(p0[None, torch.arange(M.n_out_line) % len(p0)])
-                score.append(s0[None, torch.arange(M.n_out_line) % len(s0)])
-            if len(jcs[i]) == 0:
-                jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
-                jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
+            lines = []
+            score = []
+            for i in range(n_batch):
+                p0 = p[idx[i]: idx[i + 1]]
+                s0 = s[idx[i]: idx[i + 1]]
+                mask = b[idx[i]: idx[i + 1]]
+                p0 = p0[mask]
+                s0 = s0[mask]
 
-            jcs[i] = jcs[i][
-                None, torch.arange(M.n_out_junc) % len(jcs[i])
-            ]
-            jtypes[i] = jtypes[i][
-                None, torch.arange(M.n_out_junc) % len(jtypes[i])
-            ]
+                if len(p0) == 0:
+                    lines.append(torch.zeros([1, M.n_out_line, 2, 2], device=p.device))
+                    score.append(torch.zeros([1, M.n_out_line, 4], device=p.device))
+                else:
+                    # Ensure start point is lexicographically smaller than end point
+                    mask = (p0[:, 0, 0] > p0[:, 1, 0]) | ((p0[:, 0, 0] == p0[:, 1, 0]) & (p0[:, 0, 1] > p0[:, 1, 1]))
+                    p0[mask] = torch.flip(p0[mask], [1])
 
-        result["preds"]["lines"] = torch.cat(lines)
-        result["preds"]["score"] = torch.cat(score)
-        result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
-        result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
+                    # Get unique lines and their indices
+                    p0_unique, unique_indices = torch.unique(p0, dim=0, return_inverse=True)
+
+                    # Use the unique indices to gather the corresponding scores
+                    s0_unique = s0[unique_indices]
+
+                    # Now, both p0_unique and s0_unique are aligned and free of duplicates
+                    print("shape p0", p0.shape, "unique shape", p0_unique.shape)
+
+                    lines.append(p0_unique[None, torch.arange(M.n_out_line) % len(p0_unique)])
+                    score.append(s0_unique[None, torch.arange(M.n_out_line) % len(s0_unique)])
+                if len(jcs[i]) == 0:
+                    jcs[i] = torch.zeros([M.n_out_junc, 2], device=p.device)
+                    jtypes[i] = torch.zeros([M.n_out_junc], device=p.device)
+
+                jcs[i] = jcs[i][
+                    None, torch.arange(M.n_out_junc) % len(jcs[i])
+                ]
+                jtypes[i] = jtypes[i][
+                    None, torch.arange(M.n_out_junc) % len(jtypes[i])
+                ]
+
+            result["preds"]["lines"] = torch.cat(lines)
+            result["preds"]["score"] = torch.cat(score)
+            result["preds"]["juncs"] = torch.cat([jcs[i] for i in range(n_batch)])
+            result["preds"]["jtype"] = torch.cat([jtypes[i] for i in range(n_batch)])
 
             #print("length lines", result["preds"]["lines"].shape)
 
 
 
+
+        # if input_dict["mode"] != "testing":
+        #     def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
+        #         # Ensure the logits are float, Convert labels to long
+        #         x = x.float()
+        #         y = y.long()
+        #
+        #         # Calculate the log softmax along the second dimension
+        #         log_softmax = F.log_softmax(x, dim=-1)
+        #
+        #         # Initialize an empty tensor to store the per-class losses
+        #         loss_per_class = torch.zeros(num_classes).float().to(
+        #             x.device)  # ensure the tensor is on the same device as x
+        #
+        #         # Loop over each class and calculate the loss
+        #         for c in range(num_classes):
+        #             # Create a mask that selects only the samples of class c
+        #             mask = (y == c).float()
+        #             loss_c = -log_softmax[:, c] * mask
+        #             loss_per_class[c] = loss_c.sum() * class_weights[c]
+        #
+        #         # Normalize by the total number of samples in the batch
+        #         misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=0) == 1).float()
+        #         misclass_loss = misclass_mask.sum() * misclass_penalty
+        #
+        #         loss_per_class[0] += misclass_loss
+        #
+        #         loss_per_class /= x.shape[0]
+        #         return loss_per_class
+        #
+        #     class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
+        #
+        #     y = torch.argmax(y, dim=1)
+        #
+        #     # if input_dict["mode"] != "training":
+        #     count = torch.bincount(y)
+        #     unique_values = torch.unique(y)
+        #     print("values of labels",unique_values, count)
+        #
+        #     x_class = torch.argmax(x, dim=1)
+        #     count = torch.bincount(x_class)
+        #     unique_values = torch.unique(x_class)
+        #     print("values of pred", unique_values, count)
+        #
+        #     loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
+        #
+        #     lneg = loss_per_class[0]
+        #     lpos0 = loss_per_class[1]
+        #     lpos1 = loss_per_class[2]
+        #     lpos2 = loss_per_class[3]
+        #
+        #     result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
+        #     result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
+        #     result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
+        #     result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
+
+        def focal_loss(logits, targets, alpha, gamma=2.0):
+            CE_loss = F.cross_entropy(logits, targets, reduction='none')
+            pt = torch.exp(-CE_loss)
+            F_loss = alpha * (1 - pt) ** gamma * CE_loss
+            return F_loss
 
         if input_dict["mode"] != "testing":
             def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
@@ -212,6 +278,8 @@ class LineVectorizer(nn.Module):
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
 
+        if input_dict["mode"] == "training":
+            del result["preds"]
 
         # print(input_dict["mode"])
         # print("lines result:", len(lines))#, torch.max(lines))
@@ -240,26 +308,35 @@ class LineVectorizer(nn.Module):
             second_layer_joff = joff[1]
             concatenated_layer_joff = joff[2:].sum(dim=0)
             new_joff = torch.stack([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
+            jmap = nms_3d(jmap)
+            # Separate the layers for jm
+            first_layer_jmap = jmap[0]
+            second_layer_jmap = jmap[1]
+            concatenated_layer_jmap = jmap[2:].sum(dim=0)
+            new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
 
             new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
 
             # Rest of the code remains largely similar
             n_type = new_jmap.shape[0]
 
-            new_joff = new_joff.reshape(n_type, 2, -1)
-            new_jmap = new_jmap.reshape(n_type, -1)
-            max_K = M.n_dyn_junc // n_type
-            N = len(junc)
-            K = min(int((new_jmap > M.eval_junc_thres).float().sum().item()), max_K) if mode != "training" else min(
-                int(N * 2 + 2), max_K)
-            K = max(K, 2)
+            max_size = max([s.size(0) for s in scores])
 
-            # Get top K scores and their indices
-            score, index = torch.topk(new_jmap, k=K)
-            y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
+            # Pad each tensor in scores and indices lists to match the max_size
+            padded_scores = [F.pad(s, (0, max_size - s.size(0)), value=0) for s in scores]
+            padded_indices = [F.pad(idx, (0, max_size - idx.size(0)), value=0) for idx in indices]
+            # padded_scores = [F.pad(s, (0, max_size - s.size(0))) for s in scores]
+            # padded_indices = [F.pad(idx, (0, max_size - idx.size(0))) for idx in indices]
+
+            # Convert lists to tensors for further processing
+            score = torch.stack(padded_scores)
+            index = torch.stack(padded_indices)
+
+            y = (index // 256).float() + torch.gather(joff[:, 0], 1, index) + 0.5
+            x = (index % 256).float() + torch.gather(joff[:, 1], 1, index) + 0.5
 
             # xy: [N_TYPE, K, 2]
+
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y, index
@@ -271,7 +348,9 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 match[t, new_jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
+            #print("match shape before flatten",match.shape)
             match = match.flatten()
+            #print("match shape after flatten", match.shape)
 
             # Create mesh grid and filter based on conditions
             u, v = torch.meshgrid(torch.arange(n_type * K, device=device), torch.arange(n_type * K, device=device))
@@ -351,6 +430,21 @@ def nms_2d(a):
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
     keep = (a == ap).float()
     return (a * keep).squeeze(1)  # Ensure it's [number_of_layers, 256, 256]
+        filtered_jtype = jtype[valid_indices]
+
+        return jcs, filtered_jtype
+
+    def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
+        c = torch.zeros_like(scalar_labels, dtype=torch.bool)
+        for class_idx, max_samples in enumerate([M.n_dyn_negl, M.n_dyn_posl0, M.n_dyn_posl1, M.n_dyn_posl2]):
+            cdx = (scalar_labels == class_idx).nonzero().flatten()
+            if len(cdx) > max_samples:
+                cdx = torch.randperm(len(cdx), device=device)[:max_samples]
+            c[cdx] = 1
+        cdx = torch.randint(len(c), (M.n_dyn_othr,), device=device)
+        c[cdx] = 1
+        return c
+
 
 def nms_3d(a):
     original_shape = a.shape
@@ -360,22 +454,9 @@ def nms_3d(a):
 
     # For multiple layers, apply 3D NMS
     a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 3, 3), stride=(1, 1, 1), padding=(0, 1, 1))
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
     keep = (a == ap).float()
-    return (a * keep).squeeze(0)  # Ensure it's [number_of_layers, 256, 256]
-
-def combined_nms(jmap):
-    # Split the tensor into two parts
-    first_two_layers = jmap[:2]
-    rest_layers = jmap[2:]
-
-    # Apply NMS
-    nms_first_two = nms_2d(first_two_layers)
-    nms_rest = nms_3d(rest_layers)
-
-    # Concatenate the results
-    return torch.cat([nms_first_two, nms_rest], dim=0)
-
+    return (a * keep).squeeze(0)
 
 class Bottleneck1D(nn.Module):
     def __init__(self, inplanes, outplanes):
