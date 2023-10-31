@@ -325,6 +325,7 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
+        print("jmap shape", result["jmap"])
         mask_result = result["jmap"][i].cpu().detach().numpy()
 
         mask_result = np.sum(mask_result, axis=0)

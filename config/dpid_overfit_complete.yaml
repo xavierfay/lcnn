@@ -57,7 +57,7 @@ model:
 
   # maximum junction and line outputs
   n_out_junc: 600
-  n_out_line: 2500
+  n_out_line: 500
 
   # additional ablation study parameters
   use_cood: 1
