@@ -118,6 +118,9 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     Returns:
     - loss (torch.Tensor): scalar tensor representing the loss
     """
+    print("logits shape", logits.shape)
+    print("labels shape", labels_one_hot.shape)
+    print("alpha shape", alpha.shape)
 
     # Compute softmax probabilities
     probas = F.softmax(logits, dim=1)
