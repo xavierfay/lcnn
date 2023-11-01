@@ -328,7 +328,7 @@ class Trainer(object):
         jmap = nms_3d(result["jmap"][i].cpu().detach().numpy())
         for j, results in enumerate(jmap):
             mask_result = results
-            imshow(mask_result, cmap="jet"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
+            imshow(mask_result, cmap="heat"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
@@ -505,14 +505,23 @@ def pprint(*args):
     print("\r", end="")
     print(*args)
 
-def nms_3d(a):
-    original_shape = a.shape
+def nms_3d(tensor):
+    """
+    Perform 3D non-maximum suppression on a tensor of shape [C, H, W].
+    """
+    # Define a 3x3x3 kernel
+    kernel = torch.ones((1, 1, 3, 3, 3), dtype=torch.float32, device=tensor.device)
 
-    # For multiple layers, apply 3D NMS
-    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
-    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
-    keep = (a == ap).float()
-    return (a * keep).squeeze(0)
+    # Use max pooling to get the max values in a 3x3x3 neighborhood
+    max_tensor = F.max_pool3d(tensor.unsqueeze(0), kernel_size=3, stride=1, padding=1)
+
+    # Create a mask of the original tensor values that are equal to the max values
+    mask = torch.eq(tensor, max_tensor.squeeze(0))
+
+    # Zero out non-max values
+    suppressed_tensor = tensor * mask.float()
+
+    return suppressed_tensor
 # def _launch_tensorboard(board_out, port, out):
 #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #     p = subprocess.Popen(["tensorboard", f"--logdir={board_out}", f"--port={port}"])
