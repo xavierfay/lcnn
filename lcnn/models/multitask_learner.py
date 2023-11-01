@@ -109,7 +109,10 @@ class MultitaskLearner(nn.Module):
 
 
 def jmap_cross_entropy(logits, positive):
+    print("logits shape", logits.shape)
+    print("positive shape", positive.shape)
     loss  = F.cross_entropy(logits, positive.long(), reduction="mean")
+    return loss
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
