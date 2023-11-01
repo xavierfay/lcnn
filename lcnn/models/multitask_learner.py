@@ -96,7 +96,7 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = M.jmap_weight * jmap_single + (1-M.jmap_weight) * jmap_multi
 
             penalty = mutual_exclusivity_penalty(jmap)
-            L["jmap"] = jmap_single + M.jmap_weight * penalty
+            L["jmap"] = jmap_single #+ M.jmap_weight * penalty
 
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
