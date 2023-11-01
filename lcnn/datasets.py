@@ -55,18 +55,13 @@ class WireframeDataset(Dataset):
 
             jmap = target["jmap"]
             print(jmap.shape)
-
             summed_jmap = jmap.sum(axis=0)
             error_positions = np.argwhere(summed_jmap > 1)
             for spatial_pos in error_positions:
-                print("Spatial pos:", spatial_pos)
+                print(spatial_pos)
                 x, y = spatial_pos
                 layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
-
-                # Keep the 1 in the layer with the highest layer number
                 highest_layer = np.max(layers_with_ones)
-
-                # Set 0 in the other layers
                 for layer in layers_with_ones:
                     if layer != highest_layer:
                         jmap[layer, x, y] = 0
