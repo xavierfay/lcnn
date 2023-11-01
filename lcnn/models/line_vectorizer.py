@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
-            jmap_filter =  (jmap >= 0.45).float()
+            jmap_filter =  jmap(jmap >= 0.45).float()
 
 
 
@@ -307,6 +307,9 @@ class LineVectorizer(nn.Module):
         print("xy.shape", xy.shape)
         print("jmap.shape", jmap.shape)
         print("score.shape", score.shape)
+
+        indices = torch.where(jmap == score)
+        print(indices)
 
         n_type, K, _ = xy.shape
         xy_int = xy.long()
