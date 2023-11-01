@@ -56,6 +56,7 @@ class WireframeDataset(Dataset):
             jmap = target["jmap"]
             print(jmap.shape)
             summed_jmap = jmap.sum(axis=0)
+            print(summed_jmap.shape)
             error_positions = np.argwhere(summed_jmap > 1)
             for spatial_pos in error_positions:
                 print(spatial_pos)
