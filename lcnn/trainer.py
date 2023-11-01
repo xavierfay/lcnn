@@ -326,7 +326,7 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        jmap = nms_3d(result["jmap"][i].cpu().detach().numpy())
+        jmap = (result["jmap"][i].cpu().detach().numpy())
         for j, results in enumerate(jmap):
             mask_result = results
             imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
@@ -343,9 +343,9 @@ class Trainer(object):
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
 
-        for j, target in enumerate(target["jmap"][i]):
-            mask_result = target.cpu().detach().numpy()
-            imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}a.jpg"), plt.close()
+        for j, mask_target in enumerate(target["jmap"][i]):
+            mask_target = mask_target.cpu().detach().numpy()
+            imshow(mask_target, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}a.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().detach().numpy()
