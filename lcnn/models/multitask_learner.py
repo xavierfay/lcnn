@@ -80,13 +80,13 @@ class MultitaskLearner(nn.Module):
             L = OrderedDict()
 
             alpha = compute_alpha(T["jmap"])
-            cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
-            print("cross loss", cross_loss)
+            # cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
+            # print("cross loss", cross_loss)
 
-            focal_loss_jmap = sum(
+            L["jmap"] = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
-            L["jmap"] = cross_loss * M.penalty + focal_loss_jmap
+            #L["jmap"] = cross_loss * M.penalty + focal_loss_jmap
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
