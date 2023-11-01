@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
-            #jmap = (jmap >= 0.3).float()
+
 
 
             # Separate the layers for jmap
@@ -260,7 +260,6 @@ class LineVectorizer(nn.Module):
 
             # Get top K scores and their indices
             score, index = torch.topk(new_jmap, k=K)
-            j_class =  (index // (new_jmap.shape[1] * new_jmap.shape[2])).long()
             y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
 
@@ -297,33 +296,34 @@ class LineVectorizer(nn.Module):
 
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
+            jmap = jmap >= 0.45
+            jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
-            #jcs, jtype = self.matching_algorithm(xy, jmap, score)
-            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
-            jtype = [torch.full((len(jcs[i]),), i, dtype=torch.long) for i in range(n_type)]
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
-        # The first two layers of xy always correspond to the first two layers of jmap
+        # For the first two layers of xy, they are always matched with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-        # For the third layer of xy, get its intensity across jmap[2:]
-        intensities_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        # For each layer of xy, get its intensity across all layers of jmap
+        intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(n_type)]
 
-        # Determine the jtype for the third layer of xy based on the maximum intensity
-        jtype_2 = torch.argmax(intensities_2, dim=0).add(2)  # Add 2 to offset for the first two layers
+        # Determine the jtype for each layer of xy based on the closest intensity
+        jtypes = [torch.argmin(torch.abs(intensity - score[i]), dim=0) for i, intensity in enumerate(intensities)]
+
         # Combine jtypes
-        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
+        jtype = torch.stack(jtypes, dim=0)
+
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.000001
         jcs = xy[valid_indices]
-
         filtered_jtype = jtype[valid_indices]
 
         return jcs, filtered_jtype
+
 
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
