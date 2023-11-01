@@ -296,7 +296,7 @@ class LineVectorizer(nn.Module):
 
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
-            jmap = jmap >= 0.45
+            jmap = (jmap >= 0.45).float()
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
             return line, label, jcs, jtype
