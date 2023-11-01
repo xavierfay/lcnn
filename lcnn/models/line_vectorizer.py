@@ -310,7 +310,8 @@ class LineVectorizer(nn.Module):
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
         # For the third layer of xy, find the closest non-zero location in jmap[2:]
-        closest_coords = self.find_closest_non_zero(xy, jmap[2:])
+        twod_jmap = argmax(jmap[2:], dim=0)
+        closest_coords = self.find_closest_non_zero(xy, twod_jmap)
 
         # Convert these coordinates to their associated layer in jmap[2:]
         jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
@@ -325,7 +326,7 @@ class LineVectorizer(nn.Module):
 
         return jcs, filtered_jtype
 
-    def find_closest_non_zero(self, xy, jmap):
+    def find_closest_non_zero_2d(self, xy, jmap):
         # Define a local neighborhood
         neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
 
@@ -335,7 +336,7 @@ class LineVectorizer(nn.Module):
             x = xy[2, i, 0].long()
             y = xy[2, i, 1].long()
 
-            if jmap[:, y, x].any():  # If any layer at this location is non-zero
+            if jmap[y, x] != 0:  # Check if the value at this location is non-zero
                 closest_coords.append((x, y))
                 continue
 
@@ -347,16 +348,16 @@ class LineVectorizer(nn.Module):
                 dx = torch.arange(-radius, radius + 1, device=jmap.device)
                 dy = torch.arange(-radius, radius + 1, device=jmap.device)
 
-                local_x = torch.clamp(x + dx.unsqueeze(0), 0, jmap.shape[2] - 1)
-                local_y = torch.clamp(y + dy.unsqueeze(1), 0, jmap.shape[1] - 1)
+                local_x = torch.clamp(x + dx.unsqueeze(0), 0, jmap.shape[1] - 1)
+                local_y = torch.clamp(y + dy.unsqueeze(1), 0, jmap.shape[0] - 1)
 
-                local_intensities = jmap[:, local_y, local_x]
+                local_intensities = jmap[local_y, local_x]
 
                 if local_intensities.any():
                     # If any value in the local_intensities is non-zero,
                     # we have found the closest non-zero location
                     non_zero_indices = torch.nonzero(local_intensities)
-                    closest_y, closest_x = non_zero_indices[0][1], non_zero_indices[0][2]
+                    closest_y, closest_x = non_zero_indices[0][0], non_zero_indices[0][1]
                     closest_coords.append((closest_x, closest_y))
                     found = True
                 else:
@@ -364,6 +365,7 @@ class LineVectorizer(nn.Module):
                     radius += 1
 
         return closest_coords
+
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
         for class_idx, max_samples in enumerate([M.n_dyn_negl, M.n_dyn_posl0, M.n_dyn_posl1, M.n_dyn_posl2]):
