@@ -123,6 +123,7 @@ def mutual_exclusivity_penalty(jmap, labels):
     procced_jmap = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
     print("jmap in mutual exclusivity penalty", procced_jmap.shape)
     # Loop over all keypoint types (layers)
+    total_penalty = 0.0
     for i in range(procced_jmap.shape[0]):
         penalty = F.nll_loss(procced_jmap[i], labels[i])
         total_penalty += penalty
