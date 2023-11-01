@@ -192,3 +192,7 @@ def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
         loss = loss * (mask / w)
 
     return loss.mean(2).mean(1)
+
+def cross_entropy_loss(logits, positive):
+    nlogp = -F.log_softmax(logits, dim=0)
+    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
