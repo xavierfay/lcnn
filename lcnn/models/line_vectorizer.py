@@ -310,7 +310,7 @@ class LineVectorizer(nn.Module):
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
         # For the third layer of xy, find the closest non-zero location in jmap[2:]
-        twod_jmap = argmax(jmap[2:], dim=0)
+        twod_jmap = torch.argmax(jmap[2:], dim=0)
         closest_coords = self.find_closest_non_zero(xy, twod_jmap)
 
         # Convert these coordinates to their associated layer in jmap[2:]
