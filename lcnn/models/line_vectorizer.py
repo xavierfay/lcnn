@@ -303,6 +303,11 @@ class LineVectorizer(nn.Module):
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
+
+        print("xy.shape", xy.shape)
+        print("jmap.shape", jmap.shape)
+        print("score.shape", score.shape)
+
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
