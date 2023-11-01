@@ -312,7 +312,8 @@ class LineVectorizer(nn.Module):
         intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(n_type)]
 
         # Determine the jtype for each layer of xy based on the closest intensity
-        jtypes = [torch.argmin(torch.abs(intensity - score[i]), dim=0) for i, intensity in enumerate(intensities)]
+        jtypes = [torch.argmin(torch.abs(intensity - float(score[i])), dim=0) for i, intensity in enumerate(intensities)]
+
 
         # Combine jtypes
         jtype = torch.stack(jtypes, dim=0)
