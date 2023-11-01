@@ -85,9 +85,12 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
+            jmap_single = sum(
+                focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
+            )
 
-            L["jmap"] = multi_class_focal_loss(jmap, T["jmap"], alpha)
-
+            jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
+            L["jmap"] = M.jmap_weight * jmap_single + (1-M.jmap_weight) * jmap_multi
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -107,6 +110,21 @@ class MultitaskLearner(nn.Module):
         result["losses"] = losses
         return result
 
+
+
+def focal_loss(logits, positive, alpha, gamma=2.0):
+    # Get the probability of the positive class
+    probas = F.softmax(logits, dim=0)
+
+    mask = (positive == 1).float()
+    p_t = mask * probas[1] + (1.0 - mask) * probas[0]
+
+    # Extend alpha to have the same shape as logits
+    alpha_t = alpha[None, :, None, None].expand_as(logits)
+
+    epsilon = 1e-7
+    loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
+    return loss.mean(2).mean(1)
 
 def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
     """
