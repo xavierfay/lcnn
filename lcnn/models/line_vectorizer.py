@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
-            jmap_filter =  jmap(jmap >= 0.45).float()
+            jmap_filter =  jmap*(jmap >= 0.45).float()
 
 
 
