@@ -513,17 +513,15 @@ def nms_3d(array):
     """
     Perform 3D non-maximum suppression across all layers on a numpy array.
     """
-
     # Use a 3x3x3 filter for maximum filtering across all layers
-    max_filtered = maximum_filter(array, size=(3, 3, 3))
-
+    max_filtered = maximum_filter(array, size=(34, 3, 3))
     # Create a mask where the original array is equal to the max filtered array
     mask = (array == max_filtered)
-
     # Zero out non-max values
     suppressed_array = array * mask
-
     return suppressed_array
+
+
 
 # def _launch_tensorboard(board_out, port, out):
 #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
