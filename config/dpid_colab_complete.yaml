@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete
   datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
-  resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231029-192142-93ab662-baseline
+  resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231029-192142-93ab662-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -56,7 +56,7 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 500
+  n_out_junc: 50
   n_out_line: 3000
 
   # additional ablation study parameters

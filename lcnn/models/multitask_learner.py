@@ -67,7 +67,7 @@ class MultitaskLearner(nn.Module):
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
-            jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
+            jmap_probs = jmap.permute(2, 0, 1, 3, 4)[:, :, 1]
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
