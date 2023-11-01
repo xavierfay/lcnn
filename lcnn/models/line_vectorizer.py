@@ -326,8 +326,12 @@ class LineVectorizer(nn.Module):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
+        # Ensure joff has the same shape as xy
+        if joff.shape != xy.shape:
+            joff = joff[:, :K, :2]
+
         # Reverse the offset to get back to the original coordinates
-        xy_original = xy - joff[:, :, :2].permute(1, 0, 2)
+        xy_original = xy - joff
 
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
