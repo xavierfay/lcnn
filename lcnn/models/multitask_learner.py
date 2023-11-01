@@ -85,8 +85,11 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
+            print("jmap shape", jmap.shape)
+            print("alpha shape", alpha.shape)
+            print("T[jmap] shape", T["jmap"].shape)
             jmap_single = sum(
-                focal_loss(jmap[i], T["jmap"][:, i], alpha[:,i]) for i in range(n_jtyp)
+                focal_loss(jmap[:,i], T["jmap"][i], alpha[i]) for i in range(n_jtyp)
             )
 
             jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
