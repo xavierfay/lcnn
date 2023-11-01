@@ -491,7 +491,6 @@ def visualize_layers(mask_result, threshold=0.001):
     plt.imshow(argmax_layers, cmap='jet', origin='upper', vmin=-1, vmax=mask_result.shape[0] - 1)
     plt.colorbar(label='Layer Number')
     plt.title('Argmax Visualization of Layers')
-    plt.show()
 
 def tprint(*args):
     """Temporarily prints things on the screen"""
