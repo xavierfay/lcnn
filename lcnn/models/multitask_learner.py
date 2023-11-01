@@ -120,10 +120,10 @@ def mutual_exclusivity_penalty(jmap, labels):
     print("labels in mutual exclusivity penalty", labels.shape)
 
     # Apply softmax over the class dimension
-    jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
-
+    procced_jmap = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
+    print("jmap in mutual exclusivity penalty", procced_jmap.shape)
     # Loop over all keypoint types (layers)
-    penalty = F.nll_loss(jmap, labels)
+    penalty = F.nll_loss(procced_jmap, labels)
 
 
     return penalty
