@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
-            jmap = (jmap >= 0.45).float()
+
 
             # Separate the layers for jmap
             first_layer_jmap = jmap[0]
@@ -259,6 +259,7 @@ class LineVectorizer(nn.Module):
 
             # Get top K scores and their indices
             score, index = torch.topk(new_jmap, k=K)
+            j_class =  (index // (new_jmap.shape[1] * new_jmap.shape[2])).long()
             y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
             x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
 
@@ -295,8 +296,10 @@ class LineVectorizer(nn.Module):
 
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
-            jcs, jtype = self.matching_algorithm(xy, jmap, score)
-
+            #jmap = (jmap >= 0.3).float()
+            #jcs, jtype = self.matching_algorithm(xy, jmap, score)
+            jcs = [xy[i, score[i] > 0.03] for i in range(n_type)]
+            jtype = [torch.full((len(jcs[i]),), i, dtype=torch.long) for i in range(n_type)]
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
