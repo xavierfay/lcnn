@@ -326,15 +326,13 @@ class Trainer(object):
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
         mask_result = result["jmap"][i].cpu().detach().numpy()
-
-        mask_result = np.sum(mask_result, axis=0)
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
 
 
         # Displaying the results using the updated imshow function
-        imshow(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        visualize_layers(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
         imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
@@ -467,6 +465,31 @@ def plt_heatmaps(jmap):
     combined_image = np.clip(combined_image, 0, 1)
 
     return combined_image
+
+
+def visualize_layers(mask_result, threshold=0.5):
+    """
+    Visualize the layers of the mask_result where confidence is above the threshold.
+
+    Args:
+    - mask_result (numpy.ndarray): A 3D array of shape (layers, height, width).
+    - threshold (float): Confidence threshold to visualize a layer.
+
+    Returns:
+    - A plot showing different layers using a colormap.
+    """
+    # Create an empty array to store the layer numbers for visualization
+    visualization = np.zeros(mask_result.shape[1:])
+
+    # Iterate through each layer
+    for layer in range(mask_result.shape[0]):
+        # If confidence is above threshold, mark with layer number
+        visualization[mask_result[layer] > threshold] = layer
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(visualization, cmap='jet', origin='upper')
+    plt.colorbar(label='Layer Number')
+    plt.title('Visualization of Layers')
 
 def tprint(*args):
     """Temporarily prints things on the screen"""
