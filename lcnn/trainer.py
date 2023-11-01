@@ -257,7 +257,7 @@ class Trainer(object):
 
 
 
-            if self.iteration % 100 == 0:  # e.g., every 100 iterations
+            if self.iteration % 4 == 0:  # e.g., every 100 iterations
                 viz = osp.join(self.out, "viz", f"{self.iteration * M.batch_size_eval:09d}")
                 osp.exists(viz) or os.makedirs(viz)
                 print("plot the results")
@@ -325,10 +325,10 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu().detach().numpy()
-        for j, results in enumerate(mask_result):
-            line_result = results.cpu().detach().numpy()
-            imshow(line_result, cmap="jet"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
+
+        for j, results in enumerate(result["jmap"][i]):
+            mask_result = results.cpu().detach().numpy()
+            imshow(mask_result, cmap="jet"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
