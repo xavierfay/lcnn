@@ -62,7 +62,7 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
             jmap = jmap.permute(1, 0, 2, 3)
-            #jmap = F.softmax(jmap, dim=0)
+            #jmap = F.softmax(jmap, dim=1)
             #jmap = F.softmax(jmap, dim=1)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
@@ -70,10 +70,14 @@ class MultitaskLearner(nn.Module):
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
+            jmap_softmax = F.softmax(jmap, dim=1)[:, 1:, :, :]
+            print(jmap_softmax.shape)
+            print(jmap_softmax[0].sum(dim=0))
+
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": F.softmax(jmap, dim=0)[:, 1:, :, :],
+                    "jmap": F.softmax(jmap, dim=1)[:, 1:, :, :],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                      #"joff": joff[1:].permute(1, 0, 2, 3).sigmoid() - 0.5,
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
@@ -97,6 +101,7 @@ class MultitaskLearner(nn.Module):
 
             penalty = mutual_exclusivity_penalty(T["jmap"])
             L["jmap"] = jmap_single + M.jmap_weight * penalty
+            print(M.jmap_weight * penalty)
 
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
