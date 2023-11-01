@@ -295,15 +295,14 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu().numpy()
-        mask_result = np.sum(mask_result, axis=0)
+        mask_result = result["jmap"][i].cpu().detach().numpy()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
 
 
         # Displaying the results using the updated imshow function
-        imshow(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        visualize_layers(mask_result),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
         imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
@@ -389,8 +388,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        if self.iteration == 0:
-            self.validate()
+        # if self.iteration == 0:
+        #     self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
@@ -436,6 +435,33 @@ def plt_heatmaps(jmap):
     combined_image = np.clip(combined_image, 0, 1)
 
     return combined_image
+
+
+def visualize_layers(mask_result, threshold=0.3):
+    """
+    Visualize the layers of the mask_result where confidence is above the threshold.
+
+    Args:
+    - mask_result (numpy.ndarray): A 3D array of shape (layers, height, width).
+    - threshold (float): Confidence threshold to visualize a layer.
+
+    Returns:
+    - A plot showing different layers using a colormap.
+    """
+    # Create an empty array to store the layer numbers for visualization
+    max_confidences = np.max(mask_result, axis=0)
+
+    # Compute the layer with the maximum confidence per pixel
+    argmax_layers = np.argmax(mask_result, axis=0)
+
+    # Where the maximum confidence is below the threshold, set to -1 (white)
+    argmax_layers[max_confidences < threshold] = -1
+
+    plt.figure(figsize=(10, 10))
+    plt.imshow(argmax_layers, cmap='jet', origin='upper', vmin=-1, vmax=mask_result.shape[0] - 1)
+    plt.colorbar(label='Layer Number')
+    plt.title('Argmax Visualization of Layers')
+    plt.show()
 
 def tprint(*args):
     """Temporarily prints things on the screen"""

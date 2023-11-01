@@ -67,7 +67,7 @@ class MultitaskLearner(nn.Module):
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
-
+            jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
@@ -80,9 +80,13 @@ class MultitaskLearner(nn.Module):
             L = OrderedDict()
 
             alpha = compute_alpha(T["jmap"])
+            cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
+            print("cross loss", cross_loss)
+
             L["jmap"] = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
+            L["jmap"] += cross_loss * M.penalty
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -103,14 +107,11 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def l2loss(input, target):
-    return ((target - input) ** 2).mean(2).mean(1)
-
-
-def cross_entropy_loss(logits, positive):
-    nlogp = -F.log_softmax(logits, dim=0)
-    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
-
+def jmap_cross_entropy(logits, positive):
+    positive = positive.permute(1, 0, 2, 3)
+    positive = positive.argmax(dim=1)
+    loss = F.cross_entropy(logits, positive.long(), reduction="mean")
+    return loss
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
@@ -174,3 +175,7 @@ def sigmoid_l1_loss(logits, target, offset=0.0, mask=None):
         loss = loss * (mask / w)
 
     return loss.mean(2).mean(1)
+
+def cross_entropy_loss(logits, positive):
+    nlogp = -F.log_softmax(logits, dim=0)
+    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
