@@ -321,17 +321,19 @@ class LineVectorizer(nn.Module):
 
             for i in range(intensities.shape[1]):
                 if mask_zero_intensity[:, i].any():
-                    local_x = torch.clamp(xy_int[2, i, 0] + dx, 0,
-                                          jmap.shape[2] - 1)  # Ensuring we don't go out of bounds
-                    local_y = torch.clamp(xy_int[2, i, 1] + dy, 0, jmap.shape[1] - 1)
+                    local_x = torch.clamp(xy_int[2, i, 0] + dx, 1, jmap.shape[2] - 2)  # Avoid extreme edges
+                    local_y = torch.clamp(xy_int[2, i, 1] + dy, 1, jmap.shape[1] - 2)  # Avoid extreme edges
 
                     local_intensities = jmap[:, local_y, local_x]
                     max_local_intensity, _ = local_intensities.max(dim=-1)
 
-                    print(f"Shape of intensities slice: {intensities[mask_zero_intensity[:, i], i].shape}")
-                    print(f"Shape of max_local_intensity: {max_local_intensity.shape}")
+                    # Check the shapes
+                    if intensities[mask_zero_intensity[:, i], i].shape[0] != max_local_intensity.shape[0]:
+                        # Adjust the max_local_intensity to match the shape
+                        max_local_intensity = max_local_intensity[:intensities[mask_zero_intensity[:, i], i].shape[0]]
 
                     intensities[mask_zero_intensity[:, i], i] = max_local_intensity
+
 
         # Compute the difference between these intensities and the score for xy[2]
         differences = torch.abs(intensities - score[2].unsqueeze(0))
