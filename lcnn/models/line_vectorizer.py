@@ -305,18 +305,18 @@ class LineVectorizer(nn.Module):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
-        # For the first two layers of xy, they are always matched with the first two layers of jmap
+        # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-        # For each layer of xy, get its intensity across all layers of jmap
-        intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(n_type)]
+        # For the remaining layers of xy, get their intensity across all layers of jmap
+        intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(2, n_type)]
 
-        # Determine the jtype for each layer of xy based on the closest intensity
-        jtypes = [torch.argmin(torch.abs(intensity - score[i].float()), dim=0) for i, intensity in enumerate(intensities)]
-
+        # Determine the jtype for each of the remaining layers of xy based on the closest intensity
+        jtypes_other = [torch.argmin(torch.abs(intensity - score[i].float()), dim=0) for i, intensity in
+                        enumerate(intensities, start=2)]
 
         # Combine jtypes
-        jtype = torch.stack(jtypes, dim=0)
+        jtype = torch.cat([jtype_0_1, torch.stack(jtypes_other, dim=0)], dim=0)
 
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.000001
@@ -324,7 +324,6 @@ class LineVectorizer(nn.Module):
         filtered_jtype = jtype[valid_indices]
 
         return jcs, filtered_jtype
-
 
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
