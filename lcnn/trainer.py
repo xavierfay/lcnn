@@ -505,10 +505,19 @@ def pprint(*args):
     print("\r", end="")
     print(*args)
 
-def nms_3d(tensor):
+def nms_3d(input_tensor):
     """
     Perform 3D non-maximum suppression on a tensor of shape [C, H, W].
+    Handles both numpy arrays and PyTorch tensors.
     """
+    # Convert numpy array to PyTorch tensor if necessary
+    if isinstance(input_tensor, np.ndarray):
+        tensor = torch.from_numpy(input_tensor).float()
+        was_numpy = True
+    else:
+        tensor = input_tensor
+        was_numpy = False
+
     # Define a 3x3x3 kernel
     kernel = torch.ones((1, 1, 3, 3, 3), dtype=torch.float32, device=tensor.device)
 
@@ -521,7 +530,12 @@ def nms_3d(tensor):
     # Zero out non-max values
     suppressed_tensor = tensor * mask.float()
 
-    return suppressed_tensor
+    # Convert back to numpy if original input was numpy
+    if was_numpy:
+        return suppressed_tensor.cpu().numpy()
+    else:
+        return suppressed_tensor
+
 # def _launch_tensorboard(board_out, port, out):
 #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #     p = subprocess.Popen(["tensorboard", f"--logdir={board_out}", f"--port={port}"])
