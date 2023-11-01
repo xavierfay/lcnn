@@ -231,7 +231,7 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
-            jmap_filter =  jmap*(jmap >= 0.45).float()
+            jmap_filter =  jmap*(jmap >= 0.1).float()
 
 
 
@@ -297,7 +297,7 @@ class LineVectorizer(nn.Module):
 
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
-            jmap = jmap * (jmap >= 0.45).float()
+            jmap = jmap * (jmap >= 0.1).float()
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
             return line, label, jcs, jtype
@@ -310,17 +310,12 @@ class LineVectorizer(nn.Module):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
-        # Get intensities for the third layer of xy across all layers of jmap
-        intensities = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
-
-        # Compute the difference between these intensities and the score for xy[2]
-        differences = torch.abs(intensities - score[2].unsqueeze(0))
-
-        # Find the layer in jmap with the smallest difference for each point in xy[2]
-        jtype_2 = torch.argmin(differences, dim=0)
-
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
+
+        # For the third layer of xy, get its intensity across jmap[2:] and find the closest layer
+        intensity_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        jtype_2 = torch.argmin(torch.abs(intensity_2 - score[2].float()), dim=0) + 2  # +2 to account for the offset
 
         # Combine the associated layers
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
@@ -331,6 +326,7 @@ class LineVectorizer(nn.Module):
         filtered_jtype = jtype[valid_indices]
 
         return jcs, filtered_jtype
+
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
         for class_idx, max_samples in enumerate([M.n_dyn_negl, M.n_dyn_posl0, M.n_dyn_posl1, M.n_dyn_posl2]):
