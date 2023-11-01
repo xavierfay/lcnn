@@ -22,6 +22,7 @@ from lcnn.utils import recursive_to
 import wandb
 from torch.cuda.amp import autocast, GradScaler
 
+from scipy.ndimage import maximum_filter
 class Trainer(object):
     def __init__(self, device, model, optimizer, train_loader, val_loader, out):
         self.device = device
@@ -314,7 +315,7 @@ class Trainer(object):
         )
         return total_loss
 
-    def _plot_samples(self, i, index, result, meta, target, prefix):
+    def _plot_samples(self, i, index, result, meta, vtarget, prefix):
         # for key, value in result.items():
         #     if isinstance(value, (torch.Tensor, np.ndarray)):
         #         print(f"plot sample function {key}: {value.shape}")
@@ -505,36 +506,22 @@ def pprint(*args):
     print("\r", end="")
     print(*args)
 
-def nms_3d(input_tensor):
+
+def nms_3d(array):
     """
-    Perform 3D non-maximum suppression on a tensor of shape [C, H, W].
-    Handles both numpy arrays and PyTorch tensors.
+    Perform 3D non-maximum suppression across all layers on a numpy array.
     """
-    # Convert numpy array to PyTorch tensor if necessary
-    if isinstance(input_tensor, np.ndarray):
-        tensor = torch.from_numpy(input_tensor).float()
-        was_numpy = True
-    else:
-        tensor = input_tensor
-        was_numpy = False
 
-    # Define a 3x3x3 kernel
-    kernel = torch.ones((1, 1, 3, 3, 3), dtype=torch.float32, device=tensor.device)
+    # Use a 3x3x3 filter for maximum filtering across all layers
+    max_filtered = maximum_filter(array, size=(3, 3, 3))
 
-    # Use max pooling to get the max values in a 3x3x3 neighborhood
-    max_tensor = F.max_pool3d(tensor.unsqueeze(0), kernel_size=3, stride=1, padding=1)
-
-    # Create a mask of the original tensor values that are equal to the max values
-    mask = torch.eq(tensor, max_tensor.squeeze(0))
+    # Create a mask where the original array is equal to the max filtered array
+    mask = (array == max_filtered)
 
     # Zero out non-max values
-    suppressed_tensor = tensor * mask.float()
+    suppressed_array = array * mask
 
-    # Convert back to numpy if original input was numpy
-    if was_numpy:
-        return suppressed_tensor.cpu().numpy()
-    else:
-        return suppressed_tensor
+    return suppressed_array
 
 # def _launch_tensorboard(board_out, port, out):
 #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
