@@ -315,7 +315,7 @@ class LineVectorizer(nn.Module):
 
         if mask_zero_intensity.any():
             # Define a local neighborhood
-            neighborhood = torch.tensor([-3, 0, 3], device=jmap.device)
+            neighborhood = torch.tensor([-10, 0, 10], device=jmap.device)
             dx, dy = torch.meshgrid(neighborhood, neighborhood)
             dx, dy = dx.flatten(), dy.flatten()
 
