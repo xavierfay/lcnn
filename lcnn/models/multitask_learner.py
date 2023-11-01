@@ -111,6 +111,7 @@ class MultitaskLearner(nn.Module):
 
 def jmap_cross_entropy(logits, positive):
     positive = positive.permute(1, 0, 2, 3)
+    positive = positive.argmax(dim=1)
     print("logits shape", logits.shape)
     print("positive shape", positive.shape)
     loss = F.cross_entropy(logits, positive.long(), reduction="mean")
