@@ -298,19 +298,14 @@ class LineVectorizer(nn.Module):
     def matching_algorithm(self, xy, jmap, score):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
-
         # The first two layers of xy always correspond to the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
-
         # For the third layer of xy, get its intensity across jmap[2:]
         intensities_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
-
         # Determine the jtype for the third layer of xy based on the maximum intensity
         jtype_2 = torch.argmax(intensities_2, dim=0).add(2)  # Add 2 to offset for the first two layers
-
         # Combine jtypes
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)  # Shape: [3, 200]
-
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.03
         jcs = xy[valid_indices]
