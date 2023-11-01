@@ -67,7 +67,7 @@ class MultitaskLearner(nn.Module):
 
             # print("jmap in forward pass", jmap.shape)
             # print("lmap in forward pass",lmap.shape)
-
+            jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
@@ -82,11 +82,12 @@ class MultitaskLearner(nn.Module):
             alpha = compute_alpha(T["jmap"])
             #penalty = mutual_exclusivity_penalty(jmap, T["jmap"])
             #print(penalty)
+            cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
 
             L["jmap"] = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
-            #L["jmap"] += penalty * M.penalty
+            L["jmap"] += cross_loss * M.penalty
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -107,29 +108,9 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def mutual_exclusivity_penalty(jmap, labels):
-    """
-    Compute the mutual exclusivity penalty for all pairs of layers.
+def jmap_cross_entropy(logits, positive):
+    loss  = F.cross_entropy(logits, positive.long(), reduction="mean")
 
-    :param layers_predictions: A list of tensors where each tensor is the predictions from a layer.
-    :param lambda_val: Hyperparameter for the strength of the mutual exclusivity constraint.
-    :return: Total penalty value.
-    """
-    labels = labels.permute(1, 0, 2, 3)
-    print("jmap in mutual exclusivity penalty", jmap.shape)
-    print("labels in mutual exclusivity penalty", labels.shape)
-
-    # Apply softmax over the class dimension
-    procced_jmap = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
-    print("jmap in mutual exclusivity penalty", procced_jmap.shape)
-    # Loop over all keypoint types (layers)
-    total_penalty = 0.0
-    for i in range(procced_jmap.shape[0]):
-        penalty = F.nll_loss(procced_jmap[i], labels[i])
-        total_penalty += penalty
-
-
-    return total_penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)

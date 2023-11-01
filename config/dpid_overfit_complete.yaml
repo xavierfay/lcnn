@@ -68,7 +68,7 @@ model:
   use_jtyp: 1
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.1
+  eval_junc_thres: 0.01
 
   # penalty variable
   penalty: 0.001
