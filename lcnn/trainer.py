@@ -467,7 +467,7 @@ def plt_heatmaps(jmap):
     return combined_image
 
 
-def visualize_layers(mask_result, threshold=0.5):
+def visualize_layers(mask_result, threshold=0.001):
     """
     Visualize the layers of the mask_result where confidence is above the threshold.
 
