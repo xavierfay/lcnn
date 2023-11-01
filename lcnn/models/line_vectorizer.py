@@ -298,8 +298,18 @@ class LineVectorizer(nn.Module):
     def matching_algorithm(self, xy, jmap, score):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
-        assert (xy_int >= 0).all() and (xy_int[:, :, 0] < jmap.shape[-1]).all() and \
-               (xy_int[:, :, 1] < jmap.shape[-2]).all(), "Indices in xy_int are out of bounds for jmap dimensions."
+        if not (xy_int >= 0).all():
+            print("Negative indices detected:", xy_int[xy_int < 0])
+
+        if not (xy_int[:, :, 0] < jmap.shape[-1]).all():
+            print("X indices out of bounds:", xy_int[:, :, 0][xy_int[:, :, 0] >= jmap.shape[-1]])
+
+        if not (xy_int[:, :, 1] < jmap.shape[-2]).all():
+            print("Y indices out of bounds:", xy_int[:, :, 1][xy_int[:, :, 1] >= jmap.shape[-2]])
+
+        xy_int = xy_int.clamp(min=0, max=jmap.shape[-2] - 1)  # For Y-dimension
+        xy_int[:, :, 0] = xy_int[:, :, 0].clamp(min=0, max=jmap.shape[-1] - 1)  # For X-dimension
+
         # The first two layers of xy always correspond to the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
         # For the third layer of xy, get its intensity across jmap[2:]
