@@ -263,7 +263,7 @@ class LineVectorizer(nn.Module):
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
-            del x, y, index
+            del x, y
 
             # dist: [N_TYPE, K, N]
             dist = torch.sum((xy_ - junc) ** 2, -1)
@@ -294,7 +294,7 @@ class LineVectorizer(nn.Module):
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
             #jmap = jmap * (jmap >= 0.).float()
-            jcs, jtype = self.matching_algorithm(xy, jmap, new_joff, score)
+            jcs, jtype = self.matching_algorithm(xy, jmap, new_joff, score,index)
 
             return line, label, jcs, jtype
 
@@ -322,7 +322,7 @@ class LineVectorizer(nn.Module):
     #
     #     return jcs, filtered_jtype
 
-    def matching_algorithm(self, xy, jmap, joff, score):
+    def matching_algorithm(self, xy, jmap, joff, score, index):
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
@@ -331,7 +331,7 @@ class LineVectorizer(nn.Module):
             joff = joff[:, :K, :2]
 
         # Reverse the offset to get back to the original coordinates
-        xy_original = xy - joff
+        xy_original = self.reverse_xy_computation(xy, joff, index)
 
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
@@ -352,6 +352,24 @@ class LineVectorizer(nn.Module):
         filtered_jtype = jtype[valid_indices]
 
         return jcs, filtered_jtype
+
+    def reverse_xy_computation(self, xy_with_offset, joff, index):
+        # Extract y and x from the modified xy_with_offset tensor
+        y_modified = xy_with_offset[:, :, 0]
+        x_modified = xy_with_offset[:, :, 1]
+
+        # Subtract the offsets to get the original values
+        y_original = y_modified - torch.gather(joff[:, 0], 1, index)
+        x_original = x_modified - torch.gather(joff[:, 1], 1, index)
+
+        # Now, remove the 0.5 addition
+        y_original = y_original - 0.5
+        x_original = x_original - 0.5
+
+        # Combine y_original and x_original to get the original xy tensor
+        xy_original = torch.cat([y_original[..., None], x_original[..., None]], dim=-1)
+
+        return xy_original
 
     # def find_closest_non_zero_2d(self, xy, jmap):
     #     # Define a local neighborhood
