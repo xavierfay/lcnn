@@ -22,6 +22,7 @@ from lcnn.utils import recursive_to
 import wandb
 from torch.cuda.amp import autocast, GradScaler
 
+from scipy.ndimage import maximum_filter
 class Trainer(object):
     def __init__(self, device, model, optimizer, train_loader, val_loader, out):
         self.device = device
@@ -295,18 +296,26 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-        mask_result = result["jmap"][i].cpu().detach().numpy()
+        jmap = nms_3d(result["jmap"][i].cpu().detach().numpy())
+        for j, results in enumerate(jmap):
+            mask_result = results
+            imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
+
+
         mask_target = target["jmap"][i].cpu().numpy()
-        mask_target = plt_heatmaps(mask_target)
+        #mask_target = plt_heatmaps(mask_target)
 
 
         # Displaying the results using the updated imshow function
-        visualize_layers(mask_result),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
-        imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        #imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
         # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+
+        for j, mask_target in enumerate(target["jmap"][i]):
+            mask_target = mask_target.cpu().detach().numpy()
+            imshow(mask_target, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}a.jpg"), plt.close()
 
         for j, results in enumerate(result["lmap"][i]):
             line_result = results.cpu().numpy()
@@ -388,8 +397,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        # if self.iteration == 0:
-        #     self.validate()
+        if self.iteration % 4 == 0:
+            self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
@@ -473,6 +482,20 @@ def pprint(*args):
     """Permanently prints things on the screen"""
     print("\r", end="")
     print(*args)
+
+
+def nms_3d(array):
+    """
+    Perform 3D non-maximum suppression across all layers on a numpy array.
+    """
+    # Use a 3x3x3 filter for maximum filtering across all layers
+    max_filtered = maximum_filter(array, size=(34, 3, 3))
+    # Create a mask where the original array is equal to the max filtered array
+    mask = (array == max_filtered)
+    # Zero out non-max values
+    suppressed_array = array * mask
+    return suppressed_array
+
 
 
 # def _launch_tensorboard(board_out, port, out):
