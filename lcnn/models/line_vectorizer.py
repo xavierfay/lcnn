@@ -296,7 +296,7 @@ class LineVectorizer(nn.Module):
 
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
-            jmap = (jmap >= 0.45).float()
+            jmap = jmap * (jmap >= 0.45).float()
             jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
             return line, label, jcs, jtype
@@ -308,15 +308,18 @@ class LineVectorizer(nn.Module):
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-        # For the remaining layers of xy, get their intensity across all layers of jmap
-        intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(2, n_type)]
+        # For the third layer of xy, get its intensity across jmap[2:]
+        intensity_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        jtype_2 = torch.argmin(torch.abs(intensity_2 - score[2].float()),
+                               dim=0) + 2  # +2 because we started from jmap[2:]
 
-        # Determine the jtype for each of the remaining layers of xy based on the closest intensity
+        # For the remaining layers of xy (if any), get their intensity across all layers of jmap
+        intensities = [jmap[:, xy_int[i, :, 1], xy_int[i, :, 0]] for i in range(3, n_type)]
         jtypes_other = [torch.argmin(torch.abs(intensity - score[i].float()), dim=0) for i, intensity in
-                        enumerate(intensities, start=2)]
+                        enumerate(intensities, start=3)]
 
         # Combine jtypes
-        jtype = torch.cat([jtype_0_1, torch.stack(jtypes_other, dim=0)], dim=0)
+        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0), torch.stack(jtypes_other, dim=0)], dim=0)
 
         # Filter xy and jtype based on the score threshold
         valid_indices = score > 0.000001
