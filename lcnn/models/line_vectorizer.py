@@ -313,6 +313,16 @@ class LineVectorizer(nn.Module):
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
+        intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
+
+        print("Intensities:", intensities)
+        print("Score for xy[2]:", score[2])
+
+        # Compute the difference between these intensities and the score for xy[2]
+        differences = torch.abs(intensities - score[2].unsqueeze(0))
+
+        print("Differences:", differences)
+
         # For the third layer of xy, get its intensity across jmap[2:] and find the closest layer
         intensity_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
         jtype_2 = torch.argmin(torch.abs(intensity_2 - score[2].float()), dim=0) + 2  # +2 to account for the offset
