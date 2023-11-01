@@ -85,9 +85,7 @@ class MultitaskLearner(nn.Module):
             # L["jmap"] = sum(
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
-            print("jmap shape", jmap.shape)
-            print("alpha shape", alpha.shape)
-            print("T[jmap] shape", T["jmap"].shape)
+
             jmap_single = sum(
                 focal_loss(jmap[:,i], T["jmap"][i], alpha[i]) for i in range(n_jtyp)
             )
@@ -117,9 +115,6 @@ class MultitaskLearner(nn.Module):
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
-    print("logits shape", logits.shape)
-    print("alpha shape", alpha.shape)
-    print("positive shape", positive.shape)
 
     probas = F.softmax(logits, dim=0)
 

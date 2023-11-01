@@ -68,7 +68,7 @@ model:
   use_jtyp: 0
 
   # jmap single multi layer weigth
-  M.jmap_weight: 0.7
+  jmap_weight: 0.7
 
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.1
