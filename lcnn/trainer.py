@@ -315,7 +315,7 @@ class Trainer(object):
         )
         return total_loss
 
-    def _plot_samples(self, i, index, result, meta, vtarget, prefix):
+    def _plot_samples(self, i, index, result, meta, target, prefix):
         # for key, value in result.items():
         #     if isinstance(value, (torch.Tensor, np.ndarray)):
         #         print(f"plot sample function {key}: {value.shape}")
@@ -331,6 +331,8 @@ class Trainer(object):
             mask_result = results
             imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
+
+
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
 
