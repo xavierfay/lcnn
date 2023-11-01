@@ -308,8 +308,21 @@ class LineVectorizer(nn.Module):
         print("jmap.shape", jmap.shape)
         print("score.shape", score.shape)
 
-        indices = torch.where(jmap == score)
-        print(indices)
+        matching_indices = []
+
+        # Iterate over each layer in xy
+        for i in range(3):
+            x_indices = xy[i, :, 0].long()
+            y_indices = xy[i, :, 1].long()
+
+            # Extract the values from jmap at the xy positions for each layer
+            values_at_xy = jmap[:, y_indices, x_indices]
+
+            # Find where these values match the corresponding scores
+            layer_indices = torch.where(values_at_xy == score[i])
+
+            matching_indices.append(layer_indices)
+        print(matching_indices)
 
         n_type, K, _ = xy.shape
         xy_int = xy.long()
