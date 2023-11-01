@@ -62,6 +62,7 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
             jmap = jmap.permute(1, 0, 2, 3)
+            jmap = F.softmax(jmap, dim=0)
             jmap = F.softmax(jmap, dim=1)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
@@ -117,7 +118,7 @@ class MultitaskLearner(nn.Module):
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
 
-    probas = F.softmax(logits, dim=0)
+    #probas = F.softmax(logits, dim=0)
 
     mask = (positive == 1).float()
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
