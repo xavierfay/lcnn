@@ -81,6 +81,7 @@ class MultitaskLearner(nn.Module):
 
             alpha = compute_alpha(T["jmap"])
             penalty = mutual_exclusivity_penalty(jmap)
+            print(penalty)
 
             L["jmap"] = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)

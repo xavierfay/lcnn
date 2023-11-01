@@ -53,6 +53,22 @@ class WireframeDataset(Dataset):
                 for name in ["lmap", "joff", "jmap"]
             }
 
+            jmap = target["jmap"]
+
+            summed_jmap = jmap.sum(axis=0)
+            error_positions = np.argwhere(summed_jmap > 1)
+            for spatial_pos in error_positions:
+                x, y = spatial_pos
+                layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
+
+                # Keep the 1 in the layer with the highest layer number
+                highest_layer = np.max(layers_with_ones)
+
+                # Set 0 in the other layers
+                for layer in layers_with_ones:
+                    if layer != highest_layer:
+                        jmap[layer, x, y] = 0
+            target["jmap"] = torch.from_numpy(jmap).float()
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
