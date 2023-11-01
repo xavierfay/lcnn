@@ -62,8 +62,8 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
             jmap = jmap.permute(1, 0, 2, 3)
-            jmap = F.softmax(jmap, dim=0)
-            jmap = F.softmax(jmap, dim=1)
+            #jmap = F.softmax(jmap, dim=0)
+            #jmap = F.softmax(jmap, dim=1)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp-1, 2,  batch, row, col)
@@ -92,8 +92,12 @@ class MultitaskLearner(nn.Module):
                 focal_loss(jmap[:,i], T["jmap"][i], alpha[i]) for i in range(n_jtyp)
             )
 
-            jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
-            L["jmap"] = M.jmap_weight * jmap_single + (1-M.jmap_weight) * jmap_multi
+            # jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
+            # L["jmap"] = M.jmap_weight * jmap_single + (1-M.jmap_weight) * jmap_multi
+
+            penalty = mutual_exclusivity_penalty(jmap[:, i]) for i in range(n_jtyp)
+            L["jmap"] = jmap_single + M.jmap_weight * penalty
+
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -114,12 +118,29 @@ class MultitaskLearner(nn.Module):
         return result
 
 
+def mutual_exclusivity_penalty(layers_predictions):
+    """
+    Compute the mutual exclusivity penalty for all pairs of layers.
 
+    :param layers_predictions: A list of tensors where each tensor is the predictions from a layer.
+    :param lambda_val: Hyperparameter for the strength of the mutual exclusivity constraint.
+    :return: Total penalty value.
+    """
+
+    batch_size, num_classes, H, W = batch_predictions.shape
+    penalty = 0.0
+
+    # Loop over all pairs of classes (layers)
+    for i in range(num_classes):
+        for j in range(i + 1, num_classes):
+            # Compute the penalty for this pair of layers for the entire batch
+            penalty += torch.sum(torch.min(batch_predictions[:, i, :, :], batch_predictions[:, j, :, :]))
+
+    return  penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
 
-    #probas = F.softmax(logits, dim=0)
-    probas = logits
+    probas = F.softmax(logits, dim=0)
     mask = (positive == 1).float()
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 

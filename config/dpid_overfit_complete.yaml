@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/overfit_smaller
   datadir: /content/drive/MyDrive/Xavier/Datasets/overfit_smaller
-  resume_from:  /content/drive/MyDrive/Xavier/logs/overfit_smaller/231031-201926-eae4a7f-baseline
+  resume_from:  #/content/drive/MyDrive/Xavier/logs/overfit_smaller/231031-201926-eae4a7f-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -11,7 +11,7 @@ model:
       mean: [247.55]
       stddev: [41.36]
 
-  batch_size: 2
+  batch_size: 3
   batch_size_eval: 2
 
   # backbone multi-task parameters
@@ -68,7 +68,7 @@ model:
   use_jtyp: 0
 
   # jmap single multi layer weigth
-  jmap_weight: 1.0
+  jmap_weight: 0.25
 
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.1
