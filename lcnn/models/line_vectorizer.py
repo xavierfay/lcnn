@@ -325,7 +325,7 @@ class LineVectorizer(nn.Module):
 
         return jcs, filtered_jtype
 
-    def find_closest_non_zero(xy, jmap):
+    def find_closest_non_zero(self, xy, jmap):
         # Define a local neighborhood
         neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
 
