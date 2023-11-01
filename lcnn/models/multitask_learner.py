@@ -114,13 +114,18 @@ class MultitaskLearner(nn.Module):
 
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
+    print("logits shape", logits.shape)
+    print("alpha shape", alpha.shape)
     probas = F.softmax(logits, dim=0)
 
     mask = (positive == 1).float()
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Extend alpha to have the same shape as logits
-    alpha_t = alpha[None, :, None, None].expand_as(logits)
+    logits_shape = logits.shape
+    alpha_shape = [1 if dim != 1 else logits_shape[i] for i, dim in enumerate(alpha.shape)]
+    alpha_t = alpha.reshape(*alpha_shape).expand_as(logits)
+
 
     epsilon = 1e-7
     loss = -alpha_t * (1 - p_t) ** gamma * torch.log(p_t + epsilon)
