@@ -80,9 +80,12 @@ class MultitaskLearner(nn.Module):
             L = OrderedDict()
 
             alpha = compute_alpha(T["jmap"])
+            penalty = mutual_exclusivity_penalty(jmap)
+
             L["jmap"] = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
+            L["jmap"] += penalty * M.penalty
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
@@ -103,15 +106,30 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def l2loss(input, target):
-    return ((target - input) ** 2).mean(2).mean(1)
+def mutual_exclusivity_penalty(batch_predictions):
+    """
+    Compute the mutual exclusivity penalty for all pairs of layers.
 
+    :param layers_predictions: A list of tensors where each tensor is the predictions from a layer.
+    :param lambda_val: Hyperparameter for the strength of the mutual exclusivity constraint.
+    :return: Total penalty value.
+    """
 
-def cross_entropy_loss(logits, positive):
-    nlogp = -F.log_softmax(logits, dim=0)
-    return (positive * nlogp[1] + (1 - positive) * nlogp[0]).mean(2).mean(1)
+    n_jtyp, num_classes, batch_size, H, W = batch_predictions.shape
+    penalty = 0.0
 
+    # Apply softmax over the class dimension
+    softmax_predictions = F.softmax(batch_predictions, dim=1)
 
+    # Loop over all keypoint types (layers)
+    for i in range(n_jtyp):
+        # Loop over all pairs of classes for each keypoint type
+        for j in range(num_classes):
+            for k in range(j + 1, num_classes):
+                # Compute the penalty for this pair of classes for the entire batch
+                penalty += torch.sum(torch.min(softmax_predictions[i, j, :, :, :], softmax_predictions[i, k, :, :, :]))
+
+    return penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)
