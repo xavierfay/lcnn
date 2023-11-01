@@ -80,7 +80,7 @@ class MultitaskLearner(nn.Module):
             L = OrderedDict()
 
             alpha = compute_alpha(T["jmap"])
-            penalty = mutual_exclusivity_penalty(jmap)
+            penalty = mutual_exclusivity_penalty(jmap, T["jmap"])
             print(penalty)
 
             L["jmap"] = sum(
@@ -107,7 +107,7 @@ class MultitaskLearner(nn.Module):
         return result
 
 
-def mutual_exclusivity_penalty(batch_predictions):
+def mutual_exclusivity_penalty(jmap, labels):
     """
     Compute the mutual exclusivity penalty for all pairs of layers.
 
@@ -116,19 +116,15 @@ def mutual_exclusivity_penalty(batch_predictions):
     :return: Total penalty value.
     """
 
-    n_jtyp, num_classes, batch_size, H, W = batch_predictions.shape
-    penalty = 0.0
+    print("jmap in mutual exclusivity penalty", jmap.shape)
+    print("labels in mutual exclusivity penalty", labels.shape)
 
     # Apply softmax over the class dimension
-    softmax_predictions = F.softmax(batch_predictions, dim=1)
+    jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
 
     # Loop over all keypoint types (layers)
-    for i in range(n_jtyp):
-        # Loop over all pairs of classes for each keypoint type
-        for j in range(num_classes):
-            for k in range(j + 1, num_classes):
-                # Compute the penalty for this pair of classes for the entire batch
-                penalty += torch.sum(torch.min(softmax_predictions[i, j, :, :, :], softmax_predictions[i, k, :, :, :]))
+    penalty = F.nll_loss(jmap, labels)
+
 
     return penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
