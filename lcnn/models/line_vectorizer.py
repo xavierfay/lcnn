@@ -231,13 +231,14 @@ class LineVectorizer(nn.Module):
 
 
             jmap = nms_3d(jmap)
+            jmap_filter =  (jmap >= 0.45).float()
 
 
 
             # Separate the layers for jmap
-            first_layer_jmap = jmap[0]
-            second_layer_jmap = jmap[1]
-            concatenated_layer_jmap = jmap[2:].sum(dim=0)
+            first_layer_jmap = jmap_filter[0]
+            second_layer_jmap = jmap_filter[1]
+            concatenated_layer_jmap = jmap_filter[2:].sum(dim=0)
             new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
 
             first_layer_joff = joff[0]
