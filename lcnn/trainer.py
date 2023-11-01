@@ -329,7 +329,7 @@ class Trainer(object):
         jmap = nms_3d(result["jmap"][i].cpu().detach().numpy())
         for j, results in enumerate(jmap):
             mask_result = results
-            imshow(mask_result, cmap="heat"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
+            imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
