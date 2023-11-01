@@ -66,7 +66,7 @@ class WireframeDataset(Dataset):
                 for layer in layers_with_ones:
                     if layer != highest_layer:
                         jmap[layer, x, y] = 0
-            target["jmap"] = torch.from_numpy(jmap).float()
+            target["jmap"] = torch.tensor(jmap).float()
 
             lpos_indices = np.random.permutation(len(npz["lpos"]))[: M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2]
             lneg_indices = np.random.permutation(len(npz["lneg"]))[: M.n_stc_negl]
