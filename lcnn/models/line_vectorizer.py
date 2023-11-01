@@ -303,29 +303,34 @@ class LineVectorizer(nn.Module):
             return line, label, jcs, jtype
 
     def matching_algorithm(self, xy, jmap, score):
-        print("xy.shape", xy.shape)
-        print("jmap.shape", jmap.shape)
-        print("score.shape", score.shape)
-
         n_type, K, _ = xy.shape
         xy_int = xy.long()
 
-        # Explicitly associate the first two layers of xy with the first two layers of jmap
-        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
-
+        # Get intensities for the third layer of xy across all layers of jmap
         intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
 
-        print("Intensities:",intensities.shape, intensities)
-        print("Score for xy[2]:", score[2])
+        # If intensity is 0, compute the distance to nearby locations and get the maximum intensity
+        mask_zero_intensity = intensities == 0
+        if mask_zero_intensity.any():
+            # Define a local neighborhood
+            neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
+            dx, dy = torch.meshgrid(neighborhood, neighborhood)
+            dx, dy = dx.flatten(), dy.flatten()
+
+            for i in range(intensities.shape[1]):
+                if mask_zero_intensity[:, i].any():
+                    local_intensities = jmap[:, xy_int[2, i, 1] + dy, xy_int[2, i, 0] + dx]
+                    max_local_intensity, _ = local_intensities.max(dim=-1)
+                    intensities[mask_zero_intensity[:, i], i] = max_local_intensity
 
         # Compute the difference between these intensities and the score for xy[2]
         differences = torch.abs(intensities - score[2].unsqueeze(0))
 
-        print("Differences:",differences.shape, differences)
+        # Find the layer in jmap with the smallest difference for each point in xy[2]
+        jtype_2 = torch.argmin(differences, dim=0)
 
-        # For the third layer of xy, get its intensity across jmap[2:] and find the closest layer
-        intensity_2 = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
-        jtype_2 = torch.argmin(torch.abs(intensity_2 - score[2].float()), dim=0) + 2  # +2 to account for the offset
+        # Explicitly associate the first two layers of xy with the first two layers of jmap
+        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
         # Combine the associated layers
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
