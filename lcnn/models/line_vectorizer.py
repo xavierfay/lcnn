@@ -228,12 +228,8 @@ class LineVectorizer(nn.Module):
             Lpos, Lneg = meta["Lpos"], meta["Lneg"]
             device = jmap.device
 
-
-
             jmap = nms_3d(jmap)
             jmap_filter =  jmap*(jmap >= 0.1).float()
-
-
 
             # Separate the layers for jmap
             first_layer_jmap = jmap_filter[0]
@@ -326,45 +322,72 @@ class LineVectorizer(nn.Module):
 
         return jcs, filtered_jtype
 
-    def find_closest_non_zero_2d(self, xy, jmap):
-        # Define a local neighborhood
-        neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
+    def matching_algorithm(self, xy, jmap, joff, score):
+        n_type, K, _ = xy.shape
+        xy_int = xy.long()
 
-        closest_coords = []
+        # Reverse the offset to get back to the original coordinates
+        xy_original = xy - joff[:, :, :2].permute(1, 0, 2)
 
-        for i in range(xy.shape[1]):
-            x = xy[2, i, 0].long()
-            y = xy[2, i, 1].long()
+        # Explicitly associate the first two layers of xy with the first two layers of jmap
+        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-            if jmap[y, x] != 0:  # Check if the value at this location is non-zero
-                closest_coords.append((x, y))
-                continue
+        # For the third layer of xy, find the closest non-zero location in jmap[2:]
+        twod_jmap = torch.argmax(jmap[2:], dim=0)
+        closest_coords = self.find_closest_non_zero_2d(xy_original, twod_jmap)
 
-            found = False
-            radius = 1
+        # Convert these coordinates to their associated layer in jmap[2:]
+        jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
 
-            while not found:
-                # Expand the neighborhood based on the radius
-                dx = torch.arange(-radius, radius + 1, device=jmap.device)
-                dy = torch.arange(-radius, radius + 1, device=jmap.device)
+        # Combine the associated layers
+        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
 
-                local_x = torch.clamp(x + dx.unsqueeze(0), 0, jmap.shape[1] - 1)
-                local_y = torch.clamp(y + dy.unsqueeze(1), 0, jmap.shape[0] - 1)
+        # Filter xy and jtype based on the score threshold
+        valid_indices = score > 0.000001
+        jcs = xy[valid_indices]
+        filtered_jtype = jtype[valid_indices]
 
-                local_intensities = jmap[local_y, local_x]
+        return jcs, filtered_jtype
 
-                if local_intensities.any():
-                    # If any value in the local_intensities is non-zero,
-                    # we have found the closest non-zero location
-                    non_zero_indices = torch.nonzero(local_intensities)
-                    closest_y, closest_x = non_zero_indices[0][0], non_zero_indices[0][1]
-                    closest_coords.append((closest_x, closest_y))
-                    found = True
-                else:
-                    # If not found, expand the radius for the next iteration
-                    radius += 1
-
-        return closest_coords
+    # def find_closest_non_zero_2d(self, xy, jmap):
+    #     # Define a local neighborhood
+    #     neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
+    #
+    #     closest_coords = []
+    #
+    #     for i in range(xy.shape[1]):
+    #         x = xy[2, i, 0].long()
+    #         y = xy[2, i, 1].long()
+    #
+    #         if jmap[y, x] != 0:  # Check if the value at this location is non-zero
+    #             closest_coords.append((x, y))
+    #             continue
+    #
+    #         found = False
+    #         radius = 1
+    #
+    #         while not found:
+    #             # Expand the neighborhood based on the radius
+    #             dx = torch.arange(-radius, radius + 1, device=jmap.device)
+    #             dy = torch.arange(-radius, radius + 1, device=jmap.device)
+    #
+    #             local_x = torch.clamp(x + dx.unsqueeze(0), 0, jmap.shape[1] - 1)
+    #             local_y = torch.clamp(y + dy.unsqueeze(1), 0, jmap.shape[0] - 1)
+    #
+    #             local_intensities = jmap[local_y, local_x]
+    #
+    #             if local_intensities.any():
+    #                 # If any value in the local_intensities is non-zero,
+    #                 # we have found the closest non-zero location
+    #                 non_zero_indices = torch.nonzero(local_intensities)
+    #                 closest_y, closest_x = non_zero_indices[0][0], non_zero_indices[0][1]
+    #                 closest_coords.append((closest_x, closest_y))
+    #                 found = True
+    #             else:
+    #                 # If not found, expand the radius for the next iteration
+    #                 radius += 1
+    #
+    #     return closest_coords
 
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
