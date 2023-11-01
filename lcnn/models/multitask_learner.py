@@ -95,8 +95,8 @@ class MultitaskLearner(nn.Module):
             # jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
             # L["jmap"] = M.jmap_weight * jmap_single + (1-M.jmap_weight) * jmap_multi
 
-            penalty = mutual_exclusivity_penalty(jmap)
-            L["jmap"] = jmap_single #+ M.jmap_weight * penalty
+            penalty = mutual_exclusivity_penalty(T["jmap"])
+            L["jmap"] = jmap_single + M.jmap_weight * penalty
 
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
@@ -127,14 +127,14 @@ def mutual_exclusivity_penalty(batch_predictions):
     :return: Total penalty value.
     """
 
-    batch_size, num_classes, H, W = batch_predictions.shape
+    num_classes,batch_size, H, W = batch_predictions.shape
     penalty = 0.0
-
+    softmax_predictions = F.softmax(batch_predictions, dim=0)
     # Loop over all pairs of classes (layers)
     for i in range(num_classes):
         for j in range(i + 1, num_classes):
             # Compute the penalty for this pair of layers for the entire batch
-            penalty += torch.sum(torch.min(batch_predictions[:, i, :, :], batch_predictions[:, j, :, :]))
+            penalty += torch.sum(torch.min(softmax_predictions[i, :, :, :], softmax_predictions[j, :, :, :]))
 
     return penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
