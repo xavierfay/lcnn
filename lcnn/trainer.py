@@ -332,7 +332,7 @@ class Trainer(object):
 
 
         # Displaying the results using the updated imshow function
-        visualize_layers(mask_result, cmap="jet"),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        visualize_layers(mask_result),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
         imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
