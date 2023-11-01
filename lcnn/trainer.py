@@ -326,13 +326,15 @@ class Trainer(object):
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
         mask_result = result["jmap"][i].cpu().detach().numpy()
+        for j, results in enumerate(mask_result):
+            line_result = results.cpu().detach().numpy()
+            imshow(line_result, cmap="jet"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
         mask_target = plt_heatmaps(mask_target)
 
 
         # Displaying the results using the updated imshow function
-        visualize_layers(mask_result),  plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
         imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
 
         # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
