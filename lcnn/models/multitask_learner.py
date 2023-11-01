@@ -122,7 +122,7 @@ def focal_loss(logits, positive, alpha, gamma=2.0):
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Extend alpha to have the same shape as logits
-    alpha_t = alpha[None, :, None, None].expand_as(logits)
+    alpha_t = alpha[:, None, None].expand_as(logits)
 
 
     epsilon = 1e-7
