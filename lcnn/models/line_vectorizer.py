@@ -302,40 +302,27 @@ class LineVectorizer(nn.Module):
 
             return line, label, jcs, jtype
 
-
     def matching_algorithm(self, xy, jmap, score):
         print("xy.shape", xy.shape)
         print("jmap.shape", jmap.shape)
         print("score.shape", score.shape)
 
-        matching_indices = []
-
-        # Iterate over each layer in xy
-        for i in range(3):
-            x_indices = xy[i, :, 0].long()
-            y_indices = xy[i, :, 1].long()
-
-            # Extract the values from jmap at the xy positions for each layer
-            values_at_xy = jmap[:, y_indices, x_indices]
-
-            # Find where these values match the corresponding scores
-            layer_indices = torch.where(values_at_xy == score[i])
-
-            matching_indices.append(layer_indices)
-        print(matching_indices)
-
         n_type, K, _ = xy.shape
         xy_int = xy.long()
+
+        # Get intensities for the third layer of xy across all layers of jmap
+        intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
+
+        # Compute the difference between these intensities and the score for xy[2]
+        differences = torch.abs(intensities - score[2].unsqueeze(0))
+
+        # Find the layer in jmap with the smallest difference for each point in xy[2]
+        jtype_2 = torch.argmin(differences, dim=0)
 
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
 
-        # For the third layer of xy, get its intensity across jmap[2:] and find the closest layer
-        intensity_2 = jmap[5:, xy_int[2, :, 1], xy_int[2, :, 0]]
-        jtype_2 = torch.argmin(torch.abs(intensity_2 - score[2].float()),
-                               dim=0) + 2  # +2 because we started from jmap[2:]
-
-        # Combine jtypes
+        # Combine the associated layers
         jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
 
         # Filter xy and jtype based on the score threshold
@@ -344,7 +331,6 @@ class LineVectorizer(nn.Module):
         filtered_jtype = jtype[valid_indices]
 
         return jcs, filtered_jtype
-
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)
         for class_idx, max_samples in enumerate([M.n_dyn_negl, M.n_dyn_posl0, M.n_dyn_posl1, M.n_dyn_posl2]):
