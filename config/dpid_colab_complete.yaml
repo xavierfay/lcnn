@@ -69,6 +69,8 @@ model:
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.01
 
+  penalty: 1
+
 optim:
   name: Adam
   lr: 4.0e-4
