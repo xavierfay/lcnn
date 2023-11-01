@@ -40,7 +40,7 @@ model:
   n_stc_negl: 200
 
   ## dynamic sampler
-  n_dyn_junc: 800
+  n_dyn_junc: 900
   n_dyn_posl0: 2000
   n_dyn_posl1: 2000
   n_dyn_posl2: 2000
@@ -67,7 +67,7 @@ model:
   use_half: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.001
 
 optim:
   name: Adam
