@@ -116,6 +116,8 @@ def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
     print("logits shape", logits.shape)
     print("alpha shape", alpha.shape)
+    print("positive shape", positive.shape)
+
     probas = F.softmax(logits, dim=0)
 
     mask = (positive == 1).float()
