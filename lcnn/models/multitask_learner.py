@@ -72,8 +72,8 @@ class MultitaskLearner(nn.Module):
             # print("lmap in forward pass",lmap.shape)
             jmap_softmax = F.softmax(jmap, dim=1) #[:, 1:, :, :]
             print(jmap_softmax.shape)
-            sum = jmap_softmax[0].sum(dim=0)
-            print(sum.max())
+            summ = jmap_softmax[0].sum(dim=0)
+            print(summ.max())
 
 
             if stack == 0:
