@@ -294,33 +294,33 @@ class LineVectorizer(nn.Module):
             # Process jcs and jtype
             xy = xy.reshape(n_type, K, 2)
             #jmap = jmap * (jmap >= 0.).float()
-            jcs, jtype = self.matching_algorithm(xy, jmap, score)
+            jcs, jtype = self.matching_algorithm(xy, jmap, new_joff, score)
 
             return line, label, jcs, jtype
 
-    def matching_algorithm(self, xy, jmap, score):
-        n_type, K, _ = xy.shape
-        xy_int = xy.long()
-
-        # Explicitly associate the first two layers of xy with the first two layers of jmap
-        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
-
-        # For the third layer of xy, find the closest non-zero location in jmap[2:]
-        twod_jmap = torch.argmax(jmap[2:], dim=0)
-        closest_coords = self.find_closest_non_zero_2d(xy, twod_jmap)
-
-        # Convert these coordinates to their associated layer in jmap[2:]
-        jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
-
-        # Combine the associated layers
-        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
-
-        # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.000001
-        jcs = xy[valid_indices]
-        filtered_jtype = jtype[valid_indices]
-
-        return jcs, filtered_jtype
+    # def matching_algorithm(self, xy, jmap, score):
+    #     n_type, K, _ = xy.shape
+    #     xy_int = xy.long()
+    #
+    #     # Explicitly associate the first two layers of xy with the first two layers of jmap
+    #     jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
+    #
+    #     # For the third layer of xy, find the closest non-zero location in jmap[2:]
+    #     twod_jmap = torch.argmax(jmap[2:], dim=0)
+    #     closest_coords = self.find_closest_non_zero_2d(xy, twod_jmap)
+    #
+    #     # Convert these coordinates to their associated layer in jmap[2:]
+    #     jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
+    #
+    #     # Combine the associated layers
+    #     jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
+    #
+    #     # Filter xy and jtype based on the score threshold
+    #     valid_indices = score > 0.000001
+    #     jcs = xy[valid_indices]
+    #     filtered_jtype = jtype[valid_indices]
+    #
+    #     return jcs, filtered_jtype
 
     def matching_algorithm(self, xy, jmap, joff, score):
         n_type, K, _ = xy.shape
