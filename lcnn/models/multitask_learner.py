@@ -83,10 +83,10 @@ class MultitaskLearner(nn.Module):
             cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
             print("cross loss", cross_loss)
 
-            L["jmap"] = sum(
+            focal_loss_jmap = sum(
                 focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             )
-            L["jmap"] += cross_loss * M.penalty
+            L["jmap"] = cross_loss * M.penalty + focal_loss_jmap
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
             )
