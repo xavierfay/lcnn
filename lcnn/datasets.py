@@ -59,6 +59,7 @@ class WireframeDataset(Dataset):
             summed_jmap = jmap.sum(axis=0)
             error_positions = np.argwhere(summed_jmap > 1)
             for spatial_pos in error_positions:
+                print("Spatial pos:", spatial_pos)
                 x, y = spatial_pos
                 layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
 
