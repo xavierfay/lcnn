@@ -310,6 +310,7 @@ class LineVectorizer(nn.Module):
         intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
 
         # If intensity is 0, compute the distance to nearby locations and get the maximum intensity
+        # If intensity is 0, compute the distance to nearby locations and get the maximum intensity
         mask_zero_intensity = intensities == 0
         if mask_zero_intensity.any():
             # Define a local neighborhood
@@ -319,8 +320,13 @@ class LineVectorizer(nn.Module):
 
             for i in range(intensities.shape[1]):
                 if mask_zero_intensity[:, i].any():
-                    local_intensities = jmap[:, xy_int[2, i, 1] + dy, xy_int[2, i, 0] + dx]
+                    local_x = torch.clamp(xy_int[2, i, 0] + dx, 0,
+                                          jmap.shape[2] - 1)  # Ensuring we don't go out of bounds
+                    local_y = torch.clamp(xy_int[2, i, 1] + dy, 0, jmap.shape[1] - 1)
+
+                    local_intensities = jmap[:, local_y, local_x]
                     max_local_intensity, _ = local_intensities.max(dim=-1)
+
                     intensities[mask_zero_intensity[:, i], i] = max_local_intensity
 
         # Compute the difference between these intensities and the score for xy[2]
