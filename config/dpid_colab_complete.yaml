@@ -56,8 +56,8 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 300
-  n_out_line: 500
+  n_out_junc: 600
+  n_out_line: 1000
 
   # additional ablation study parameters
   use_cood: 0
