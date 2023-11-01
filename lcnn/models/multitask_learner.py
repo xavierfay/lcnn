@@ -123,10 +123,12 @@ def mutual_exclusivity_penalty(jmap, labels):
     procced_jmap = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
     print("jmap in mutual exclusivity penalty", procced_jmap.shape)
     # Loop over all keypoint types (layers)
-    penalty = F.nll_loss(procced_jmap, labels)
+    for i in range(procced_jmap.shape[0]):
+        penalty = F.nll_loss(procced_jmap, labels)
+        total_penalty += penalty
 
 
-    return penalty
+    return total_penalty
 def focal_loss(logits, positive, alpha, gamma=2.0):
     # Get the probability of the positive class
     probas = F.softmax(logits, dim=0)
