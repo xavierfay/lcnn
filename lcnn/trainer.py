@@ -325,9 +325,9 @@ class Trainer(object):
         img = io.imread(fn)
         imshow(img), plt.savefig(f"{prefix}_img.jpg"), plt.close()
 
-
-        for j, results in enumerate(result["jmap"][i]):
-            mask_result = results.cpu().detach().numpy()
+        jmap = nms_3d(result["jmap"][i].cpu().detach().numpy())
+        for j, results in enumerate(jmap):
+            mask_result = results
             imshow(mask_result, cmap="jet"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         #mask_result = plt_heatmaps(mask_result)
         mask_target = target["jmap"][i].cpu().numpy()
@@ -505,7 +505,14 @@ def pprint(*args):
     print("\r", end="")
     print(*args)
 
+def nms_3d(a):
+    original_shape = a.shape
 
+    # For multiple layers, apply 3D NMS
+    a = a.view(1, original_shape[0], original_shape[1], original_shape[2])
+    ap = F.max_pool3d(a, (original_shape[0], 5, 5), stride=(1, 1, 1), padding=(0, 2, 2))
+    keep = (a == ap).float()
+    return (a * keep).squeeze(0)
 # def _launch_tensorboard(board_out, port, out):
 #     os.environ["CUDA_VISIBLE_DEVICES"] = ""
 #     p = subprocess.Popen(["tensorboard", f"--logdir={board_out}", f"--port={port}"])
