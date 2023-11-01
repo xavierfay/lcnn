@@ -324,7 +324,7 @@ class LineVectorizer(nn.Module):
                     local_x = torch.clamp(xy_int[2, i, 0] + dx, 1, jmap.shape[2] - 2)  # Avoid extreme edges
                     local_y = torch.clamp(xy_int[2, i, 1] + dy, 1, jmap.shape[1] - 2)  # Avoid extreme edges
 
-                    local_intensities = jmap[:, local_y, local_x]
+                    local_intensities = jmap[2:, local_y, local_x]  # Ensure we only consider jmap[2:]
                     max_local_intensity, _ = local_intensities.max(dim=-1)
 
                     # Check the shapes
@@ -334,12 +334,11 @@ class LineVectorizer(nn.Module):
 
                     intensities[mask_zero_intensity[:, i], i] = max_local_intensity
 
-
         # Compute the difference between these intensities and the score for xy[2]
         differences = torch.abs(intensities - score[2].unsqueeze(0))
 
         # Find the layer in jmap with the smallest difference for each point in xy[2]
-        jtype_2 = torch.argmin(differences, dim=0)
+        jtype_2 = torch.argmin(differences, dim=0) + 2  # +2 to account for jmap[2:]
 
         # Explicitly associate the first two layers of xy with the first two layers of jmap
         jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
