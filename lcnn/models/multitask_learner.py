@@ -62,6 +62,7 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, batch, row, col)
             jmap = jmap.permute(1, 0, 2, 3)
+            jmap = F.softmax(jmap, dim=1)
 
             lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp-1, 2,  batch, row, col)
@@ -71,7 +72,7 @@ class MultitaskLearner(nn.Module):
 
             if stack == 0:
                 result["preds"] = {
-                    "jmap": F.softmax(jmap, dim=1)[:, 1:],
+                    "jmap": jmap[:, 1:],
                     "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                      #"joff": joff[1:].permute(1, 0, 2, 3).sigmoid() - 0.5,
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
@@ -157,6 +158,21 @@ def multi_class_focal_loss(logits, labels_one_hot, alpha=None, gamma=2.0):
 
     return loss.mean()
 
+
+def regularization_term(logits):
+    """
+    Compute the regularization term based on squared probabilities.
+
+    Args:
+    - probas (torch.Tensor): Softmax probabilities, shape [batch_size, n_classes, H, W]
+
+    Returns:
+    - reg (torch.Tensor): Regularization term, shape [batch_size]
+    """
+    probas = F.softmax(logits, dim=0)
+    squared_probas = probas ** 2
+    reg = squared_probas.sum(dim=1).mean(dim=(1, 2))
+    return reg
 
 def l2loss(input, target):
     return ((target - input) ** 2).mean(2).mean(1)
