@@ -86,7 +86,7 @@ class MultitaskLearner(nn.Module):
             #     combined_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
             # )
             jmap_single = sum(
-                focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
+                focal_loss(jmap[i], T["jmap"][i], alpha[i]) for i in range(n_jtyp)
             )
 
             jmap_multi = multi_class_focal_loss(jmap, T["jmap"], alpha)
@@ -122,9 +122,7 @@ def focal_loss(logits, positive, alpha, gamma=2.0):
     p_t = mask * probas[1] + (1.0 - mask) * probas[0]
 
     # Extend alpha to have the same shape as logits
-    logits_shape = logits.shape
-    alpha_shape = [1 if dim != 1 else logits_shape[i] for i, dim in enumerate(alpha.shape)]
-    alpha_t = alpha.reshape(*alpha_shape).expand_as(logits)
+    alpha_t = alpha[None, :, None, None].expand_as(logits)
 
 
     epsilon = 1e-7
