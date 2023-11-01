@@ -307,7 +307,7 @@ class LineVectorizer(nn.Module):
         xy_int = xy.long()
 
         # Get intensities for the third layer of xy across all layers of jmap
-        intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        intensities = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
 
         # If intensity is 0, compute the distance to nearby locations and get the maximum intensity
         mask_zero_intensity = intensities == 0
