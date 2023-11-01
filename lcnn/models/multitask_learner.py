@@ -115,7 +115,7 @@ def mutual_exclusivity_penalty(jmap, labels):
     :param lambda_val: Hyperparameter for the strength of the mutual exclusivity constraint.
     :return: Total penalty value.
     """
-
+    labels = labels.permute(1, 0, 2, 3)
     print("jmap in mutual exclusivity penalty", jmap.shape)
     print("labels in mutual exclusivity penalty", labels.shape)
 
