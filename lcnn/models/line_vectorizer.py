@@ -311,7 +311,7 @@ class LineVectorizer(nn.Module):
         xy_int = xy.long()
 
         # Get intensities for the third layer of xy across all layers of jmap
-        intensities = jmap[:, xy_int[2, :, 1], xy_int[2, :, 0]]
+        intensities = jmap[2:, xy_int[2, :, 1], xy_int[2, :, 0]]
 
         # Compute the difference between these intensities and the score for xy[2]
         differences = torch.abs(intensities - score[2].unsqueeze(0))
