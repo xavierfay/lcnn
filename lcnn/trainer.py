@@ -467,7 +467,7 @@ def plt_heatmaps(jmap):
     return combined_image
 
 
-def visualize_layers(mask_result, threshold=0.001):
+def visualize_layers(mask_result, threshold=0.3):
     """
     Visualize the layers of the mask_result where confidence is above the threshold.
 
@@ -479,17 +479,19 @@ def visualize_layers(mask_result, threshold=0.001):
     - A plot showing different layers using a colormap.
     """
     # Create an empty array to store the layer numbers for visualization
-    visualization = np.zeros(mask_result.shape[1:])
+    max_confidences = np.max(mask_result, axis=0)
 
-    # Iterate through each layer
-    for layer in range(mask_result.shape[0]):
-        # If confidence is above threshold, mark with layer number
-        visualization[mask_result[layer] > threshold] = layer
+    # Compute the layer with the maximum confidence per pixel
+    argmax_layers = np.argmax(mask_result, axis=0)
+
+    # Where the maximum confidence is below the threshold, set to -1 (white)
+    argmax_layers[max_confidences < threshold] = -1
 
     plt.figure(figsize=(10, 10))
-    plt.imshow(visualization, cmap='jet', origin='upper')
+    plt.imshow(argmax_layers, cmap='jet', origin='upper', vmin=-1, vmax=mask_result.shape[0] - 1)
     plt.colorbar(label='Layer Number')
-    plt.title('Visualization of Layers')
+    plt.title('Argmax Visualization of Layers')
+    plt.show()
 
 def tprint(*args):
     """Temporarily prints things on the screen"""
