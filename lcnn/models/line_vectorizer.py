@@ -271,12 +271,42 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y
 
-            # dist: [N_TYPE, K, N]
-            dist = torch.sum((xy_ - junc) ** 2, -1)
-            cost, match = torch.min(dist, -1)
+            matches = torch.full((xy.shape[0], xy.shape[1]), N, dtype=torch.long)
+            costs = torch.full((xy.shape[0], xy.shape[1]), float('inf'))
 
-            match[cost > 1.5 * 1.5] = N
-            match = match.flatten()
+            # Iterate over each junction type
+            for t in range(jtype.max().item() + 1):
+                # Mask for xy points of type t
+                mask_xy = jtype == t
+
+                # Mask for junc points of type t
+                mask_junc = jtyp == t
+
+                # If no points of type t, continue
+                if not mask_xy.any() or not mask_junc.any():
+                    continue
+
+                # Compute distances for type t
+                dist = torch.sum((xy[mask_xy, :, None] - junc[mask_junc]) ** 2, -1)
+
+                # Get best matches for type t
+                cost, match = torch.min(dist, -1)
+
+                # Update the matches and costs tensors
+                matches[mask_xy] = match
+                costs[mask_xy] = cost
+
+            # Set matches where cost exceeds threshold to N
+            matches[costs > 1.5 * 1.5] = N
+
+            match = matches.flatten()
+
+            # # dist: [N_TYPE, K, N]
+            # dist = torch.sum((xy_ - junc) ** 2, -1)
+            # cost, match = torch.min(dist, -1)
+            #
+            # match[cost > 1.5 * 1.5] = N
+            # match = match.flatten()
 
             # Create mesh grid and filter based on conditions
             u, v = torch.meshgrid(torch.arange(K, device=device), torch.arange(K, device=device))
