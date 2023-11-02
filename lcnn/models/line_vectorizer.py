@@ -229,36 +229,42 @@ class LineVectorizer(nn.Module):
             device = jmap.device
 
             jmap = nms_3d(jmap)
-            jmap_filter =  jmap*(jmap >= 0.1).float()
-
-            # Separate the layers for jmap
-            first_layer_jmap = jmap_filter[0]
-            second_layer_jmap = jmap_filter[1]
-            concatenated_layer_jmap = jmap_filter[2:].sum(dim=0)
-            new_jmap = torch.stack([first_layer_jmap, second_layer_jmap, concatenated_layer_jmap], dim=0).to(device)
-
-            first_layer_joff = joff[0]
-            second_layer_joff = joff[1]
-            concatenated_layer_joff = joff[2:].sum(dim=0)
-            new_joff = torch.stack([first_layer_joff, second_layer_joff, concatenated_layer_joff], dim=0).to(device)
-
-            new_jtyp = torch.where(jtyp <= 1, jtyp, torch.tensor(2, device=jtyp.device))
-
-            # Rest of the code remains largely similar
-            n_type = new_jmap.shape[0]
-
-            new_joff = new_joff.reshape(n_type, 2, -1)
-            new_jmap = new_jmap.reshape(n_type, -1)
-            max_K = M.n_dyn_junc // n_type
+            n_type = jmap.size(1)
+            max_K = M.n_dyn_junc
             N = len(junc)
-            K = min(int((new_jmap > M.eval_junc_thres).float().sum().item()), max_K) if mode != "training" else min(
-                int(N * 2 + 2), max_K)
-            K = max(K, 2)
+            if mode != "training":
+                K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
+            else:
+                K = min(int(N * 2 + 2), max_K)
+            if K < 2:
+                K = 2
 
-            # Get top K scores and their indices
-            score, index = torch.topk(new_jmap, k=K)
-            y = (index // 256).float() + torch.gather(new_joff[:, 0], 1, index) + 0.5
-            x = (index % 256).float() + torch.gather(new_joff[:, 1], 1, index) + 0.5
+            K = min(K, jmap.numel())
+
+            def get_top_k_3d(jmap, joff, K, device):
+                # Transfer tensors to the specified device
+                jmap = jmap.to(device)
+                joff = joff.to(device)
+
+                # Flatten jmap and Get top K scores and their indices
+                score, index = torch.topk(jmap.view(-1), k=K)
+
+                # Get 3D coordinates
+                depth = jmap.size(2)
+                height = jmap.size(1)
+
+                jtype = (index // (depth * height)).long()
+                y = ((index % (depth * height)) // depth).float()
+                x = (index % depth).float()
+
+                # Adjust coordinates with offsets
+                y += torch.gather(joff[:, 0].contiguous().view(-1), 0, index) + 0.5
+                x += torch.gather(joff[:, 1].contiguous().view(-1), 0, index) + 0.5
+
+                return score, jtype, x, y
+
+            score, jtype, x, y = get_top_k_3d(jmap, joff, K, device)
+
 
             # xy: [N_TYPE, K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
@@ -269,34 +275,32 @@ class LineVectorizer(nn.Module):
             dist = torch.sum((xy_ - junc) ** 2, -1)
             cost, match = torch.min(dist, -1)
 
-            for t in range(n_type):
-                match[t, new_jtyp[match[t]] != t] = N
             match[cost > 1.5 * 1.5] = N
             match = match.flatten()
 
             # Create mesh grid and filter based on conditions
-            u, v = torch.meshgrid(torch.arange(n_type * K, device=device), torch.arange(n_type * K, device=device))
+            u, v = torch.meshgrid(torch.arange(K, device=device), torch.arange(K, device=device))
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
             scalar_labels = Lpos[up, vp].long()
 
-            c = (u < v).flatten() if mode != "training" else self.sample_training_labels(scalar_labels, Lneg, up,
-                                                                                         vp,
+            c = (u < v).flatten() if mode != "training" else self.sample_training_labels(scalar_labels, Lneg, up, vp,
                                                                                          device)
 
             # Create line and label tensors
             u, v, scalar_labels = u[c], v[c], scalar_labels[c]
-            xy = xy.reshape(n_type * K, 2)
+            xy = xy.reshape(K, 2)
             line = torch.stack([xy[u], xy[v]], dim=1)
             label = torch.zeros(scalar_labels.shape[0], 4, device=scalar_labels.device)
             label[torch.arange(label.shape[0]), scalar_labels] = 1
 
             # Process jcs and jtype
-            xy = xy.reshape(n_type, K, 2)
-            #jmap = jmap * (jmap >= 0.).float()
-            jcs, jtype = self.matching_algorithm(xy, jmap, new_joff, score,index)
+            jcs = xy[score > 0.001]
+            jtype_tensor = jtype[score > 0.001]
 
-            return line, label, jcs, jtype
+            #jcs, jtype = self.matching_algorithm(xy, jmap, score)
+
+            return line, label, jcs, jtype_tensor
 
     # def matching_algorithm(self, xy, jmap, score):
     #     n_type, K, _ = xy.shape

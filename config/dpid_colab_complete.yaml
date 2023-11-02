@@ -40,7 +40,7 @@ model:
   n_stc_negl: 200
 
   ## dynamic sampler
-  n_dyn_junc: 600
+  n_dyn_junc: 400
   n_dyn_posl0: 2000
   n_dyn_posl1: 2000
   n_dyn_posl2: 2000
