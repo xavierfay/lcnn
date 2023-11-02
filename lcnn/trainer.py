@@ -397,8 +397,8 @@ class Trainer(object):
 
     def train(self):
         plt.rcParams["figure.figsize"] = (24, 24)
-        if self.iteration % 4 == 0:
-            self.validate()
+        # if self.iteration % 4 == 0:
+        #     self.validate()
         epoch_size = len(self.train_loader)
         start_epoch = self.iteration // epoch_size
         for self.epoch in range(start_epoch, self.max_epoch):
