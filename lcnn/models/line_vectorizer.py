@@ -277,11 +277,13 @@ class LineVectorizer(nn.Module):
             cost, match = torch.min(dist, dim=-1)
 
             # Ensure match has the same type
+            valid_indices_mask = match < junc.shape[0]
+
+            # Ensure match has the same type
             for t in range(n_type):
                 mask = jtype == t
-                valid_match_mask = match != N
-                filtered_mask = mask[valid_match_mask]
-                match[valid_match_mask & (jtyp[match[valid_match_mask]] != t) & filtered_mask] = N
+                filtered_mask = mask & valid_indices_mask
+                match[filtered_mask & (jtyp[match[filtered_mask]] != t)] = N
 
             # Set matches where cost exceeds threshold to N
             match[cost > 1.5 * 1.5] = N
