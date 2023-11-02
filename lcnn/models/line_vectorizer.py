@@ -283,7 +283,7 @@ class LineVectorizer(nn.Module):
                 # If there are no valid distances, the default value of N will remain for this index
                 if valid_dists.shape[0] > 0:
                     min_dist_idx = valid_dists.argmin()
-                    if valid_dists[min_dist_idx] <= (1.5 * 1.5):
+                    if valid_dists[min_dist_idx] <= (50):
                         # Convert the index from the masked to the original
                         matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx] = N
 
@@ -318,8 +318,8 @@ class LineVectorizer(nn.Module):
             label[torch.arange(label.shape[0]), scalar_labels] = 1
 
             # Process jcs and jtype
-            jcs = xy[score > 0.001]
-            jtype_tensor = jtype[score > 0.001]
+            jcs = xy[score > 0.03]
+            jtype_tensor = jtype[score > 0.03]
 
             #jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
