@@ -68,13 +68,13 @@ model:
   use_half: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.01
+  eval_junc_thres: 0.46
 
   penalty: 0
 
 optim:
   name: Adam
-  lr: 4.0e-4
+  lr: 4.0e-5
   amsgrad: True
   weight_decay: 0
   max_epoch: 100
