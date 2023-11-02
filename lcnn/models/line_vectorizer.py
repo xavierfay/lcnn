@@ -289,18 +289,19 @@ class LineVectorizer(nn.Module):
                 # Compute distances for type t
                 print("xy", xy.shape)
                 print("junc", junc.shape)
-                dist  = ((xy[:, None, :] - junc[None, :, :]) ** 2).sum(-1)
+                dist = ((xy[:, None, :] - junc[None, :, :]) ** 2).sum(-1)
 
                 # Get best matches for type t
                 cost, match = torch.min(dist, -1)
 
                 # Update the matches and costs tensors
-                matches[mask_xy] = match
-                costs[mask_xy] = cost
+                matches[mask_xy] = match[:, None]
+                costs[mask_xy] = cost[:, None]
 
             # Set matches where cost exceeds threshold to N
             matches[costs > 1.5 * 1.5] = N
             unmatched_count = (matches == N).sum().item()
+            print("unmatched count", unmatched_count)
 
             match = matches.flatten()
 
