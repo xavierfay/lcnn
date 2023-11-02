@@ -289,7 +289,7 @@ class LineVectorizer(nn.Module):
                 # Compute distances for type t
                 print("xy", xy.shape)
                 print("junc", junc.shape)
-                dist = ((xy[:, None, :] - junc[None, :, :]) ** 2).sum(-1)
+                dist = torch.sum((xy_ - junc) ** 2, -1)
 
                 # Get best matches for type t
                 cost, match = torch.min(dist, -1)
