@@ -280,7 +280,8 @@ class LineVectorizer(nn.Module):
             for t in range(n_type):
                 mask = jtype == t
                 valid_match_mask = match != N
-                match[mask & valid_match_mask & (jtyp[match[valid_match_mask]] != t)] = N
+                filtered_mask = mask[valid_match_mask]
+                match[valid_match_mask & (jtyp[match[valid_match_mask]] != t) & filtered_mask] = N
 
             # Set matches where cost exceeds threshold to N
             match[cost > 1.5 * 1.5] = N
