@@ -259,8 +259,8 @@ class LineVectorizer(nn.Module):
                 x = (index % depth).float()
 
                 # Adjust coordinates with offsets
-                y += torch.gather(joff[:, 0].view(-1), 0, index) + 0.5
-                x += torch.gather(joff[:, 1].view(-1), 0, index) + 0.5
+                y += torch.gather(joff[:, 0].contiguous().view(-1), 0, index) + 0.5
+                x += torch.gather(joff[:, 1].contiguous().view(-1), 0, index) + 0.5
 
                 return score, jtype, x, y
 
