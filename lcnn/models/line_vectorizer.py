@@ -273,7 +273,7 @@ class LineVectorizer(nn.Module):
             # Iterate over each junction type
             dist = ((xy[:, None, :] - junc) ** 2).sum(dim=-1)
 
-            matched_indices = torch.full((xy.shape[0],), fill_value=N, dtype=torch.long)
+            matched_indices = torch.full((xy.shape[0],), fill_value=N, dtype=torch.long, device= device)
 
             for idx, (point, typ) in enumerate(zip(xy, jtype)):
                 # Mask distances based on type
