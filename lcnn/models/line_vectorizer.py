@@ -242,7 +242,11 @@ class LineVectorizer(nn.Module):
 
             K = min(K, jmap.numel())
 
-            def get_top_k_3d(jmap, joff, K):
+            def get_top_k_3d(jmap, joff, K, device):
+                # Transfer tensors to the specified device
+                jmap = jmap.to(device)
+                joff = joff.to(device)
+
                 # Get top K scores and their indices
                 score, index = torch.topk(jmap, k=K)
 
