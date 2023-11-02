@@ -271,27 +271,28 @@ class LineVectorizer(nn.Module):
             del x, y
 
             # Iterate over each junction type
-            dist = torch.sum((xy_ - junc) ** 2, dim=-1)
+            dist = ((xy[:, None, :] - junc) ** 2).sum(dim=-1)
 
-            # Get best matches
-            cost, match = torch.min(dist, dim=-1)
+            matched_indices = torch.full((xy.shape[0],), fill_value=N, dtype=torch.long)
 
-            # Ensure match has the same type
-            valid_indices_mask = match < junc.shape[0]
+            for idx, (point, typ) in enumerate(zip(xy, jtype)):
+                # Mask distances based on type
+                type_mask = (jtyp == typ)
+                valid_dists = dist[idx, type_mask]
 
-            # Ensure match has the same type
-            for t in range(n_type):
-                mask = jtype == t
-                filtered_mask = mask & valid_indices_mask
-                match[filtered_mask[filtered_mask] & (jtyp[match[filtered_mask]] != t)] = N
+                # If there are no valid distances, the default value of N will remain for this index
+                if valid_dists.shape[0] > 0:
+                    min_dist_idx = valid_dists.argmin()
+                    if valid_dists[min_dist_idx] <= (1.5 * 1.5):
+                        # Convert the index from the masked to the original
+                        matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx] = N
 
 
             # Set matches where cost exceeds threshold to N
-            match[cost > 1.5 * 1.5] = N
-            unmatched_count = (match == N).sum().item()
+            unmatched_count = (matched_indices == N).sum().item()
             print("unmatched count", unmatched_count)
 
-            match = match.flatten()
+            match = matched_indices.flatten()
 
             # # dist: [N_TYPE, K, N]
             # dist = torch.sum((xy_ - junc) ** 2, -1)
