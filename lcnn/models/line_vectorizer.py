@@ -292,7 +292,7 @@ class LineVectorizer(nn.Module):
 
             unmatched_count = (matched_indices == N).sum().item()
             mask_valid_matches = dist.min(dim=-1).values <= (1.5*1.5)
-            loss_unmatched = (K-unmatched_count)/N
+            loss_unmatched = 1-((K-unmatched_count)/N)
             loss_distance = dist[mask_valid_matches].sum()
             total_loss = loss_unmatched + loss_distance * 1e-10
             match = matched_indices.flatten()
