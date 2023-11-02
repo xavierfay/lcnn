@@ -274,19 +274,20 @@ class LineVectorizer(nn.Module):
             # Iterate over each junction type
             dist = ((xy[:, None, :] - junc) ** 2).sum(dim=-1)
 
-            matched_indices = torch.full((xy.shape[0],), fill_value=N, dtype=torch.long, device= device)
+            matched_indices = torch.full((xy.shape[0],), fill_value=N, dtype=torch.long, device=device)
 
             for idx, (point, typ) in enumerate(zip(xy, jtype)):
                 # Mask distances based on type
                 type_mask = (jtyp == typ)
                 valid_dists = dist[idx, type_mask]
 
-                # If there are no valid distances, the default value of N will remain for this index
+                # If there are valid distances and the smallest one is within the threshold
                 if valid_dists.shape[0] > 0:
                     min_dist_idx = valid_dists.argmin()
-                    if valid_dists[min_dist_idx] <= (200):
-                        # Convert the index from the masked to the original
-                        matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx] = N
+                    if valid_dists[min_dist_idx] <= 100:
+                        matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx]
+                    else:
+                        matched_indices[idx] = N
 
             unmatched_count = (matched_indices == N).sum().item()
             mask_valid_matches = dist.min(dim=-1).values <= 50
