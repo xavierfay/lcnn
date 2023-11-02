@@ -283,14 +283,16 @@ class LineVectorizer(nn.Module):
                 # If there are no valid distances, the default value of N will remain for this index
                 if valid_dists.shape[0] > 0:
                     min_dist_idx = valid_dists.argmin()
-                    if valid_dists[min_dist_idx] <= (50):
+                    if valid_dists[min_dist_idx] <= (200):
                         # Convert the index from the masked to the original
                         matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx] = N
 
-
-            # Set matches where cost exceeds threshold to N
             unmatched_count = (matched_indices == N).sum().item()
-            print("unmatched count", unmatched_count)
+            mask_valid_matches = dist.min(dim=-1).values <= 50
+            loss_unmatched = unmatched_count
+            loss_distance = dist[mask_valid_matches].sum()
+            total_loss = loss_unmatched + loss_distance
+            pritn(total_loss)
 
             match = matched_indices.flatten()
 
