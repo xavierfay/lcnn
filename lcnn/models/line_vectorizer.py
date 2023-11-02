@@ -240,6 +240,8 @@ class LineVectorizer(nn.Module):
             if K < 2:
                 K = 2
 
+            K = min(K, jmap.numel())
+
             def get_top_k_3d(jmap, joff, K):
                 # Get top K scores and their indices
                 score, index = torch.topk(jmap, k=K)
