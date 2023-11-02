@@ -40,7 +40,7 @@ model:
   n_stc_negl: 200
 
   ## dynamic sampler
-  n_dyn_junc: 900
+  n_dyn_junc: 400
   n_dyn_posl0: 2000
   n_dyn_posl1: 2000
   n_dyn_posl2: 2000
@@ -63,7 +63,7 @@ model:
   use_cood: 0
   use_slop: 0
   use_conv: 0
-  use_wandb: 1
+  use_wandb: 0
   use_half: 0
 
   # junction threashold for evaluation (See #5)

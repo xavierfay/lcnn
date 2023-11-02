@@ -303,8 +303,8 @@ class LineVectorizer(nn.Module):
             label[torch.arange(label.shape[0]), scalar_labels] = 1
 
             # Process jcs and jtype
-            jcs = xy[score > 0.03]
-            jtype_tensor = jtype[score > 0.03]
+            jcs = xy[score > 0.001]
+            jtype_tensor = jtype[score > 0.001]
 
             #jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
