@@ -271,11 +271,8 @@ class LineVectorizer(nn.Module):
             xy_ = xy[..., None, :]
             del x, y
 
-            matches = torch.full((xy.shape[0], xy.shape[1]), N, dtype=torch.long)
-            costs = torch.full((xy.shape[0], xy.shape[1]), float('inf'))
-
             # Iterate over each junction type
-            dist = torch.sum((xy[:, None, :] - junc) ** 2, dim=-1)
+            dist = torch.sum((xy_ - junc) ** 2, dim=-1)
 
             # Get best matches
             cost, match = torch.min(dist, dim=-1)
@@ -286,7 +283,7 @@ class LineVectorizer(nn.Module):
                 match[mask & (jtyp[match] != t)] = N
 
             # Set matches where cost exceeds threshold to N
-            match[costs > 1.5 * 1.5] = N
+            match[cost > 1.5 * 1.5] = N
             unmatched_count = (match == N).sum().item()
             print("unmatched count", unmatched_count)
 
