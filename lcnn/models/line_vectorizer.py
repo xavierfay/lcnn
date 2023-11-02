@@ -275,35 +275,22 @@ class LineVectorizer(nn.Module):
             costs = torch.full((xy.shape[0], xy.shape[1]), float('inf'))
 
             # Iterate over each junction type
-            for t in range(jtype.max().item() + 1):
-                # Mask for xy points of type t
-                mask_xy = jtype == t
+            dist = torch.sum((xy[:, None, :] - junc) ** 2, dim=-1)
 
-                # Mask for junc points of type t
-                mask_junc = jtyp == t
+            # Get best matches
+            cost, match = torch.min(dist, dim=-1)
 
-                # If no points of type t, continue
-                if not mask_xy.any() or not mask_junc.any():
-                    continue
-
-                # Compute distances for type t
-                print("xy", xy.shape)
-                print("junc", junc.shape)
-                dist = torch.sum((xy_ - junc) ** 2, -1)
-
-                # Get best matches for type t
-                cost, match = torch.min(dist, -1)
-
-                # Update the matches and costs tensors
-                matches[mask_xy] = match[:, None]
-                costs[mask_xy] = cost[:, None]
+            # Ensure match has the same type
+            for t in range(n_type):
+                mask = jtype == t
+                match[mask & (jtyp[match] != t)] = N
 
             # Set matches where cost exceeds threshold to N
-            matches[costs > 1.5 * 1.5] = N
-            unmatched_count = (matches == N).sum().item()
+            match[costs > 1.5 * 1.5] = N
+            unmatched_count = (match == N).sum().item()
             print("unmatched count", unmatched_count)
 
-            match = matches.flatten()
+            match = match.flatten()
 
             # # dist: [N_TYPE, K, N]
             # dist = torch.sum((xy_ - junc) ** 2, -1)
