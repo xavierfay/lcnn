@@ -247,8 +247,8 @@ class LineVectorizer(nn.Module):
                 jmap = jmap.to(device)
                 joff = joff.to(device)
 
-                # Get top K scores and their indices
-                score, index = torch.topk(jmap, k=K)
+                # Flatten jmap and Get top K scores and their indices
+                score, index = torch.topk(jmap.view(-1), k=K)
 
                 # Get 3D coordinates
                 depth = jmap.size(2)
@@ -259,8 +259,8 @@ class LineVectorizer(nn.Module):
                 x = (index % depth).float()
 
                 # Adjust coordinates with offsets
-                y += torch.gather(joff[:, 0], 1, index) + 0.5
-                x += torch.gather(joff[:, 1], 1, index) + 0.5
+                y += torch.gather(joff[:, 0].view(-1), 0, index) + 0.5
+                x += torch.gather(joff[:, 1].view(-1), 0, index) + 0.5
 
                 return score, jtype, x, y
 
