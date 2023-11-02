@@ -264,8 +264,6 @@ class LineVectorizer(nn.Module):
 
             score, jtype, x, y = get_top_k_3d(jmap, joff, K, device)
 
-            print("max jtype", torch.max(jtype), torch.min(jtype))
-            print("max, min jtyp", torch.max(jtyp), torch.min(jtyp))
             # xy: [K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
@@ -284,7 +282,7 @@ class LineVectorizer(nn.Module):
                 # If there are valid distances and the smallest one is within the threshold
                 if valid_dists.shape[0] > 0:
                     min_dist_idx = valid_dists.argmin()
-                    if valid_dists[min_dist_idx] <= 100:
+                    if valid_dists[min_dist_idx] <= (1.5*1.5):
                         matched_indices[idx] = torch.where(type_mask)[0][min_dist_idx]
                     else:
                         matched_indices[idx] = N
