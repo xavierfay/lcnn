@@ -264,7 +264,8 @@ class LineVectorizer(nn.Module):
 
             score, jtype, x, y = get_top_k_3d(jmap, joff, K, device)
 
-
+            print("max jtype", torch.max(jtype), torch.min(jtype))
+            print("max, min jtyp", torch.max(jtyp), torch.min(jtyp))
             # xy: [K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
