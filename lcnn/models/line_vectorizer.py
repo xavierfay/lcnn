@@ -233,7 +233,6 @@ class LineVectorizer(nn.Module):
             n_type = jmap.size(1)
             max_K = M.n_dyn_junc
             N = len(junc)
-            N = len(junc)
             if mode != "training":
                 K = min(int((jmap > M.eval_junc_thres).float().sum().item()), max_K)
             else:
@@ -260,7 +259,7 @@ class LineVectorizer(nn.Module):
                 return score, jtype, x, y
 
             print("k", K)
-
+            print("N", N)
             score, jtype, x, y = get_top_k_3d(jmap, joff, K)
             print("score", score.shape)
             print("jtype", jtype.shape)
