@@ -259,6 +259,8 @@ class LineVectorizer(nn.Module):
 
                 return score, jtype, x, y
 
+            print("k", K)
+
             score, jtype, x, y = get_top_k_3d(jmap, joff, K)
             print("score", score.shape)
             print("jtype", jtype.shape)
