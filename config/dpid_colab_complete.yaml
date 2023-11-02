@@ -25,7 +25,7 @@ model:
     lpos1: 10
     lpos2: 10
     lneg: 10
-    jtype: 1
+    jtype: 0.1
 
   # backbone parameters
   backbone: stacked_hourglass
