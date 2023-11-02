@@ -266,7 +266,7 @@ class LineVectorizer(nn.Module):
             score, jtype, x, y = get_top_k_3d(jmap, joff, K, device)
 
 
-            # xy: [N_TYPE, K, 2]
+            # xy: [K, 2]
             xy = torch.cat([y[..., None], x[..., None]], dim=-1)
             xy_ = xy[..., None, :]
             del x, y
@@ -280,7 +280,8 @@ class LineVectorizer(nn.Module):
             # Ensure match has the same type
             for t in range(n_type):
                 mask = jtype == t
-                match[mask & (jtyp[match] != t)] = N
+                valid_match_mask = match != N
+                match[mask & valid_match_mask & (jtyp[match[valid_match_mask]] != t)] = N
 
             # Set matches where cost exceeds threshold to N
             match[cost > 1.5 * 1.5] = N
