@@ -239,7 +239,6 @@ class LineVectorizer(nn.Module):
             if K < 2:
                 K = 2
 
-            K = min(K, jmap.numel())
 
             def get_top_k_3d(jmap, joff, K, device):
                 # Transfer tensors to the specified device
