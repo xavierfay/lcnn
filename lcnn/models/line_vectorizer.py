@@ -49,10 +49,10 @@ class LineVectorizer(nn.Module):
         n_batch, n_channel, row, col = x.shape
 
 
-        xs, ys, fs, ps, idx, jcs, jtypes = [], [], [], [], [0], [], []
+        xs, ys, fs, ps, idx, jcs, jtypes, losses = [], [], [], [], [0], [], [], []
         for i, meta in enumerate(input_dict["meta"]):
 
-            p, label, jc, jtype = self.sample_lines(
+            p, label, jc, jtype, jtype_loss = self.sample_lines(
                 meta, h["jmap"][i], h["joff"][i], input_dict["mode"]
             )
             # print("p.shape:", p.shape)
@@ -66,6 +66,7 @@ class LineVectorizer(nn.Module):
             jcs.append(jc)
             ps.append(p)
             jtypes.append(jtype)
+            losses.append(jtype_loss)
             #fs.append(feat)
 
 
@@ -211,6 +212,7 @@ class LineVectorizer(nn.Module):
             result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
             result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
             result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
+            result["losses"][0]["jtype"] = sum(losses) * M.loss_weight["jtype"]
 
 
         # print(input_dict["mode"])
@@ -327,7 +329,7 @@ class LineVectorizer(nn.Module):
 
             #jcs, jtype = self.matching_algorithm(xy, jmap, score)
 
-            return line, label, jcs, jtype_tensor
+            return line, label, jcs, jtype_tensor, total_loss
 
     # def matching_algorithm(self, xy, jmap, score):
     #     n_type, K, _ = xy.shape

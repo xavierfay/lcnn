@@ -22,6 +22,7 @@ model:
     joff: 0.25
     lpos: 1
     lneg: 1
+    jtype: 1
 
   # backbone parameters
   backbone: stacked_hourglass
