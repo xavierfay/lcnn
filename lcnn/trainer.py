@@ -68,7 +68,7 @@ class Trainer(object):
         else:
             mode = 'disabled'
 
-        wandb.init(project='line_reader', entity='xfung', mode=mode, resume=auto)
+        wandb.init(project='line_reader', entity='xfung', mode=mode, resume="auto")
         config = wandb.config
         config.update(M, allow_val_change=True)
 
