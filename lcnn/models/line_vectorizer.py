@@ -350,9 +350,6 @@ class LineVectorizer(nn.Module):
             u, v = torch.meshgrid(torch.arange(K, device=device), torch.arange(K, device=device))
             u, v = u.flatten(), v.flatten()
             up, vp = match[u], match[v]
-            print("up", up.shape)
-            print("vp", vp.shape)
-            print("Lpos", Lpos.shape)
             scalar_labels = Lpos[up, vp].long()
 
             c = (u < v).flatten() if mode != "training" else self.sample_training_labels(scalar_labels, Lneg, up, vp,
