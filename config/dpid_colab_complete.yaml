@@ -1,7 +1,7 @@
 io:
-  logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete
-  datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
-  resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231031-091856-de58a7e-baseline
+  logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/dpid_complete
+  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/complete
+  resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231031-091856-de58a7e-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -64,11 +64,11 @@ model:
   use_cood: 0
   use_slop: 0
   use_conv: 0
-  use_wandb: 0
+  use_wandb: 1
   use_half: 0
 
   # junction threashold for evaluation (See #5)
-  eval_junc_thres: 0.46
+  eval_junc_thres: 0.01
 
   penalty: 0
 

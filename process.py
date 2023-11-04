@@ -74,7 +74,7 @@ def main():
     else:
         raise NotImplementedError
 
-    checkpoint = torch.load(args["<checkpoint>"])
+    checkpoint = torch.load(args["<checkpoint>"], map_location=torch.device("cpu"))
     model = MultitaskLearner(model)
     model = LineVectorizer(model)
     model.load_state_dict(checkpoint["model_state_dict"])
@@ -82,7 +82,7 @@ def main():
     model.eval()
 
     loader = torch.utils.data.DataLoader(
-        WireframeDataset(args["<image-dir>"], split="valid"),
+        WireframeDataset(args["<image-dir>"], split="test_test"),
         shuffle=False,
         batch_size=M.batch_size,
         collate_fn=collate,

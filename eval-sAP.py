@@ -28,7 +28,7 @@ from docopt import docopt
 import lcnn.utils
 import lcnn.metric
 
-GT = "data/wireframe/valid/*.npz"
+GT = "C:/Users/xavier/Documents/GitHub/lcnn/dpid_complete_forloop/test_test/*.npz"
 
 
 def line_score(path, threshold=5):

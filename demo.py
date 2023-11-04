@@ -110,13 +110,14 @@ def main():
                     {
                         "junc": torch.zeros(2, 2).to(device),
                         "jtyp": torch.zeros(2, dtype=torch.uint8).to(device),
-                        "Lpos": torch.zeros(2, 2, dtype=torch.uint8).to(device),
+                        "Lpos": torch.zeros(4, 4, dtype=torch.uint8).to(device),
                         "Lneg": torch.zeros(2, 2, dtype=torch.uint8).to(device),
                     }
                 ],
                 "target": {
-                    "jmap": torch.zeros([1, 2, 256, 256]).to(device),
+                    "jmap": torch.zeros([1, 34, 256, 256]).to(device),
                     "joff": torch.zeros([1, 2, 2, 256, 256]).to(device),
+                    "lmap": torch.zeros([1, 3, 256, 256]).to(device),
                 },
                 "mode": "testing",
             }
@@ -126,13 +127,13 @@ def main():
         # plt.imshow(line_result)
         # plt.show()
 
-        rjuncs = H["juncs"].cpu().numpy() / 256 * im.shape[:2]
+        rjuncs = H["juncs"][0].cpu().numpy() / 256 * im.shape[:2]
         rjunts = None
         if "junts" in H:
             rjunts = H["junts"].cpu().numpy() / 256 * im.shape[:2]
 
         juncs = rjuncs
-        junts = rjunts
+        jtyp = H["jtype"][0].cpu().numpy()
 
         # print("juncs", juncs.shape, juncs)
         # print("junts", junts.shape, junts)
@@ -156,19 +157,31 @@ def main():
             plt.subplots_adjust(top=1, bottom=0, right=1, left=0, hspace=0, wspace=0)
             plt.margins(0, 0)
             for (a, b), s in zip(nlines, nscores):
-                if s < t:
+                line_type = np.argmax(s)
+                if np.max(s) < t:
                     continue
-                plt.plot([a[1], b[1]], [a[0], b[0]], c=c(s), linewidth=2, zorder=s)
-                plt.scatter(a[1], a[0], **PLTOPTS)
-                plt.scatter(b[1], b[0], **PLTOPTS)
+                elif line_type == 1:
+                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=3, linestyle='--')
+                elif line_type == 2:
+                    plt.plot([a[1], b[1]], [a[0], b[0]], c=c(np.max(s)), linewidth=3)
+                elif line_type == 3:
+                    plt.plot([a[1], b[1]], [a[0], b[0]], c="blue", linewidth=3)
+                # plt.scatter(a[1], a[0], **PLTOPTS)
+                # plt.scatter(b[1], b[0], **PLTOPTS)
 
-            if juncs is not None and juncs.size > 0 and not np.all(juncs[0, 0] == 0):
-                for j in juncs[0]:  # Access the second dimension of junts to iterate over points
-                    plt.scatter(j[1], j[0], c="red", s=10, zorder=100)
+            if not (juncs[0] == 0).all():
+                for i, j in enumerate(juncs):
+                    if i > 0 and (i == juncs[0]).all():
+                        break
+                    if jtyp[i] == 0:
+                        plt.scatter(j[1], j[0], c="red", s=25, zorder=100)
+                    elif jtyp[i] == 1:
+                        plt.scatter(j[1], j[0], c="yellow", s=25, zorder=100)
+                    else:
+                        # add plot with number from jtype
+                        plt.scatter(j[1], j[0], c="blue", s=25, zorder=100)
+                        plt.text(j[1] + 10, j[0], str(jtyp[i]), color="black", fontsize=4, zorder=200)
 
-            if junts is not None and junts.size > 0 and not np.all(junts[0, 0] == 0):
-                for j in junts[0]:  # Access the second dimension of junts to iterate over points
-                    plt.scatter(j[1], j[0], c="blue", s=10, zorder=100)
 
             plt.gca().xaxis.set_major_locator(plt.NullLocator())
             plt.gca().yaxis.set_major_locator(plt.NullLocator())
