@@ -1,6 +1,6 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete/other_drive/line_cross_entropy/
-  datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
+  datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2/
   resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/other_drive/line_cross_entropy/
   num_workers: 2
   tensorboard_port: 0
