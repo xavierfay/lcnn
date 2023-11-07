@@ -141,8 +141,8 @@ class HourglassNet(nn.Module):
 
         # Add an adaptor to match the channel dimensions if necessary
         self.channel_adaptor = nn.Sequential(
-            nn.Conv2d(2048, 256, kernel_size=1, stride=1, bias=False),
-            nn.BatchNorm2d(256),
+            nn.Conv2d(2048, 512, kernel_size=1, stride=1, bias=False), # Change this to match the expected size
+            nn.BatchNorm2d(512),
             nn.ReLU(inplace=True)
         )
 
