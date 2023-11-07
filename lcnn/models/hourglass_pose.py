@@ -123,13 +123,6 @@ class HourglassNet(nn.Module):
         self.num_feats = 128
         self.num_stacks = num_stacks
         block = Bottleneck
-        self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3)
-        self.bn1 = nn.BatchNorm2d(self.inplanes)
-        self.relu = nn.ReLU(inplace=True)
-        self.layer1 = self._make_residual(block, self.inplanes, 1)
-        self.layer2 = self._make_residual(block, self.inplanes, 1)
-        self.layer3 = self._make_residual(block, self.num_feats, 1)
-        self.maxpool = nn.MaxPool2d(2, stride=2)
 
 
         # Use ResNet as the backbone
@@ -145,19 +138,15 @@ class HourglassNet(nn.Module):
             res.append(self._make_residual(block, self.num_feats, num_blocks))
             fc.append(self._make_fc(ch, ch))
             score.append(head(ch, num_classes))
-            # vpts.append(VptsHead(ch))
-            # vpts.append(nn.Linear(ch, 9))
-            # score.append(nn.Conv2d(ch, num_classes, kernel_size=1))
-            # score[i].bias.data[0] += 4.6
-            # score[i].bias.data[2] += 4.6
+
             if i < num_stacks - 1:
                 fc_.append(nn.Conv2d(ch, ch, kernel_size=1))
                 score_.append(nn.Conv2d(num_classes, ch, kernel_size=1))
+
         self.hg = nn.ModuleList(hg)
         self.res = nn.ModuleList(res)
         self.fc = nn.ModuleList(fc)
         self.score = nn.ModuleList(score)
-        # self.vpts = nn.ModuleList(vpts)
         self.fc_ = nn.ModuleList(fc_)
         self.score_ = nn.ModuleList(score_)
 
@@ -192,10 +181,17 @@ class HourglassNet(nn.Module):
         x = x.repeat(1, 3, 1, 1)
         x = self.resnet_backbone(x)
 
-        if i < self.num_stacks - 1:
-            fc_ = self.fc_[i](y)
-            score_ = self.score_[i](score)
-            x = x + fc_ + score_
+        for i in range(self.num_stacks):
+            y = self.hg[i](x)
+            y = self.res[i](y)
+            y = self.fc[i](y)
+            score = self.score[i](y)
+            out.append(score)
+
+            if i < self.num_stacks - 1:
+                fc_ = self.fc_[i](y)
+                score_ = self.score_[i](score)
+                x = x + fc_ + score_
         # x = self.conv1(x)
         # x = self.bn1(x)
         # x = self.relu(x)
