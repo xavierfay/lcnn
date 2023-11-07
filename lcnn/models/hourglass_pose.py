@@ -109,6 +109,7 @@ class HourglassNet(nn.Module):
         self.inplanes = 64
         self.num_feats = 128
         self.num_stacks = num_stacks
+        block = Bottleneck
 
         # Use ResNet as the backbone
         pretrained_resnet = models.resnet50(pretrained=True)  # or resnet18, resnet34, resnet101, etc.
