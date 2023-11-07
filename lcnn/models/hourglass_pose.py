@@ -106,6 +106,10 @@ class HourglassNet(nn.Module):
     def __init__(self, head, depth, num_stacks, num_blocks, num_classes):
         super(HourglassNet, self).__init__()
 
+        self.inplanes = 64
+        self.num_feats = 128
+        self.num_stacks = num_stacks
+
         # Use ResNet as the backbone
         pretrained_resnet = models.resnet50(pretrained=True)  # or resnet18, resnet34, resnet101, etc.
         self.resnet_backbone = nn.Sequential(*list(pretrained_resnet.children())[:-2])
