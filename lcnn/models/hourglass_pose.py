@@ -14,16 +14,16 @@ pretrained_resnet = models.resnet50(pretrained=True)
 
 # Adjust the first convolutional layer
 # Original first conv layer: in_channels=3, out_channels=64, kernel_size=7, stride=2, padding=3, bias=False
-pretrained_resnet.conv1 = nn.Conv2d(in_channels=1,
-                                    out_channels=pretrained_resnet.conv1.out_channels,
-                                    kernel_size=pretrained_resnet.conv1.kernel_size,
-                                    stride=pretrained_resnet.conv1.stride,
-                                    padding=pretrained_resnet.conv1.padding,
-                                    bias=pretrained_resnet.conv1.bias)
-
-# Now the first layer will accept 1-channel inputs
-# Remember to remove the fully connected and pooling layers if they are not needed
-pretrained_resnet = nn.Sequential(*list(pretrained_resnet.children())[:-2])
+# pretrained_resnet.conv1 = nn.Conv2d(in_channels=1,
+#                                     out_channels=pretrained_resnet.conv1.out_channels,
+#                                     kernel_size=pretrained_resnet.conv1.kernel_size,
+#                                     stride=pretrained_resnet.conv1.stride,
+#                                     padding=pretrained_resnet.conv1.padding,
+#                                     bias=pretrained_resnet.conv1.bias)
+#
+# # Now the first layer will accept 1-channel inputs
+# # Remember to remove the fully connected and pooling layers if they are not needed
+# pretrained_resnet = nn.Sequential(*list(pretrained_resnet.children())[:-2])
 
 # Remove the average pooling and fully connected layer
 modules = list(pretrained_resnet.children())[:-2]
@@ -182,6 +182,7 @@ class HourglassNet(nn.Module):
     def forward(self, x):
         out = []
         # out_vps = []
+        x = x.repeat(1, 3, 1, 1)
         x = self.resnet_backbone(x)
         x = self.conv1(x)
         x = self.bn1(x)
