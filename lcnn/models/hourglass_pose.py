@@ -195,7 +195,7 @@ class HourglassNet(nn.Module):
     def forward(self, x):
         out = []
         # out_vps = []
-        x = x.repeat(1, 3, 1, 1)
+        #x = x.repeat(1, 3, 1, 1)
         x = self.resnet_backbone(x)
         x = self.channel_adaptor(x)
 
