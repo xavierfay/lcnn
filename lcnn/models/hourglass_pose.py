@@ -110,11 +110,6 @@ class HourglassNet(nn.Module):
         pretrained_resnet = models.resnet50(pretrained=True)  # or resnet18, resnet34, resnet101, etc.
         self.resnet_backbone = nn.Sequential(*list(pretrained_resnet.children())[:-2])
 
-        self.resnet = ResNet(Bottleneck, resnet_layers)
-
-        # Remove the fully connected layer and the average pooling from ResNet
-        self.resnet = nn.Sequential(*list(self.resnet.children())[:-2])
-
         # build hourglass modules
         ch = self.num_feats *  Bottleneck.expansion
         # vpts = []
