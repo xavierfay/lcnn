@@ -30,7 +30,7 @@ model:
   # backbone parameters
   backbone: stacked_hourglass
   depth: 5
-  num_stacks: 4
+  num_stacks: 3
   num_blocks: 2
 
   # sampler parameters
