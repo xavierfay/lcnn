@@ -191,29 +191,34 @@ class HourglassNet(nn.Module):
         # out_vps = []
         x = x.repeat(1, 3, 1, 1)
         x = self.resnet_backbone(x)
-        x = self.conv1(x)
-        x = self.bn1(x)
-        x = self.relu(x)
 
-        x = self.layer1(x)
-        x = self.maxpool(x)
-        x = self.layer2(x)
-        x = self.layer3(x)
+        if i < self.num_stacks - 1:
+            fc_ = self.fc_[i](y)
+            score_ = self.score_[i](score)
+            x = x + fc_ + score_
+        # x = self.conv1(x)
+        # x = self.bn1(x)
+        # x = self.relu(x)
+        #
+        # x = self.layer1(x)
+        # x = self.maxpool(x)
+        # x = self.layer2(x)
+        # x = self.layer3(x)
 
-        for i in range(self.num_stacks):
-            y = self.hg[i](x)
-            y = self.res[i](y)
-            y = self.fc[i](y)
-            score = self.score[i](y)
-            # pre_vpts = F.adaptive_avg_pool2d(x, (1, 1))
-            # pre_vpts = pre_vpts.reshape(-1, 256)
-            # vpts = self.vpts[i](x)
-            out.append(score)
-            # out_vps.append(vpts)
-            if i < self.num_stacks - 1:
-                fc_ = self.fc_[i](y)
-                score_ = self.score_[i](score)
-                x = x + fc_ + score_
+        # for i in range(self.num_stacks):
+        #     y = self.hg[i](x)
+        #     y = self.res[i](y)
+        #     y = self.fc[i](y)
+        #     score = self.score[i](y)
+        #     # pre_vpts = F.adaptive_avg_pool2d(x, (1, 1))
+        #     # pre_vpts = pre_vpts.reshape(-1, 256)
+        #     # vpts = self.vpts[i](x)
+        #     out.append(score)
+        #     # out_vps.append(vpts)
+        #     if i < self.num_stacks - 1:
+        #         fc_ = self.fc_[i](y)
+        #         score_ = self.score_[i](score)
+        #         x = x + fc_ + score_
 
         return out[::-1], y  # , out_vps[::-1]
 
