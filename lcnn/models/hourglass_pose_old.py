@@ -7,14 +7,6 @@ Use lr=0.01 for current version
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torchvision.models.resnet import ResNet, Bottleneck
-import torchvision.models as models
-
-pretrained_resnet = models.resnet50(pretrained=True)  # For ResNet-50
-
-# Remove the average pooling and fully connected layer
-modules = list(pretrained_resnet.children())[:-2]
-resnet_backbone = nn.Sequential(*modules)
 
 __all__ = ["HourglassNet", "hg"]
 
@@ -103,20 +95,22 @@ class Hourglass(nn.Module):
 class HourglassNet(nn.Module):
     """Hourglass model from Newell et al ECCV 2016"""
 
-    def __init__(self, resnet_layers, head, depth, num_stacks, num_blocks, num_classes):
+    def __init__(self, block, head, depth, num_stacks, num_blocks, num_classes):
         super(HourglassNet, self).__init__()
 
-        # Use ResNet as the backbone
-        pretrained_resnet = models.resnet50(pretrained=True)  # or resnet18, resnet34, resnet101, etc.
-        self.resnet_backbone = nn.Sequential(*list(pretrained_resnet.children())[:-2])
-
-        self.resnet = ResNet(Bottleneck, resnet_layers)
-
-        # Remove the fully connected layer and the average pooling from ResNet
-        self.resnet = nn.Sequential(*list(self.resnet.children())[:-2])
+        self.inplanes = 64
+        self.num_feats = 128
+        self.num_stacks = num_stacks
+        self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3)
+        self.bn1 = nn.BatchNorm2d(self.inplanes)
+        self.relu = nn.ReLU(inplace=True)
+        self.layer1 = self._make_residual(block, self.inplanes, 1)
+        self.layer2 = self._make_residual(block, self.inplanes, 1)
+        self.layer3 = self._make_residual(block, self.num_feats, 1)
+        self.maxpool = nn.MaxPool2d(2, stride=2)
 
         # build hourglass modules
-        ch = self.num_feats *  Bottleneck.expansion
+        ch = self.num_feats * block.expansion
         # vpts = []
         hg, res, fc, score, fc_, score_ = [], [], [], [], [], []
         for i in range(num_stacks):
@@ -168,7 +162,6 @@ class HourglassNet(nn.Module):
     def forward(self, x):
         out = []
         # out_vps = []
-        x = self.resnet_backbone(x)
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -197,8 +190,8 @@ class HourglassNet(nn.Module):
 
 
 def hg(**kwargs):
-    resnet_layers = [3, 4, 6, 3]
     model = HourglassNet(
+        Bottleneck2D,
         head=kwargs.get("head", lambda c_in, c_out: nn.Conv2d(c_in, c_out, 1)),
         depth=kwargs["depth"],
         num_stacks=kwargs["num_stacks"],
