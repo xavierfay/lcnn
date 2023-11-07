@@ -122,7 +122,7 @@ class HourglassNet(nn.Module):
         self.inplanes = 64
         self.num_feats = 128
         self.num_stacks = num_stacks
-        block = Bottleneck
+        block = Bottleneck2D
         self.conv1 = nn.Conv2d(1, self.inplanes, kernel_size=7, stride=2, padding=3)
         self.bn1 = nn.BatchNorm2d(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -131,19 +131,8 @@ class HourglassNet(nn.Module):
         self.layer3 = self._make_residual(block, self.num_feats, 1)
         self.maxpool = nn.MaxPool2d(2, stride=2)
 
-        # Load a pre-trained ResNet and remove the average pooling and fully connected layer
-        self.resnet_backbone = models.resnet50(pretrained=True)
-        self.resnet_backbone = nn.Sequential(*list(self.resnet_backbone.children())[:-2])
-
-        # Replace the first convolutional layer to accept 1-channel input if necessary
-        self.resnet_backbone[0] = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-
-        # Add an adaptor to match the channel dimensions if necessary
-        self.channel_adaptor = nn.Sequential(
-            nn.Conv2d(2048, 256, kernel_size=1, stride=1, bias=False), # Change this to match the expected size
-            nn.BatchNorm2d(256),
-            nn.ReLU(inplace=True)
-        )
+        # Initialize ResNet layers without pretrained weights
+        self.resnet_layers = self._init_resnet_layers(block)
 
         # build hourglass modules
         #ch = self.num_feats *  Bottleneck.expansion
@@ -165,6 +154,22 @@ class HourglassNet(nn.Module):
         self.fc_ = nn.ModuleList(fc_)
         self.score_ = nn.ModuleList(score_)
 
+    def _init_resnet_layers(self, block):
+        # Define the layers of ResNet here
+        # You can use the original ResNet definition as a guide
+        # Make sure to adjust the layers to not use pretrained weights
+        layers = []
+
+        # Add the initial convolution, BN, and ReLU
+        layers.append(nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False))
+        layers.append(nn.BatchNorm2d(64))
+        layers.append(nn.ReLU(inplace=True))
+
+        # Add the remaining layers according to the ResNet architecture
+        # Omit the fully connected and pooling layers at the end
+        # layers += [ ... ]
+
+        return nn.Sequential(*layers)
     def _make_residual(self, block, planes, blocks, stride=1):
         downsample = None
         if stride != 1 or self.inplanes != planes * block.expansion:
@@ -192,10 +197,12 @@ class HourglassNet(nn.Module):
 
     def forward(self, x):
         out = []
-        # out_vps = []
-        #x = x.repeat(1, 3, 1, 1)
-        x = self.resnet_backbone(x)
-        x = self.channel_adaptor(x)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+
+        # Pass through ResNet layers
+        x = self.resnet_layers(x)
 
         for i in range(self.num_stacks):
             y = self.hg[i](x)
