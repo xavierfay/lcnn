@@ -109,6 +109,7 @@ class HourglassNet(nn.Module):
         self.inplanes = 64
         self.num_feats = 128
         self.num_stacks = num_stacks
+        self.relu = nn.ReLU(inplace=True)
         block = Bottleneck
 
         # Use ResNet as the backbone
