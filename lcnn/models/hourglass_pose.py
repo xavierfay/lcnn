@@ -116,7 +116,7 @@ class Hourglass(nn.Module):
 class HourglassNet(nn.Module):
     """Hourglass model from Newell et al ECCV 2016"""
 
-    def __init__(self, head, depth, num_stacks, num_blocks, num_classes):
+    def __init__(self, block, head, depth, num_stacks, num_blocks, num_classes):
         super(HourglassNet, self).__init__()
 
         self.inplanes = 64
@@ -236,9 +236,10 @@ class HourglassNet(nn.Module):
 
 
 def hg(**kwargs):
+    head = kwargs.pop('head', lambda c_in, c_out: nn.Conv2d(c_in, c_out, 1))
     model = HourglassNet(
-        Bottleneck2D,
-        head=kwargs.get("head", lambda c_in, c_out: nn.Conv2d(c_in, c_out, 1)),
+        block=Bottleneck2D,
+        head=head,
         depth=kwargs["depth"],
         num_stacks=kwargs["num_stacks"],
         num_blocks=kwargs["num_blocks"],
