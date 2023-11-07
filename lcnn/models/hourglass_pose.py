@@ -131,10 +131,20 @@ class HourglassNet(nn.Module):
         self.layer3 = self._make_residual(block, self.num_feats, 1)
         self.maxpool = nn.MaxPool2d(2, stride=2)
 
+        self.resnet_backbone = models.resnet50(pretrained=True)
 
-        # Use ResNet as the backbone
-        pretrained_resnet = models.resnet50(pretrained=True)  # or resnet18, resnet34, resnet101, etc.
-        self.resnet_backbone = nn.Sequential(*list(pretrained_resnet.children())[:-2])
+        # Adjust the first convolutional layer to accept 1-channel input if necessary
+        self.resnet_backbone.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+
+        # Remove the average pooling and fully connected layer from the ResNet
+        self.resnet_backbone = nn.Sequential(*list(self.resnet_backbone.children())[:-2])
+
+        # Add an adaptor to match the channel dimensions if necessary
+        self.channel_adaptor = nn.Sequential(
+            nn.Conv2d(2048, 256, kernel_size=1, stride=1, bias=False),
+            nn.BatchNorm2d(256),
+            nn.ReLU(inplace=True)
+        )
 
         # build hourglass modules
         ch = self.num_feats *  Bottleneck.expansion
@@ -187,6 +197,7 @@ class HourglassNet(nn.Module):
         # out_vps = []
         x = x.repeat(1, 3, 1, 1)
         x = self.resnet_backbone(x)
+        x = self.channel_adaptor(x)
 
         for i in range(self.num_stacks):
             y = self.hg[i](x)
