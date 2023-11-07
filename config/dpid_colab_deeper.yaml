@@ -29,7 +29,7 @@ model:
 
   # backbone parameters
   backbone: stacked_hourglass
-  depth: 8
+  depth: 6
   num_stacks: 4
   num_blocks: 2
 
