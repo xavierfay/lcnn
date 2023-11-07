@@ -103,7 +103,7 @@ class Hourglass(nn.Module):
 class HourglassNet(nn.Module):
     """Hourglass model from Newell et al ECCV 2016"""
 
-    def __init__(self, resnet_layers, head, depth, num_stacks, num_blocks, num_classes):
+    def __init__(self, head, depth, num_stacks, num_blocks, num_classes):
         super(HourglassNet, self).__init__()
 
         # Use ResNet as the backbone
