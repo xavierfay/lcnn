@@ -131,35 +131,33 @@ class HourglassNet(nn.Module):
         self.layer3 = self._make_residual(block, self.num_feats, 1)
         self.maxpool = nn.MaxPool2d(2, stride=2)
 
+        # Load a pre-trained ResNet and remove the average pooling and fully connected layer
         self.resnet_backbone = models.resnet50(pretrained=True)
-
-        # Adjust the first convolutional layer to accept 1-channel input if necessary
-        self.resnet_backbone.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
-
-        # Remove the average pooling and fully connected layer from the ResNet
         self.resnet_backbone = nn.Sequential(*list(self.resnet_backbone.children())[:-2])
+
+        # Replace the first convolutional layer to accept 1-channel input if necessary
+        self.resnet_backbone.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         # Add an adaptor to match the channel dimensions if necessary
         self.channel_adaptor = nn.Sequential(
-            nn.Conv2d(2048, 512, kernel_size=1, stride=1, bias=False), # Change this to match the expected size
-            nn.BatchNorm2d(512),
+            nn.Conv2d(2048, 256, kernel_size=1, stride=1, bias=False), # Change this to match the expected size
+            nn.BatchNorm2d(256),
             nn.ReLU(inplace=True)
         )
 
         # build hourglass modules
-        ch = self.num_feats *  Bottleneck.expansion
+        #ch = self.num_feats *  Bottleneck.expansion
+        ch = 256
         # vpts = []
         hg, res, fc, score, fc_, score_ = [], [], [], [], [], []
         for i in range(num_stacks):
-            hg.append(Hourglass(block, num_blocks, self.num_feats, depth))
-            res.append(self._make_residual(block, self.num_feats, num_blocks))
+            hg.append(Hourglass(block, num_blocks, ch//block.expansion, depth))
+            res.append(self._make_residual(block, ch//block.expansion, num_blocks))
             fc.append(self._make_fc(ch, ch))
             score.append(head(ch, num_classes))
-
             if i < num_stacks - 1:
                 fc_.append(nn.Conv2d(ch, ch, kernel_size=1))
                 score_.append(nn.Conv2d(num_classes, ch, kernel_size=1))
-
         self.hg = nn.ModuleList(hg)
         self.res = nn.ModuleList(res)
         self.fc = nn.ModuleList(fc)
@@ -238,8 +236,8 @@ class HourglassNet(nn.Module):
 
 
 def hg(**kwargs):
-    resnet_layers = [3, 4, 6, 3]
     model = HourglassNet(
+        Bottleneck2D,
         head=kwargs.get("head", lambda c_in, c_out: nn.Conv2d(c_in, c_out, 1)),
         depth=kwargs["depth"],
         num_stacks=kwargs["num_stacks"],
