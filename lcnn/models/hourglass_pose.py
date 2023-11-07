@@ -136,7 +136,7 @@ class HourglassNet(nn.Module):
         self.resnet_backbone = nn.Sequential(*list(self.resnet_backbone.children())[:-2])
 
         # Replace the first convolutional layer to accept 1-channel input if necessary
-        self.resnet_backbone.conv1 = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.resnet_backbone[0] = nn.Conv2d(1, 64, kernel_size=7, stride=2, padding=3, bias=False)
 
         # Add an adaptor to match the channel dimensions if necessary
         self.channel_adaptor = nn.Sequential(
