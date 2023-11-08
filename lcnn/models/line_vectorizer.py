@@ -164,105 +164,101 @@ class LineVectorizer(nn.Module):
 
 
         if input_dict["mode"] != "testing":
-            def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
-                # Ensure the logits are float, Convert labels to long
-                x = x.float()
-                y = y.long()
+            if M.CE_lines and not M.focal_lines:
+                def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
+                    # Ensure the logits are float, Convert labels to long
+                    x = x.float()
+                    y = y.long()
 
-                # Calculate the log softmax along the second dimension
-                log_softmax = F.log_softmax(x, dim=-1)
+                    # Calculate the log softmax along the second dimension
+                    log_softmax = F.log_softmax(x, dim=-1)
 
-                # Initialize an empty tensor to store the per-class losses
-                loss_per_class = torch.zeros(num_classes).float().to(
-                    x.device)  # ensure the tensor is on the same device as x
+                    # Initialize an empty tensor to store the per-class losses
+                    loss_per_class = torch.zeros(num_classes).float().to(
+                        x.device)  # ensure the tensor is on the same device as x
 
-                # Loop over each class and calculate the loss
-                for c in range(num_classes):
-                    # Create a mask that selects only the samples of class c
-                    mask = (y == c).float()
-                    loss_c = -log_softmax[:, c] * mask
-                    loss_per_class[c] = loss_c.sum() * class_weights[c]
+                    # Loop over each class and calculate the loss
+                    for c in range(num_classes):
+                        # Create a mask that selects only the samples of class c
+                        mask = (y == c).float()
+                        loss_c = -log_softmax[:, c] * mask
+                        loss_per_class[c] = loss_c.sum() * class_weights[c]
 
-                # Normalize by the total number of samples in the batch
-                misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=0) == 1).float()
-                misclass_loss = misclass_mask.sum() * misclass_penalty
+                    # Normalize by the total number of samples in the batch
+                    misclass_mask = (y == 0).float() * (torch.argmax(loss_per_class, dim=0) == 1).float()
+                    misclass_loss = misclass_mask.sum() * misclass_penalty
 
-                loss_per_class[0] += misclass_loss
+                    loss_per_class[0] += misclass_loss
 
-                loss_per_class /= x.shape[0]
-                return loss_per_class
+                    loss_per_class /= x.shape[0]
+                    return loss_per_class
 
-            class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
+                class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
 
-            y = torch.argmax(y, dim=1)
+                y = torch.argmax(y, dim=1)
 
-        if input_dict["mode"] != "training":
-            count = torch.bincount(y)
-            unique_values = torch.unique(y)
-            print("values of labels",unique_values, count)
+            if input_dict["mode"] != "training":
+                count = torch.bincount(y)
+                unique_values = torch.unique(y)
+                print("values of labels",unique_values, count)
 
-            x_class = torch.argmax(x, dim=1)
-            count = torch.bincount(x_class)
-            unique_values = torch.unique(x_class)
-            print("values of pred", unique_values, count)
+                x_class = torch.argmax(x, dim=1)
+                count = torch.bincount(x_class)
+                unique_values = torch.unique(x_class)
+                print("values of pred", unique_values, count)
 
-        loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
+            loss_per_class = cross_entropy_loss_per_class(x, y, class_weights)
 
-        lneg = loss_per_class[0]
-        lpos0 = loss_per_class[1]
-        lpos1 = loss_per_class[2]
-        lpos2 = loss_per_class[3]
+            lneg = loss_per_class[0]
+            lpos0 = loss_per_class[1]
+            lpos1 = loss_per_class[2]
+            lpos2 = loss_per_class[3]
+
+        if M.focal_lines and not M.CE_lines:
+            def focal_loss(logits, targets, alpha, gamma=2.0):
+                CE_loss = F.cross_entropy(logits, targets, reduction='none')
+                pt = torch.exp(-CE_loss)
+                F_loss = alpha * (1 - pt) ** gamma * CE_loss
+                return F_loss
+
+            if input_dict["mode"] != "testing":
+
+                def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
+                    # Ensure the logits are float, Convert labels to long
+                    x = x.float()
+                    y = y.long()
+
+                    # Initialize an empty tensor to store the per-class losses
+                    loss_per_class = torch.zeros(num_classes).float().to(
+                        x.device)  # ensure the tensor is on the same device as x
+
+                    # Calculate the Focal Loss for each class
+                    for c in range(num_classes):
+                        mask = (y == c).float()
+                        alpha_c = class_weights[c]
+                        loss_c = focal_loss(x, y, alpha_c, gamma)
+                        loss_per_class[c] = (loss_c * mask).sum()
+
+                    # Normalize by the total number of samples in the batch
+                    loss_per_class /= x.shape[0]
+                    return loss_per_class
+
+                class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
+
+                y = torch.argmax(y, dim=1)
+
+                loss_per_class = focal_loss_per_class(x, y, class_weights)
+
+                lneg = loss_per_class[0]
+                lpos0 = loss_per_class[1]
+                lpos1 = loss_per_class[2]
+                lpos2 = loss_per_class[3]
 
         result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
         result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
         result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
         result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
         result["losses"][0]["jtype"] = sum(losses) * M.loss_weight["jtype"]
-
-        # def focal_loss(logits, targets, alpha, gamma=2.0):
-        #     CE_loss = F.cross_entropy(logits, targets, reduction='none')
-        #     pt = torch.exp(-CE_loss)
-        #     F_loss = alpha * (1 - pt) ** gamma * CE_loss
-        #     return F_loss
-        #
-        # if input_dict["mode"] != "testing":
-        #
-        #     def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
-        #         # Ensure the logits are float, Convert labels to long
-        #         x = x.float()
-        #         y = y.long()
-        #
-        #         # Initialize an empty tensor to store the per-class losses
-        #         loss_per_class = torch.zeros(num_classes).float().to(
-        #             x.device)  # ensure the tensor is on the same device as x
-        #
-        #         # Calculate the Focal Loss for each class
-        #         for c in range(num_classes):
-        #             mask = (y == c).float()
-        #             alpha_c = class_weights[c]
-        #             loss_c = focal_loss(x, y, alpha_c, gamma)
-        #             loss_per_class[c] = (loss_c * mask).sum()
-        #
-        #         # Normalize by the total number of samples in the batch
-        #         loss_per_class /= x.shape[0]
-        #         return loss_per_class
-        #
-        #     class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
-        #
-        #     y = torch.argmax(y, dim=1)
-        #
-        #     loss_per_class = focal_loss_per_class(x, y, class_weights)
-        #
-        #     lneg = loss_per_class[0]
-        #     lpos0 = loss_per_class[1]
-        #     lpos1 = loss_per_class[2]
-        #     lpos2 = loss_per_class[3]
-        #
-        #     result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
-        #     result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
-        #     result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
-        #     result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
-        #     result["losses"][0]["jtype"] = sum(losses) * M.loss_weight["jtype"]
 
         return result
 
@@ -371,118 +367,7 @@ class LineVectorizer(nn.Module):
 
             return line, label, jcs, jtype_tensor, total_loss, jscore
 
-    # def matching_algorithm(self, xy, jmap, score):
-    #     n_type, K, _ = xy.shape
-    #     xy_int = xy.long()
-    #
-    #     # Explicitly associate the first two layers of xy with the first two layers of jmap
-    #     jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
-    #
-    #     # For the third layer of xy, find the closest non-zero location in jmap[2:]
-    #     twod_jmap = torch.argmax(jmap[2:], dim=0)
-    #     closest_coords = self.find_closest_non_zero_2d(xy, twod_jmap)
-    #
-    #     # Convert these coordinates to their associated layer in jmap[2:]
-    #     jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
-    #
-    #     # Combine the associated layers
-    #     jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
-    #
-    #     # Filter xy and jtype based on the score threshold
-    #     valid_indices = score > 0.000001
-    #     jcs = xy[valid_indices]
-    #     filtered_jtype = jtype[valid_indices]
-    #
-    #     return jcs, filtered_jtype
 
-    def matching_algorithm(self, xy, jmap, joff, score, index):
-        n_type, K, _ = xy.shape
-        xy_int = xy.long()
-
-        # Ensure joff has the same shape as xy
-        if joff.shape != xy.shape:
-            joff = joff[:, :K, :2]
-
-        # Reverse the offset to get back to the original coordinates
-        xy_original = self.reverse_xy_computation(xy, joff, index)
-
-        # Explicitly associate the first two layers of xy with the first two layers of jmap
-        jtype_0_1 = torch.arange(2, device=jmap.device).view(2, 1).expand(2, K)
-
-        # For the third layer of xy, find the closest non-zero location in jmap[2:]
-        twod_jmap = torch.argmax(jmap[2:], dim=0)
-        closest_coords = self.find_closest_non_zero_2d(xy_original, twod_jmap)
-
-        # Convert these coordinates to their associated layer in jmap[2:]
-        jtype_2 = torch.stack([jmap[2:, y, x].argmax() for x, y in closest_coords]) + 2
-
-        # Combine the associated layers
-        jtype = torch.cat([jtype_0_1, jtype_2.unsqueeze(0)], dim=0)
-
-        # Filter xy and jtype based on the score threshold
-        valid_indices = score > 0.000001
-        jcs = xy[valid_indices]
-        filtered_jtype = jtype[valid_indices]
-
-        return jcs, filtered_jtype
-
-    def reverse_xy_computation(self, xy_with_offset, joff, index):
-        # Extract y and x from the modified xy_with_offset tensor
-        y_modified = xy_with_offset[:, :, 0]
-        x_modified = xy_with_offset[:, :, 1]
-
-        # Subtract the offsets to get the original values
-        y_original = y_modified - torch.gather(joff[:, 0], 1, index)
-        x_original = x_modified - torch.gather(joff[:, 1], 1, index)
-
-        # Now, remove the 0.5 addition
-        y_original = y_original - 0.5
-        x_original = x_original - 0.5
-
-        # Combine y_original and x_original to get the original xy tensor
-        xy_original = torch.cat([y_original[..., None], x_original[..., None]], dim=-1)
-
-        return xy_original
-
-    def find_closest_non_zero_2d(self, xy, jmap):
-        # Define a local neighborhood
-        neighborhood = torch.tensor([-1, 0, 1], device=jmap.device)
-
-        closest_coords = []
-
-        for i in range(xy.shape[1]):
-            x = xy[2, i, 0].long()
-            y = xy[2, i, 1].long()
-
-            if jmap[y, x] != 0:  # Check if the value at this location is non-zero
-                closest_coords.append((x, y))
-                continue
-
-            found = False
-            radius = 1
-
-            while not found:
-                # Expand the neighborhood based on the radius
-                dx = torch.arange(-radius, radius + 1, device=jmap.device)
-                dy = torch.arange(-radius, radius + 1, device=jmap.device)
-
-                local_x = torch.clamp(x + dx.unsqueeze(0), 0, jmap.shape[1] - 1)
-                local_y = torch.clamp(y + dy.unsqueeze(1), 0, jmap.shape[0] - 1)
-
-                local_intensities = jmap[local_y, local_x]
-
-                if local_intensities.any():
-                    # If any value in the local_intensities is non-zero,
-                    # we have found the closest non-zero location
-                    non_zero_indices = torch.nonzero(local_intensities)
-                    closest_y, closest_x = non_zero_indices[0][0], non_zero_indices[0][1]
-                    closest_coords.append((closest_x, closest_y))
-                    found = True
-                else:
-                    # If not found, expand the radius for the next iteration
-                    radius += 1
-
-        return closest_coords
 
     def sample_training_labels(self, scalar_labels, Lneg, up, vp, device):
         c = torch.zeros_like(scalar_labels, dtype=torch.bool)

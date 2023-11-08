@@ -1,7 +1,7 @@
 io:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete/
   datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
-  resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231107-173914-d862fe9-baseline
+  resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231107-173914-d862fe9-baseline
   num_workers: 2
   tensorboard_port: 0
   validation_interval: 24000
@@ -30,7 +30,7 @@ model:
   # backbone parameters
   backbone: stacked_hourglass
   depth: 4
-  num_stacks: 2
+  num_stacks: 3
   num_blocks: 2
 
   # sampler parameters
@@ -42,11 +42,11 @@ model:
 
   ## dynamic sampler
   n_dyn_junc: 400
-  n_dyn_posl0: 2000
-  n_dyn_posl1: 2000
-  n_dyn_posl2: 2000
-  n_dyn_negl: 2000
-  n_dyn_othr: 2000
+  n_dyn_posl0: 400
+  n_dyn_posl1: 400
+  n_dyn_posl2: 400
+  n_dyn_negl: 400
+  n_dyn_othr: 400
 
   # LOIPool layer parameters
   n_pts0: 32
@@ -57,26 +57,31 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 600
-  n_out_line: 1000
+  n_out_junc: 350
+  n_out_line: 800
 
   # additional ablation study parameters
   use_cood: 0
   use_slop: 0
   use_conv: 0
-  use_wandb: 0
   use_half: 0
   use_jtyp: 0
 
+  CE_lines: 0
+  focal_lines: 1
+  CE_keypoints: 0
+  focal_keypoints: 1
+
+  # evaluation
+  use_wandb: 1
+
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.01
-
-  penalty: 0
 
 optim:
   name: Adam
   lr: 4.0e-4
   amsgrad: True
-  weight_decay: 0
-  max_epoch: 100
+  weight_decay: 1.0e-4
+  max_epoch: 24
   lr_decay_epoch: 10
