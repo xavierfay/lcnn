@@ -302,16 +302,19 @@ class Trainer(object):
         #     imshow(mask_result, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}b.jpg"), plt.close()
         # #mask_result = plt_heatmaps(mask_result)
         #
+        mask_result = result["jmap"][i].cpu().detach().numpy()
+        mask_result = np.sum(mask_result, axis=0)
+
+        mask_target = target["jmap"][i].cpu().numpy()
+        mask_target = plt_heatmaps(mask_target)
         #
-        # mask_target = target["jmap"][i].cpu().numpy()
-        # #mask_target = plt_heatmaps(mask_target)
         #
-        #
-        # # Displaying the results using the updated imshow function
-        # #imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        # Displaying the results using the updated imshow function
+        imshow(mask_target, cmap="jet"), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
+        imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
         #
         # # imshow(mask_target), plt.savefig(f"{prefix}_mask_a.jpg"), plt.close()
-        # # imshow(mask_result), plt.savefig(f"{prefix}_mask_b.jpg"), plt.close()
+        # #
         #
         # for j, mask_target in enumerate(target["jmap"][i]):
         #     mask_target = mask_target.cpu().detach().numpy()

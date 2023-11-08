@@ -211,38 +211,38 @@ class LineVectorizer(nn.Module):
                 F_loss = alpha * (1 - pt) ** gamma * CE_loss
                 return F_loss
 
-            if input_dict["mode"] != "testing":
 
-                def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
-                    # Ensure the logits are float, Convert labels to long
-                    x = x.float()
-                    y = y.long()
 
-                    # Initialize an empty tensor to store the per-class losses
-                    loss_per_class = torch.zeros(num_classes).float().to(
-                        x.device)  # ensure the tensor is on the same device as x
+            def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
+                # Ensure the logits are float, Convert labels to long
+                x = x.float()
+                y = y.long()
 
-                    # Calculate the Focal Loss for each class
-                    for c in range(num_classes):
-                        mask = (y == c).float()
-                        alpha_c = class_weights[c]
-                        loss_c = focal_loss(x, y, alpha_c, gamma)
-                        loss_per_class[c] = (loss_c * mask).sum()
+                # Initialize an empty tensor to store the per-class losses
+                loss_per_class = torch.zeros(num_classes).float().to(
+                    x.device)  # ensure the tensor is on the same device as x
 
-                    # Normalize by the total number of samples in the batch
-                    loss_per_class /= x.shape[0]
-                    return loss_per_class
+                # Calculate the Focal Loss for each class
+                for c in range(num_classes):
+                    mask = (y == c).float()
+                    alpha_c = class_weights[c]
+                    loss_c = focal_loss(x, y, alpha_c, gamma)
+                    loss_per_class[c] = (loss_c * mask).sum()
 
-                class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
+                # Normalize by the total number of samples in the batch
+                loss_per_class /= x.shape[0]
+                return loss_per_class
 
-                y = torch.argmax(y, dim=1)
+            class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
 
-                loss_per_class = focal_loss_per_class(x, y, class_weights)
+            y = torch.argmax(y, dim=1)
 
-                lneg = loss_per_class[0]
-                lpos0 = loss_per_class[1]
-                lpos1 = loss_per_class[2]
-                lpos2 = loss_per_class[3]
+            loss_per_class = focal_loss_per_class(x, y, class_weights)
+
+            lneg = loss_per_class[0]
+            lpos0 = loss_per_class[1]
+            lpos1 = loss_per_class[2]
+            lpos2 = loss_per_class[3]
 
         result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
         result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
