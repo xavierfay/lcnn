@@ -82,12 +82,12 @@ class MultitaskLearner(nn.Module):
             alpha = compute_alpha(T["jmap"])
             # cross_loss = jmap_cross_entropy(jmap_probs, T["jmap"])
             # print("cross loss", cross_loss)
-            if M.focal_keypoint and not M.CE_keypoint:
+            if M.focal_keypoints and not M.CE_keypoints:
                 L["jmap"] = sum(
                     focal_loss(jmap[i], T["jmap"][i], alpha) for i in range(n_jtyp)
                 )
 
-            if M.CE_keypoint and not M.focal_keypoint:
+            if M.CE_keypoints and not M.focal_keypoints:
                 L["jmap"] = sum(
                     weighted_cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
                 )
