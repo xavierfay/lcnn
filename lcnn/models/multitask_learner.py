@@ -92,6 +92,8 @@ class MultitaskLearner(nn.Module):
                     weighted_cross_entropy_loss(jmap[i], T["jmap"][i]) for i in range(n_jtyp)
                 )
 
+                L["jmap"] = L["jmap"] * 1000 # compensate for lower values compared to focal loss
+
 
             L["lmap"] = sum(
                 cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
