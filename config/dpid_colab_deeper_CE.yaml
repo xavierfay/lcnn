@@ -69,8 +69,8 @@ model:
 
   CE_lines: 1
   focal_lines: 0
-  CE_keypoints: 1
-  focal_keypoints: 0
+  CE_keypoints: 0
+  focal_keypoints: 1
 
   # evaluation
   use_wandb: 1
