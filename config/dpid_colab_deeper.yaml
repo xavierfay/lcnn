@@ -73,7 +73,7 @@ model:
   focal_keypoints: 1
 
   # evaluation
-  use_wandb: 1
+  use_wandb: 0
 
   # junction threashold for evaluation (See #5)
   eval_junc_thres: 0.01
