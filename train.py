@@ -117,6 +117,17 @@ def main():
         checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))
 
     # 2. model
+    ### load vote_index matrix for Hough transform
+    ### defualt settings: (128, 128, 3, 1)
+    if os.path.isfile(C.io.vote_index):
+        print('load vote_index ... ')
+        vote_index = sio.loadmat(C.io.vote_index)['vote_index']
+    else:
+        print('compute vote_index ... ')
+        vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
+        sio.savemat(C.io.vote_index, {'vote_index': vote_index})
+    vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
+    print('vote_index loaded', vote_index.shape)
     if M.backbone == "stacked_hourglass":
         model = lcnn.models.hg(
             depth=M.depth,
@@ -124,6 +135,8 @@ def main():
             num_stacks=M.num_stacks,
             num_blocks=M.num_blocks,
             num_classes=sum(sum(M.head_size, [])),
+            vote_index=vote_index,
+
         )
     else:
         raise NotImplementedError
