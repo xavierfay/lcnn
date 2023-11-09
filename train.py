@@ -1,18 +1,16 @@
+
 #!/usr/bin/env python3
 """Train L-CNN
 Usage:
     train.py [options] <yaml-config>
     train.py (-h | --help )
-
 Arguments:
    <yaml-config>                   Path to the yaml hyper-parameter file
-
 Options:
    -h --help                       Show this screen.
    -d --devices <devices>          Comma seperated GPU devices [default: 0]
    -i --identifier <identifier>    Folder identifier [default: default-identifier]
 """
-
 import datetime
 import glob
 import os
@@ -26,12 +24,11 @@ import signal
 import subprocess
 import sys
 import threading
-
 import numpy as np
 import torch
 import yaml
 from docopt import docopt
-
+import scipy.io as sio
 import lcnn
 from lcnn.config import C, M
 from lcnn.datasets import WireframeDataset, collate
@@ -45,8 +42,6 @@ def git_hash():
     if isinstance(ret, bytes):
         ret = ret.decode()
     return ret
-
-
 def get_outdir(identifier):
     # load config
     name = str(datetime.datetime.now().strftime("%y%m%d-%H%M%S"))
@@ -59,8 +54,6 @@ def get_outdir(identifier):
     C.to_yaml(osp.join(outdir, "config.yaml"))
     os.system(f"git diff HEAD > {outdir}/gitdiff.patch")
     return outdir
-
-
 def main():
     args = docopt(__doc__)
     config_file = args["<yaml-config>"] or "config/wireframe.yaml"
@@ -68,12 +61,10 @@ def main():
     M.update(C.model)
     pprint.pprint(C, indent=4)
     resume_from = C.io.resume_from
-
     # WARNING: L-CNN is still not deterministic
     random.seed(0)
     np.random.seed(0)
     torch.manual_seed(0)
-
     device_name = "cpu"
     os.environ["CUDA_VISIBLE_DEVICES"] = args["--devices"]
     if torch.cuda.is_available():
@@ -84,13 +75,10 @@ def main():
     else:
         print("CUDA is not available")
     device = torch.device(device_name)
-
     # 1. dataset
-
     # uncomment for debug DataLoader
     # wireframe.datasets.WireframeDataset(datadir, split="train")[0]
     # sys.exit(0)
-
     datadir = C.io.datadir
     kwargs = {
         "collate_fn": collate,
@@ -112,16 +100,12 @@ def main():
     epoch_size = len(train_loader)
     print("epoch_size (train):", epoch_size)
     print("epoch_size (valid):", len(val_loader))
-
     if resume_from:
         checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))
-
     # 2. model
     ### load vote_index matrix for Hough transform
     ### defualt settings: (128, 128, 3, 1)
-
     vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
-
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
     if M.backbone == "stacked_hourglass":
@@ -132,23 +116,21 @@ def main():
             num_blocks=M.num_blocks,
             num_classes=sum(sum(M.head_size, [])),
             vote_index=vote_index,
-
         )
     else:
         raise NotImplementedError
     if M.use_half and device == torch.device("cuda"):
         model = model.half()
-
     model = MultitaskLearner(model)
     model = LineVectorizer(model)
-
+    print("model:", model)
+    train_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+    print('num of total parameters', train_params)
     if resume_from:
         model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
-
     if M.use_half:
         scaler = GradScaler()
-
     # 3. optimizer
     if C.optim.name == "Adam":
         optim = torch.optim.Adam(
@@ -170,7 +152,6 @@ def main():
         optim.load_state_dict(checkpoint["optim_state_dict"])
     outdir = resume_from or get_outdir(args["--identifier"])
     print("outdir:", outdir)
-
     try:
         trainer = lcnn.trainer.Trainer(
             device=device,
@@ -192,7 +173,5 @@ def main():
         if len(glob.glob(f"{outdir}/viz/*")) <= 1:
             shutil.rmtree(outdir)
         raise
-
-
 if __name__ == "__main__":
     main()

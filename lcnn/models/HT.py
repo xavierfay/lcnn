@@ -172,7 +172,7 @@ class CAT_HTIHT(nn.Module):
 
 if __name__ == "__main__":
     ### Default settings: (128, 128, 3, 1)
-    vote_index = hough_transform(rows=128, cols=128, theta_res=3, rho_res=1)
+    vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
     rows, cols, h, w = vote_index.shape
     print('vote_index', vote_index.shape)
     # sio.savemat('../../vote_index_128_31.mat', {'vote_index': vote_index})
