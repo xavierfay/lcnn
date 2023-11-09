@@ -38,7 +38,7 @@ from lcnn.datasets import WireframeDataset, collate
 from lcnn.models.line_vectorizer import LineVectorizer
 from lcnn.models.multitask_learner import MultitaskHead, MultitaskLearner
 from torch.cuda.amp import autocast, GradScaler
-
+from lcnn.models.HT import hough_transform
 def git_hash():
     cmd = 'git log -n 1 --pretty="%h"'
     ret = subprocess.check_output(shlex.split(cmd)).strip()
@@ -119,13 +119,9 @@ def main():
     # 2. model
     ### load vote_index matrix for Hough transform
     ### defualt settings: (128, 128, 3, 1)
-    if os.path.isfile(C.io.vote_index):
-        print('load vote_index ... ')
-        vote_index = sio.loadmat(C.io.vote_index)['vote_index']
-    else:
-        print('compute vote_index ... ')
-        vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
-        sio.savemat(C.io.vote_index, {'vote_index': vote_index})
+
+    vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
+
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
     if M.backbone == "stacked_hourglass":
