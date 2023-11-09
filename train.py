@@ -3,13 +3,16 @@
 Usage:
     train.py [options] <yaml-config>
     train.py (-h | --help )
+
 Arguments:
    <yaml-config>                   Path to the yaml hyper-parameter file
+
 Options:
    -h --help                       Show this screen.
    -d --devices <devices>          Comma seperated GPU devices [default: 0]
    -i --identifier <identifier>    Folder identifier [default: default-identifier]
 """
+
 import datetime
 import glob
 import os
@@ -23,6 +26,7 @@ import signal
 import subprocess
 import sys
 import threading
+
 import numpy as np
 import torch
 import yaml
