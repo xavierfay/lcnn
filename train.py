@@ -119,6 +119,7 @@ def main():
     # 2. model
     ### load vote_index matrix for Hough transform
     ### defualt settings: (128, 128, 3, 1)
+    print("check")
     vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
     print("check")
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
