@@ -126,7 +126,7 @@ def main():
     else:
         print('compute vote_index ... ')
         vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
-        sio.savemat(C.io.vote_index, {'vote_index': vote_index})
+        sio.savemat(C.io.vote_index, {'vote_index': vote_index}, format='7.3')
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
     print("check")
