@@ -1,5 +1,5 @@
 io:
-  vote_index: vote_index_128_128_3_1.mat
+  vote_index:
   logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete/
   datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
   resume_from: /content/drive/MyDrive/Xavier/logs/dpid_complete/231108-103904-b992149-baseline
