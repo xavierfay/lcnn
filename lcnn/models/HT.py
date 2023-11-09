@@ -23,52 +23,106 @@ import sys
 import scipy.io as sio
 import matplotlib.pyplot as plt
 
-# ####################################HT########################################################
+# # ####################################HT########################################################
+
 def hough_transform(rows, cols, theta_res, rho_res):
+    print("Starting hough_transform")
+    print(f"Input parameters: rows={rows}, cols={cols}, theta_res={theta_res}, rho_res={rho_res}")
 
     theta = np.linspace(0, 180.0, int(np.ceil(180.0 / theta_res) + 1.0))
     theta = theta[0:len(theta) - 1]
+    print(f"Calculated theta array of size: {theta.shape}")
 
-    ###  Actually,the offset does not have to be this large, because the origin is located at the image center.
     D = np.sqrt((rows - 1) ** 2 + (cols - 1) ** 2)
-    ###  replace the line above to reduce unnecessray computation (significantly).
-    # D = np.sqrt((rows/2) ** 2 + (cols/2) ** 2)
-    
+    print(f"Calculated diagonal D: {D}")
+
     q = np.ceil(D / rho_res)
     nrho = 2 * q + 1
     rho = np.linspace(-q * rho_res, q * rho_res, int(nrho))
+    print(f"Calculated rho array of size: {rho.shape}")
 
     w = np.size(theta)
     h = np.size(rho)
+    print(f"Size of HT map: width={w}, height={h}")
+
     cos_value = np.cos(theta * np.pi / 180.0).astype(np.float32)
     sin_value = np.sin(theta * np.pi / 180.0).astype(np.float32)
     sin_cos = np.concatenate((sin_value[None, :], cos_value[None, :]), axis=0)
+    print("Calculated sin and cos values")
 
-    ###  This is much more memory-efficient by shifting the coordinate ####
     coords_r, coords_w = np.ones((rows, cols)).nonzero()
-    coords = np.concatenate((coords_r[:,None], coords_w[:,None]), axis=1).astype(np.float32)
+    coords = np.concatenate((coords_r[:, None], coords_w[:, None]), axis=1).astype(np.float32)
+    print("Generated coordinate array")
 
-    coords[:,0] = rows-coords[:,0]-rows//2
-    coords[:,1] = coords[:,1] +1 - cols//2
+    coords[:, 0] = rows - coords[:, 0] - rows // 2
+    coords[:, 1] = coords[:, 1] + 1 - cols // 2
 
     vote_map = (coords @ sin_cos).astype(np.float32)
+    print("Calculated vote map")
 
     vote_index = np.zeros((rows * cols, h, w))
-    for i in range(rows*cols):
+    for i in range(rows * cols):
         for j in range(w):
             rhoVal = vote_map[i, j]
             rhoIdx = np.nonzero(np.abs(rho - rhoVal) == np.min(np.abs(rho - rhoVal)))[0]
             vote_map[i, j] = float(rhoIdx[0])
             vote_index[i, rhoIdx[0], j] = 1
 
+    print("Completed voting process")
 
-    ### remove all-zero lines in the HT maps ####
     vote_rho_idx = vote_index.reshape(rows * cols, h, w).sum(axis=0).sum(axis=1)
-    vote_index = vote_index[:,vote_rho_idx>0.0 ,:]
-    ### update h, since we remove those HT lines without any votes
-    ### slightly different from the original paper, the HT size in this script is 182x60.
-    h = (vote_rho_idx>0.0).sum()
+    vote_index = vote_index[:, vote_rho_idx > 0.0, :]
+    h = (vote_rho_idx > 0.0).sum()
+    print(f"Filtered out zero lines. New height: {h}")
+
+    print("Hough transform completed")
     return vote_index.reshape(rows, cols, h, w)
+
+# def hough_transform(rows, cols, theta_res, rho_res):
+#
+#     theta = np.linspace(0, 180.0, int(np.ceil(180.0 / theta_res) + 1.0))
+#     theta = theta[0:len(theta) - 1]
+#
+#     ###  Actually,the offset does not have to be this large, because the origin is located at the image center.
+#     D = np.sqrt((rows - 1) ** 2 + (cols - 1) ** 2)
+#     ###  replace the line above to reduce unnecessray computation (significantly).
+#     # D = np.sqrt((rows/2) ** 2 + (cols/2) ** 2)
+#
+#     q = np.ceil(D / rho_res)
+#     nrho = 2 * q + 1
+#     rho = np.linspace(-q * rho_res, q * rho_res, int(nrho))
+#
+#     w = np.size(theta)
+#     h = np.size(rho)
+#     cos_value = np.cos(theta * np.pi / 180.0).astype(np.float32)
+#     sin_value = np.sin(theta * np.pi / 180.0).astype(np.float32)
+#     sin_cos = np.concatenate((sin_value[None, :], cos_value[None, :]), axis=0)
+#
+#     ###  This is much more memory-efficient by shifting the coordinate ####
+#     coords_r, coords_w = np.ones((rows, cols)).nonzero()
+#     coords = np.concatenate((coords_r[:,None], coords_w[:,None]), axis=1).astype(np.float32)
+#
+#     coords[:,0] = rows-coords[:,0]-rows//2
+#     coords[:,1] = coords[:,1] +1 - cols//2
+#
+#     vote_map = (coords @ sin_cos).astype(np.float32)
+#
+#     vote_index = np.zeros((rows * cols, h, w))
+#     for i in range(rows*cols):
+#         for j in range(w):
+#             rhoVal = vote_map[i, j]
+#             rhoIdx = np.nonzero(np.abs(rho - rhoVal) == np.min(np.abs(rho - rhoVal)))[0]
+#             vote_map[i, j] = float(rhoIdx[0])
+#             vote_index[i, rhoIdx[0], j] = 1
+#
+#
+#     ### remove all-zero lines in the HT maps ####
+#     vote_rho_idx = vote_index.reshape(rows * cols, h, w).sum(axis=0).sum(axis=1)
+#     vote_index = vote_index[:,vote_rho_idx>0.0 ,:]
+#     ### update h, since we remove those HT lines without any votes
+#     ### slightly different from the original paper, the HT size in this script is 182x60.
+#     h = (vote_rho_idx>0.0).sum()
+#     return vote_index.reshape(rows, cols, h, w)
 
 
 # torch.nn.Conv2d(in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, bias=True)
