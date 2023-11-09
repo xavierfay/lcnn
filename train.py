@@ -120,6 +120,7 @@ def main():
     ### load vote_index matrix for Hough transform
     ### defualt settings: (128, 128, 3, 1)
     vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
+    print("check")
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
     if M.backbone == "stacked_hourglass":
@@ -135,7 +136,7 @@ def main():
         raise NotImplementedError
     if M.use_half and device == torch.device("cuda"):
         model = model.half()
-
+    print("check")
     model = MultitaskLearner(model)
     model = LineVectorizer(model)
     print("model:", model)
