@@ -30,9 +30,9 @@ model:
 
   # backbone parameters
   backbone: stacked_hourglass
-  depth: 5
+  depth: 4
   num_stacks: 2
-  num_blocks: 2
+  num_blocks: 1
 
   # sampler parameters
   ## static sampler
@@ -42,7 +42,7 @@ model:
   n_stc_negl: 200
 
   ## dynamic sampler
-  n_dyn_junc: 400
+  n_dyn_junc: 300
   n_dyn_posl0: 400
   n_dyn_posl1: 400
   n_dyn_posl2: 400
