@@ -122,15 +122,22 @@ def main():
     print("check")
     if os.path.isfile(C.io.vote_index):
         print('load vote_index ... ')
-        vote_index = sio.loadmat(C.io.vote_index)['vote_index']
+        # Check if the file is .mat or .npy format
+        if C.io.vote_index.endswith('.mat'):
+            vote_index = sio.loadmat(C.io.vote_index)['vote_index']
+        elif C.io.vote_index.endswith('.npy'):
+            vote_index = np.load(C.io.vote_index)
+        else:
+            raise ValueError("Unknown file format for vote_index.")
     else:
         print('compute vote_index ... ')
         vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
-        sio.savemat(C.io.vote_index, {'vote_index': vote_index}, format='7.3')
+        # Save as .npy format
+        np.save(C.io.vote_index.replace('.mat', '.npy'), vote_index)
+
+    # Convert vote_index to a PyTorch tensor
     vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
-    print("check")
-    vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     print('vote_index loaded', vote_index.shape)
     if M.backbone == "stacked_hourglass":
         model = lcnn.models.hg(
