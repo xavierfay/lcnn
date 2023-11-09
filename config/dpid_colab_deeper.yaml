@@ -54,7 +54,7 @@ model:
   n_pts1: 8
 
   # line verification network parameters
-  dim_loi: 256
+  dim_loi: 128
   dim_fc: 1024
 
   # maximum junction and line outputs
