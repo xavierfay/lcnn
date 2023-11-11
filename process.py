@@ -39,7 +39,8 @@ from lcnn.config import C, M
 from lcnn.datasets import WireframeDataset, collate
 from lcnn.models.line_vectorizer import LineVectorizer
 from lcnn.models.multitask_learner import MultitaskHead, MultitaskLearner
-
+import scipy.io as sio
+from lcnn.models.HT import hough_transform
 
 def main():
     args = docopt(__doc__)
@@ -63,13 +64,31 @@ def main():
         print("CUDA is not available")
     device = torch.device(device_name)
 
+    print("check")
+    if os.path.isfile(C.io.vote_index):
+        print('load vote_index ... ')
+        # Check if the file is .mat or .npy format
+        if C.io.vote_index.endswith('.mat'):
+            vote_index = sio.loadmat(C.io.vote_index)['vote_index']
+        elif C.io.vote_index.endswith('.npy'):
+            vote_index = np.load(C.io.vote_index)
+        else:
+            raise ValueError("Unknown file format for vote_index.")
+    else:
+        print('compute vote_index ... ')
+        vote_index = hough_transform(rows=256, cols=256, theta_res=3, rho_res=1)
+        # Save as .npy format
+        np.save(C.io.vote_index.replace('.mat', '.npy'), vote_index)
+    print(type(vote_index))
+    vote_index = torch.from_numpy(vote_index).float().contiguous().to(device)
     if M.backbone == "stacked_hourglass":
         model = lcnn.models.hg(
             depth=M.depth,
-            head=lambda c_in, c_out: MultitaskHead(c_in, c_out),
+            head=MultitaskHead,
             num_stacks=M.num_stacks,
             num_blocks=M.num_blocks,
             num_classes=sum(sum(M.head_size, [])),
+            vote_index=vote_index,
         )
     else:
         raise NotImplementedError
@@ -82,7 +101,7 @@ def main():
     model.eval()
 
     loader = torch.utils.data.DataLoader(
-        WireframeDataset(args["<image-dir>"], split="test_test"),
+        WireframeDataset(args["<image-dir>"], split="test_complete"),
         shuffle=False,
         batch_size=M.batch_size,
         collate_fn=collate,

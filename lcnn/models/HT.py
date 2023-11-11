@@ -137,6 +137,7 @@ def make_conv_block(in_channels, out_channels, kernel_size=3, stride=1, padding=
 class HT(nn.Module):
     def __init__(self, vote_index):
         super(HT, self).__init__()
+        print(type(vote_index))
         self.r, self.c, self.h, self.w = vote_index.size()
         self.norm = max(self.r, self.c)
         self.vote_index = vote_index.view(self.r * self.c, self.h *self.w)
