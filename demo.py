@@ -35,6 +35,9 @@ from lcnn.models.multitask_learner import MultitaskHead, MultitaskLearner
 from lcnn.postprocess import postprocess
 from lcnn.utils import recursive_to
 
+from torchviz import make_dot
+
+
 PLTOPTS = {"color": "#33FFFF", "s": 15, "edgecolors": "none", "zorder": 5}
 cmap = plt.get_cmap("jet")
 norm = mpl.colors.Normalize(vmin=0.9, vmax=1.0)

@@ -160,9 +160,6 @@ class LineVectorizer(nn.Module):
         result["preds"]["jscore"] = torch.cat([jscores[i] for i in range(n_batch)])
 
 
-
-
-
         if input_dict["mode"] != "testing":
             if M.CE_lines and not M.focal_lines:
                 def cross_entropy_loss_per_class(x, y, class_weights, num_classes=4, misclass_penalty=10):
@@ -204,51 +201,51 @@ class LineVectorizer(nn.Module):
                 lpos1 = loss_per_class[2]
                 lpos2 = loss_per_class[3]
 
-        if M.focal_lines and not M.CE_lines:
-            def focal_loss(logits, targets, alpha, gamma=2.0):
-                CE_loss = F.cross_entropy(logits, targets, reduction='none')
-                pt = torch.exp(-CE_loss)
-                F_loss = alpha * (1 - pt) ** gamma * CE_loss
-                return F_loss
+            if M.focal_lines and not M.CE_lines:
+                def focal_loss(logits, targets, alpha, gamma=2.0):
+                    CE_loss = F.cross_entropy(logits, targets, reduction='none')
+                    pt = torch.exp(-CE_loss)
+                    F_loss = alpha * (1 - pt) ** gamma * CE_loss
+                    return F_loss
 
 
 
-            def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
-                # Ensure the logits are float, Convert labels to long
-                x = x.float()
-                y = y.long()
+                def focal_loss_per_class(x, y, class_weights, num_classes=4, gamma=2.0):
+                    # Ensure the logits are float, Convert labels to long
+                    x = x.float()
+                    y = y.long()
 
-                # Initialize an empty tensor to store the per-class losses
-                loss_per_class = torch.zeros(num_classes).float().to(
-                    x.device)  # ensure the tensor is on the same device as x
+                    # Initialize an empty tensor to store the per-class losses
+                    loss_per_class = torch.zeros(num_classes).float().to(
+                        x.device)  # ensure the tensor is on the same device as x
 
-                # Calculate the Focal Loss for each class
-                for c in range(num_classes):
-                    mask = (y == c).float()
-                    alpha_c = class_weights[c]
-                    loss_c = focal_loss(x, y, alpha_c, gamma)
-                    loss_per_class[c] = (loss_c * mask).sum()
+                    # Calculate the Focal Loss for each class
+                    for c in range(num_classes):
+                        mask = (y == c).float()
+                        alpha_c = class_weights[c]
+                        loss_c = focal_loss(x, y, alpha_c, gamma)
+                        loss_per_class[c] = (loss_c * mask).sum()
 
-                # Normalize by the total number of samples in the batch
-                loss_per_class /= x.shape[0]
-                return loss_per_class
+                    # Normalize by the total number of samples in the batch
+                    loss_per_class /= x.shape[0]
+                    return loss_per_class
 
-            class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
+                class_weights = torch.tensor([1, 10, 10, 10]).to(x.device)
 
-            y = torch.argmax(y, dim=1)
+                y = torch.argmax(y, dim=1)
 
-            loss_per_class = focal_loss_per_class(x, y, class_weights)
+                loss_per_class = focal_loss_per_class(x, y, class_weights)
 
-            lneg = loss_per_class[0]
-            lpos0 = loss_per_class[1]
-            lpos1 = loss_per_class[2]
-            lpos2 = loss_per_class[3]
+                lneg = loss_per_class[0]
+                lpos0 = loss_per_class[1]
+                lpos1 = loss_per_class[2]
+                lpos2 = loss_per_class[3]
 
-        result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
-        result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
-        result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
-        result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
-        result["losses"][0]["jtype"] = sum(losses) * M.loss_weight["jtype"]
+            result["losses"][0]["lneg"] = lneg * M.loss_weight["lneg"]
+            result["losses"][0]["lpos0"] = lpos0 * M.loss_weight["lpos0"]
+            result["losses"][0]["lpos1"] = lpos1 * M.loss_weight["lpos1"]
+            result["losses"][0]["lpos2"] = lpos2 * M.loss_weight["lpos2"]
+            result["losses"][0]["jtype"] = sum(losses) * M.loss_weight["jtype"]
 
         return result
 

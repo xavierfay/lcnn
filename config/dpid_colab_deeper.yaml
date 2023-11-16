@@ -57,8 +57,8 @@ model:
   dim_fc: 1024
 
   # maximum junction and line outputs
-  n_out_junc: 350
-  n_out_line: 800
+  n_out_junc: 600
+  n_out_line: 2000
 
   # additional ablation study parameters
   use_cood: 0
@@ -79,9 +79,9 @@ model:
   eval_junc_thres: 0.01
 
 optim:
-  name: Adam
+  name: SGD
   lr: 4.0e-4
   amsgrad: True
   weight_decay: 1.0e-4
-  max_epoch: 50
+  max_epoch: 24
   lr_decay_epoch: 10
