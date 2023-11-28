@@ -62,8 +62,6 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
 
-            print(jmap.shape)
-
             joff = output[offset[0]: offset[1]].reshape(n_jtyp, 2, batch, row, col)
 
             if stack == 0:
