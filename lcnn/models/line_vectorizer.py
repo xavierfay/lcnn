@@ -21,7 +21,7 @@ class LineVectorizer(nn.Module):
         self.register_buffer("lambda_", lambda_)
         self.do_static_sampling = M.n_stc_posl0 + M.n_stc_posl1 + M.n_stc_posl2 + M.n_stc_negl > 0
 
-        self.fc1 = nn.Conv2d(128, M.dim_loi, 1)
+        self.fc1 = nn.Conv2d(256, M.dim_loi, 1)
         scale_factor = M.n_pts0 // M.n_pts1
         if M.use_conv:
             self.pooling = nn.Sequential(
