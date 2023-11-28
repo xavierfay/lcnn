@@ -43,7 +43,7 @@ def inrange(v, shape):
 def to_int(x):
     return tuple(map(int, x))
 
-def resize_image_binary(img, new_size, upscale_factor=4):
+def resize_image_binary(img, new_size, upscale_factor=2):
 
 
     upscale_width = img.shape[1] * upscale_factor
@@ -72,7 +72,7 @@ def adjacency_matrix(n, *links):
     return mat
 def save_heatmap(prefix, image, lines, classes):
     im_rescale = (1536, 1536)
-    heatmap_scale = (128, 128)
+    heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
     jmap = np.zeros((34,) + heatmap_scale, dtype=np.float32)
@@ -143,13 +143,23 @@ def save_heatmap(prefix, image, lines, classes):
 
     summed_jmap = jmap.sum(axis=0)
     error_positions = np.argwhere(summed_jmap > 1)
+
+    # Ensure that error_positions has an even number of elements
+    if error_positions.shape[0] % 2 != 0:
+        error_positions = error_positions[:-1]
+
     for i in range(0, len(error_positions), 2):
-        x, y = error_positions[i], error_positions[i + 1]
+        x, y = error_positions[i][0], error_positions[i][1]
         layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
-        highest_layer = np.max(layers_with_ones)
-        for layer in layers_with_ones:
-            if layer != highest_layer:
-                jmap[layer, x, y] = 0
+
+        if layers_with_ones.size > 0:
+            highest_layer = np.max(layers_with_ones)
+            for layer in layers_with_ones:
+                if layer != highest_layer:
+                    jmap[layer, x, y] = 0
+        else:
+            # Handle the case where layers_with_ones is empty
+            print(f"No layers with ones at position ({x}, {y})")
 
     np.savez_compressed(
         f"{prefix}_label.npz",

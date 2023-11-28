@@ -385,7 +385,7 @@ def non_maximum_suppression(a):
     return a * keep.view(original_shape[0], -1)
 
 def nms_2d(a):
-    a = a.view(a.shape[0], 1, 128, 128)
+    a = a.view(a.shape[0], 1, 256, 256)
     ap = F.max_pool2d(a, 3, stride=1, padding=1)
     keep = (a == ap).float()
     return (a * keep).squeeze(1)  # Ensure it's [number_of_layers, 256, 256]

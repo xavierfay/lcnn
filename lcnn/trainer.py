@@ -428,7 +428,7 @@ def plt_heatmaps(jmap):
     colormap = plt.cm.jet(np.linspace(0, 1, 34))
 
     # Create an image of shape 256x256x3 initialized with ones to have a white background
-    combined_image = np.ones((128, 128, 3))
+    combined_image = np.ones((256, 256, 3))
 
     for i in range(jmap.shape[0]):
         # Multiply each heatmap layer with its corresponding color

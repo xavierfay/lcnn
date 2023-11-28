@@ -109,7 +109,6 @@ class HourglassNet(nn.Module):
         self.layer2 = self._make_residual(block, self.inplanes, 1)
         self.layer3 = self._make_residual(block, self.num_feats, 1)
         self.maxpool = nn.MaxPool2d(2, stride=2)
-        self.additional_downsample = nn.Conv2d(self.inplanes, self.inplanes, kernel_size=3, stride=3, padding=1)
 
         # build hourglass modules
         ch = self.num_feats * block.expansion
@@ -173,7 +172,6 @@ class HourglassNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
 
-        x = self.additional_downsample(x)
 
         for i in range(self.num_stacks):
             y = self.hg[i](x)
