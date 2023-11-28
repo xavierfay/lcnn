@@ -50,7 +50,7 @@ class WireframeDataset(Dataset):
         with np.load(self.filelist[idx]) as npz:
             target = {
                 name: torch.from_numpy(npz[name]).float()
-                for name in ["lmap", "joff", "jmap"]
+                for name in ["joff", "jmap"]
             }
 
             jmap = target["jmap"]
