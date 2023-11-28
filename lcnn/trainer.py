@@ -320,14 +320,6 @@ class Trainer(object):
         #     mask_target = mask_target.cpu().detach().numpy()
         #     imshow(mask_target, cmap="hot"), plt.savefig(f"{prefix}_mask_{j}a.jpg"), plt.close()
 
-        for j, results in enumerate(result["lmap"][i]):
-            line_result = results.cpu().numpy()
-            imshow(line_result, cmap="hot"), plt.savefig(f"{prefix}_line_{j}b.jpg"), plt.close()
-
-        for j, target in enumerate(target["lmap"][i]):
-            line_target = target.cpu().numpy()
-            imshow(line_target, cmap="hot"), plt.savefig(f"{prefix}_line_{j}a.jpg"), plt.close()
-
         def draw_vecl(lines, sline, juncs, jtyp, fn):
             imshow(img)
 
@@ -436,7 +428,7 @@ def plt_heatmaps(jmap):
     colormap = plt.cm.jet(np.linspace(0, 1, 34))
 
     # Create an image of shape 256x256x3 initialized with ones to have a white background
-    combined_image = np.ones((256, 256, 3))
+    combined_image = np.ones((128, 128, 3))
 
     for i in range(jmap.shape[0]):
         # Multiply each heatmap layer with its corresponding color

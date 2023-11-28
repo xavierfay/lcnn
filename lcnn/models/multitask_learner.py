@@ -46,10 +46,10 @@ class MultitaskLearner(nn.Module):
 
         T = input_dict["target"].copy()
         n_jtyp = T["jmap"].shape[1]
-        n_ltyp = T["lmap"].shape[1]
+
 
         # switch to CNHW
-        for task in ["jmap", "lmap"]:
+        for task in ["jmap"]:
             T[task] = T[task].permute(1, 0, 2, 3)
         for task in ["joff"]:
             T[task] = T[task].permute(1, 2, 0, 3, 4)
@@ -62,16 +62,12 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
 
-            lmap = output[offset[0]: offset[1]].reshape(n_ltyp, 2, batch, row, col)
             joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
 
-            # print("jmap in forward pass", jmap.shape)
-            # print("lmap in forward pass",lmap.shape)
             jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
-                    "lmap": lmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
                     "joff": joff.permute(2, 0, 1, 3, 4).sigmoid() - 0.5,
                 }
                 if input_dict["mode"] == "testing":
@@ -93,11 +89,6 @@ class MultitaskLearner(nn.Module):
                 )
 
                 L["jmap"] = L["jmap"] * 1000 # compensate for lower values compared to focal loss
-
-
-            L["lmap"] = sum(
-                cross_entropy_loss(lmap[i], T["lmap"][i]) for i in range(n_ltyp)
-            )
 
             L["joff"] = sum(
                 sigmoid_l1_loss(joff[i, j], T["joff"][i, j], -0.5, T["jmap"][i])
