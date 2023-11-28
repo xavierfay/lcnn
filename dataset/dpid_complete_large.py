@@ -141,6 +141,16 @@ def save_heatmap(prefix, image, lines, classes):
 
     image = resize_image_binary(image, im_rescale)
 
+    summed_jmap = jmap.sum(axis=0)
+    error_positions = np.argwhere(summed_jmap > 1)
+    for i in range(0, len(error_positions), 2):
+        x, y = error_positions[i], error_positions[i + 1]
+        layers_with_ones = np.where(jmap[:, x, y] == 1)[0]
+        highest_layer = np.max(layers_with_ones)
+        for layer in layers_with_ones:
+            if layer != highest_layer:
+                jmap[layer, x, y] = 0
+
     np.savez_compressed(
         f"{prefix}_label.npz",
         aspect_ratio=image.shape[1] / image.shape[0],
