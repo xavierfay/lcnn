@@ -62,7 +62,7 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
 
-            joff = output[offset[1]: offset[2]].reshape(n_jtyp, 2, batch, row, col)
+            joff = output[offset[0]: offset[1]].reshape(n_jtyp, 2, batch, row, col)
 
             jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
             if stack == 0:
