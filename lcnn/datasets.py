@@ -105,7 +105,7 @@ class WireframeDataset(Dataset):
             ldir = lpre[:, 0, :2] - lpre[:, 1, :2]
             ldir /= np.clip(LA.norm(ldir, axis=1, keepdims=True), 1e-6, None)
             feat = [
-                lpre[:, :, :2].reshape(-1, 4) / 256 * M.use_cood,
+                lpre[:, :, :2].reshape(-1, 4) / 128 * M.use_cood,
                 ldir * M.use_slop,
                 jtypes_endpoints.reshape(-1, 2) * M.use_jtyp,
             ]
