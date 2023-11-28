@@ -12,7 +12,7 @@ class MultitaskHead(nn.Module):
     def __init__(self, input_channels, num_class):
         super(MultitaskHead, self).__init__()
 
-        m = int(input_channels / 12) #changed
+        m = int(input_channels / 4) #changed
         heads = []
         for output_channels in sum(M.head_size, []):
             heads.append(
@@ -62,9 +62,10 @@ class MultitaskLearner(nn.Module):
             output = output.transpose(0, 1).reshape([-1, batch, row, col]).contiguous()
             jmap = output[0: offset[0]].reshape(n_jtyp, 2, batch, row, col)
 
+            print(jmap.shape)
+
             joff = output[offset[0]: offset[1]].reshape(n_jtyp, 2, batch, row, col)
 
-            jmap_probs = jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1]
             if stack == 0:
                 result["preds"] = {
                     "jmap": jmap.permute(2, 0, 1, 3, 4).softmax(2)[:, :, 1],
