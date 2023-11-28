@@ -12,7 +12,7 @@ class MultitaskHead(nn.Module):
     def __init__(self, input_channels, num_class):
         super(MultitaskHead, self).__init__()
 
-        m = int(input_channels / 4)
+        m = int(input_channels / 12)
         heads = []
         for output_channels in sum(M.head_size, []):
             heads.append(
