@@ -186,7 +186,7 @@ class HourglassNet(nn.Module):
             out.append(score)
 
             if i < self.num_stacks - 1:
-                fc_ = self.fc_[i](y)
+                fc_ = self.fc_[i](pooled_y)
                 score_ = self.score_[i](score)
                 x = x + fc_ + score_
 
