@@ -79,7 +79,7 @@ model:
   eval_junc_thres: 0.01
 
 optim:
-  name: SGD
+  name: Adam
   lr: 5.0e-4
   amsgrad: True
   weight_decay: 0
