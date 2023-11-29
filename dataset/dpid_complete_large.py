@@ -71,7 +71,7 @@ def adjacency_matrix(n, *links):
 
     return mat
 def save_heatmap(prefix, image, lines, classes):
-    im_rescale = (1536, 1536)
+    im_rescale = (1792,1792)
     heatmap_scale = (256, 256)
 
     fy, fx = heatmap_scale[1] / image.shape[0], heatmap_scale[0] / image.shape[1]
