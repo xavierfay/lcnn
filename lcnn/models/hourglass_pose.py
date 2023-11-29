@@ -186,6 +186,7 @@ class HourglassNet(nn.Module):
                 x = x + fc_ + score_
                 # Now apply adaptive pooling
                 x = self.adaptive_pool(x)
+                out.append(score_)
             else:
                 # For the last stack, apply adaptive pooling before the score prediction
                 pooled_y = self.adaptive_pool(y)
