@@ -188,7 +188,7 @@ class HourglassNet(nn.Module):
             if i < self.num_stacks - 1:
                 fc_ = self.fc_[i](y)
                 score_ = self.score_[i](score)
-                x = x + fc_ + score_v
+                x = x + fc_ + score_
 
         return out[::-1], y  # , out_vps[::-1]
 
