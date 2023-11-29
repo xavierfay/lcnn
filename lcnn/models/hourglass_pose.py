@@ -178,16 +178,17 @@ class HourglassNet(nn.Module):
             y = self.hg[i](x)
             y = self.res[i](y)
             y = self.fc[i](y)
-            y = self.adaptive_pool(y)
-            score = self.score[i](y)
-            # pre_vpts = F.adaptive_avg_pool2d(x, (1, 1))
-            # pre_vpts = pre_vpts.reshape(-1, 256)
-            # vpts = self.vpts[i](x)
-            # out_vps.append(vpts)
+
+            # Apply adaptive pooling before score prediction
+            pooled_y = self.adaptive_pool(y)
+            score = self.score[i](pooled_y)
+
+            out.append(score)
+
             if i < self.num_stacks - 1:
                 fc_ = self.fc_[i](y)
                 score_ = self.score_[i](score)
-                x = x + fc_ + score_
+                x = x + fc_ + score_v
 
         return out[::-1], y  # , out_vps[::-1]
 
