@@ -187,8 +187,10 @@ class HourglassNet(nn.Module):
 
             if i < self.num_stacks - 1:
                 # Update x for the next stack
+                x = self.adaptive_pool(x)
                 fc_ = self.fc_[i](y)
                 score_ = self.score_[i](score)
+
                 x = x + fc_ + score_
 
         # y should be the pooled output from the last stack
