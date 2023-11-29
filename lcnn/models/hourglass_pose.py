@@ -191,6 +191,7 @@ class HourglassNet(nn.Module):
                 pooled_y = self.adaptive_pool(y)
                 score = self.score[i](pooled_y)
                 out.append(score)
+                y = pooled_y
 
         return out[::-1], y  # , out_vps[::-1]
 
