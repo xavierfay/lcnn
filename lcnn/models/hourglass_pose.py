@@ -173,28 +173,28 @@ class HourglassNet(nn.Module):
         x = self.layer2(x)
         x = self.layer3(x)
 
-
         for i in range(self.num_stacks):
             y = self.hg[i](x)
             y = self.res[i](y)
             y = self.fc[i](y)
 
-            if i < self.num_stacks - 1:
-                # Applying fc_ and score_ before adaptive pooling
-                fc_ = self.fc_[i](y)
-                score_ = self.score_[i](self.score[i](y))
-                x = x + fc_ + score_
-                # Now apply adaptive pooling
-                x = self.adaptive_pool(x)
-                out.append(score_)
-            else:
-                # For the last stack, apply adaptive pooling before the score prediction
-                pooled_y = self.adaptive_pool(y)
-                score = self.score[i](pooled_y)
-                out.append(score)
-                y = pooled_y
+            # Apply adaptive pooling to y to get a 256x256 output
+            pooled_y = self.adaptive_pool(y)
 
-        return out[::-1], y  # , out_vps[::-1]
+            # Compute the score using the pooled output
+            score = self.score[i](pooled_y)
+            out.append(score)
+
+            if i < self.num_stacks - 1:
+                # Update x for the next stack
+                fc_ = self.fc_[i](y)
+                score_ = self.score_[i](score)
+                x = x + fc_ + score_
+
+        # y should be the pooled output from the last stack
+        y = pooled_y
+
+        return out[::-1], y
 
 
 def hg(**kwargs):
