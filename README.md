@@ -41,7 +41,7 @@ Below is a quick overview of the function of each file.
 ########################### Data ###########################
 figs/
 data/                           # default folder for placing the data
-    wireframe/                  # folder for ShanghaiTech dataset (Huang et al.)
+    dpi/                  # folder for ShanghaiTech dataset (Huang et al.)
 logs/                           # default folder for storing the output during training
 ########################### Code ###########################
 config/                         # neural network hyper-parameters and configurations
