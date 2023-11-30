@@ -1,6 +1,6 @@
 io:
-  logdir: /content/drive/MyDrive/Xavier/logs/dpid_complete/
-  datadir: /content/drive/MyDrive/Xavier/Datasets/dpid_complete_2
+  logdir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/logs/dpid_complete/
+  datadir: /content/drive/MyDrive/smartMTO-Xavier/Train_lcnn_dpid/complete
   resume_from: #/content/drive/MyDrive/Xavier/logs/dpid_complete/231108-103904-b992149-baseline
   num_workers: 2
   tensorboard_port: 0
