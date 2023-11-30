@@ -41,11 +41,11 @@ Below is a quick overview of the function of each file.
 ########################### Data ###########################
 figs/
 data/                           # default folder for placing the data
-    dpi/                  # folder for ShanghaiTech dataset (Huang et al.)
+    dpid/                       # folder for Digitize PID dataset (Paliwal et al.)
 logs/                           # default folder for storing the output during training
 ########################### Code ###########################
 config/                         # neural network hyper-parameters and configurations
-    wireframe.yaml              # default parameter for ShanghaiTech dataset
+    dpid.yaml              # default parameter for ShanghaiTech dataset
 dataset/                        # all scripts related to data generation
     wireframe.py                # script for pre-processing the ShanghaiTech dataset to npz
 misc/                           # misc scripts that are not important
