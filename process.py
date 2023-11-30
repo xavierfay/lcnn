@@ -82,7 +82,7 @@ def main():
     model.eval()
 
     loader = torch.utils.data.DataLoader(
-        WireframeDataset(args["<image-dir>"], split="test_complete"),
+        WireframeDataset(args["<image-dir>"], split="test"),
         shuffle=False,
         batch_size=M.batch_size,
         collate_fn=collate,
