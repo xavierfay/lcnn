@@ -80,7 +80,7 @@ model:
 
 optim:
   name: Adam
-  lr: 3.0e-4
+  lr: 4.0e-4
   amsgrad: True
   weight_decay: 0
   max_epoch: 24
